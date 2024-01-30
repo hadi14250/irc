@@ -1,0 +1,26 @@
+STEPS
+
+Create socket
+Bind socket to IP / port
+Mark socket for listening in
+Accept a call
+Close listening socket
+While receiving display message, echo message
+Close socket
+
+FUNCTIONS
+
+#include <sys/socket.h>
+int socket(int domain, int type, int protocol);
+creates an endpoint for communication and returns file descriptor that refers to that endpoint
+successful - returns lowest fd not in use
+error - returns -1
+domain - specifies communication domain - selects protocol family (see man)
+type - specifies communication semantics. Or more generally, socket type
+	-most common is SOCK_STREAM and SOCK_DGRAM
+	-type can also be used to modify socket behavior with Values/tags (see man)
+protocol - usually only one protocol exists, so default is 0
+	-protocol number to use is specific to communication domain (??)
+
+
+

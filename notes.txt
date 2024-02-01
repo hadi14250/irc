@@ -175,3 +175,13 @@ epoll is supposedly faster - it scales well with the nuber of fds being monitore
 		5. you can also modify or remove fds using epoll_ctl with EPOLL_CTL_MOD or EPOLL_CTL_DEL
 	kqueue is available on macos and freebsd
 	epoll is available on linux
+
+IRC clients - software apps that allow users to connect to and participate in IRC networks
+clients provide users with a graphical or command line interface to interact with irc servers and channels
+Check out these below
+	-HexChat (windows and linux only)
+	-Irssi
+	-Xchat (windows and linux)
+	-WeeChat
+	-Quassel IRC
+	-KVIrc

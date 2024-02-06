@@ -12,7 +12,7 @@ int main()
 	//create a socket
 	 //AF_INET - ipv4 internet, sockstream = connection based protocol, 1 protocol
 	int listening = socket(AF_INET, SOCK_STREAM, 0);
-	if (listening == -1)
+	if (listening == -1)  
 	{
 		std::cerr << "Error: Can't create socket" << std::endl;
 		return -1;
@@ -118,3 +118,7 @@ int main()
 }
 
 //use nc localhost 54000 to connect on a separate terminal
+/* 
+
+
+*/

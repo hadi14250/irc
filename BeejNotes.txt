@@ -1,0 +1,240 @@
+----------------
+STRUCTS
+----------------
+use addrinfo to prep socket address structures for use
+use for host name lookups and service name lookups
+call getaddrinfo() to return pointer to linked list of with filled structs
+
+struct addrinfo {
+    int              ai_flags;     // AI_PASSIVE, AI_CANONNAME, etc.
+    int              ai_family;    // AF_INET, AF_INET6, AF_UNSPEC
+    int              ai_socktype;  // SOCK_STREAM, SOCK_DGRAM
+    int              ai_protocol;  // use 0 for "any"
+    size_t           ai_addrlen;   // size of ai_addr in bytes
+    struct sockaddr *ai_addr;      // struct sockaddr_in or _in6
+    char            *ai_canonname; // full canonical hostname
+
+    struct addrinfo *ai_next;      // linked list, next node
+};
+
+holds socket address info for may types of sockets
+for us, sa_family will be AF_INET (or AF_INET6)
+
+struct sockaddr {
+    unsigned short    sa_family;    // address family, AF_xxx
+    char              sa_data[14];  // 14 bytes of protocol address
+}; 
+
+a pointer to a struct sockaddr_in can be cast to a pointer to a struct sockaddr!!!!!
+Use this in connect()
+Use this struct to reference elements of socket address
+sin_zero is used to pad structure to length of a struct sockaddr - so we should use memset to set it all to zero
+sin_family = sa_family
+sin_port must be in Network Byte Order (use htons to convert)
+// (IPv4 only--see struct sockaddr_in6 for IPv6)
+
+struct sockaddr_in {
+    short int          sin_family;  // Address family, AF_INET
+    unsigned short int sin_port;    // Port number
+    struct in_addr     sin_addr;    // Internet address
+    unsigned char      sin_zero[8]; // Same size as struct sockaddr
+};
+
+// (IPv4 only--see struct in6_addr for IPv6)
+// Internet address (a structure for historical reasons)
+struct in_addr {
+    uint32_t s_addr; // that's a 32-bit int (4 bytes)
+};
+
+sin_addr.s_addr is a 4 byte IP address in NBO (Network byte order)
+
+use this if we don't know if it's an ipv4 or ipv6 address
+this struct is big enough to hold both
+then cast to type needed
+ss_family tells you if it is AF_INET or AF_INET6 -> then cast to sockaddr_in or sockaddr_in6 as needed
+struct sockaddr_storage {
+    sa_family_t  ss_family;     // address family
+
+    // all this is padding, implementation specific, ignore it:
+    char      __ss_pad1[_SS_PAD1SIZE];
+    int64_t   __ss_align;
+    char      __ss_pad2[_SS_PAD2SIZE];
+};
+
+------------------
+MORE IP ADDRESSES
+------------------
+inet_pton() -> converts IP address into struct in_addr (or v6 equvalent struct in6_addr)
+	returns -1 on error, and 0 if address is messed up
+	check that result is greater than 0 before using!
+inet_ntop() -> converts struct in_addr to IP address (network to presentation / printable)
+these only work with numeric IP address
+INET_ADDRSTRLEN and INET6_ADDRSTRLEN are macros that will give you size of ipv4 and ipv6 address
+-----------------------------
+PRIVATE/DISCONNECTED NETWORKS
+-----------------------------
+Network Address Translation (NAT)
+Firewalls will hide network from rest of the world and translate internal IP address to external
+Firewall uses NAT to translate public IP address to private
+---------
+MORE TIPS
+---------
+use getaddrinfo() instead of gethostbyname()
+use getnameinfo() instead of gethostbyaddr()
+INADR_BROADCAST does not work anymore
+
+-------------
+getaddrinfo()
+-------------
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+int getaddrinfo(const char *node,     // e.g. "www.example.com" or IP
+                const char *service,  // e.g. "http" or port number
+                const struct addrinfo *hints,
+                struct addrinfo **res);
+
+1. node - host name to connect to or IP address
+2. service - a port number or name of a particular service (like http, ftp, telnet, smtp)
+3. hints - pointer to a struct addrinfo that's already been filled out
+
+ex: 
+int status;
+struct addrinfo hints;
+struct addrinfo *servinfo;  // will point to the results
+
+memset(&hints, 0, sizeof hints); // make sure the struct is empty
+hints.ai_family = AF_UNSPEC;     // don't care IPv4 or IPv6 (use AF_INET or AF_INET6)
+hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
+hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
+
+if ((status = getaddrinfo(NULL, "3490", &hints, &servinfo)) != 0) {
+    fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
+    exit(1);
+}
+// servinfo now points to a linked list of 1 or more struct addrinfos
+// ... do everything until you don't need servinfo anymore ....
+freeaddrinfo(servinfo); // free the linked-list
+
+ex:
+int status;
+struct addrinfo hints;
+struct addrinfo *servinfo;  // will point to the results
+
+memset(&hints, 0, sizeof hints); // make sure the struct is empty
+hints.ai_family = AF_UNSPEC;     // don't care IPv4 or IPv6
+hints.ai_socktype = SOCK_STREAM; // TCP stream sockets
+
+// get ready to connect
+status = getaddrinfo("www.example.net", "3490", &hints, &servinfo);
+
+a host refers to any device that is connected to a network and has its own unique identity (IP addresses)
+a host can have more than one ip address bc of 
+	1. network interfaces - a computer may hae both wired and wireless network interfaces
+	2. redundancy and load balancing - for high-availability systems or distributed systems
+		multiple IP adddress can be assigned to a single host so traffic can be distributed 
+		improve performance and fault tolerance
+	3. Virtualization - a virtual machine has its own ip
+	4. Multihoming
+	5. IPv4 and IPv6 dual stack
+	6. Dynamic IP Assignment - this could happen when a host moves between different networks
+
+--------
+SOCKET()
+--------
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int socket(int domain, int type, int protocol); 
+
+1. domain - PF_INET or PF_INET6 (IPv4 or IPv6)
+	use AF_INET (address family) for sockaddr_in and PF_INET (protocol family) for socket
+2. type - SOCK_STREAM or SOCK_DGRAM (stream or datagram)
+3. TCP or UDP (set to 0 or call getprotobyname())
+
+ex: use valus from getaddrinfo() cal directly into socket
+int s;
+struct addrinfo hints, *res;
+
+// [pretend we already filled out the "hints" struct]
+getaddrinfo("www.example.com", "http", &hints, &res);
+
+// again, you should do error-checking on getaddrinfo(), and walk
+// the "res" linked list looking for valid entries instead of just
+// assuming the first one is good (like many of these examples do).
+s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+socket() returns a usable socket descriptor or -1 on errror
+
+------
+BIND()
+------
+once you get a socket, must associate socket with port on local machine
+(commonly done if you're going to listen() for incoming connections no a specific port)
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
+
+1. sockfd - socket file descriptor returned by socket()
+2. my_addr - pointer to struct sockaddr that contains info about your address
+3. addrlen - length of second parameter
+
+ex:
+struct addrinfo hints, *res;
+int sockfd;
+
+// first, load up address structs with getaddrinfo():
+
+memset(&hints, 0, sizeof hints);
+hints.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
+hints.ai_socktype = SOCK_STREAM;
+hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
+
+getaddrinfo(NULL, "3490", &hints, &res);
+
+// make a socket:
+
+sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+// bind it to the port we passed in to getaddrinfo():
+bind(sockfd, res->ai_addr, res->ai_addrlen);
+
+AI_PASSIVE means that the program will bind to the IP of host it's running on
+but to bind to specific local IP address, put IP address in first argument to getaddrinfo()
+
+bind returns -1 on error
+you can also do things manually (but why should you)
+ex:
+// !!! THIS IS THE OLD WAY !!!
+
+int sockfd;
+struct sockaddr_in my_addr;
+
+sockfd = socket(PF_INET, SOCK_STREAM, 0);
+
+my_addr.sin_family = AF_INET;
+my_addr.sin_port = htons(MYPORT);     // short, network byte order
+my_addr.sin_addr.s_addr = inet_addr("10.12.110.57");
+memset(my_addr.sin_zero, '\0', sizeof my_addr.sin_zero);
+
+bind(sockfd, (struct sockaddr *)&my_addr, sizeof my_addr);
+
+can also use INADDR_ANY on s_addr field to bind to local IP address (or in6addr_any)
+
+make sure to use ports above 1024 up to 65535
+don't need to use bind() if you are connect() - ing to a remote machine and odn't care about what your local port is
+
+---------
+CONNECT()
+---------
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int connect(int sockfd, struct sockaddr *serv_addr, int addrlen); 
+
+1. sockfd - socket fd
+2. serv_addr - struct sockaddr containing destination port and IP address
+3. addrlen - length of second parameter

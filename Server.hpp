@@ -9,8 +9,9 @@
 //should we make this a static class?
 class Server{
 private:
-	std::string					_port;
-	std::string					_password;
+	std::string	_port;
+	std::string	_password;
+	int			_listenSocket;
 	std::vector<struct pollfd>	_fds;
 
 	Server();
@@ -19,6 +20,7 @@ private:
 
 	void	checkPassword() const;
 	void	checkPort() const;
+	void	createServer();
 public:
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
@@ -30,6 +32,9 @@ public:
 	};
 	class InvalidPortException : public std::exception{
 		const char *what() const throw(){return "Invalid port";}
+	};
+	class Error : public std::exception{
+		const char *what() const throw(){return "generic error msg";}
 	};
 };
 

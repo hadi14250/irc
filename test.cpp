@@ -10,7 +10,7 @@
 
 int main()
 {
-	std::istringstream ss("544.5");
+	std::istringstream ss("544.0");
 	int i;
 
 	ss >> i;

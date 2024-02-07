@@ -42,12 +42,48 @@ int main()
 	}
 
 	//3. bind socket to a port (associate your socket fd to a port on your local machine)
+	//we do this when we need to listen() for incoming connections on a specfic port
 	//we bind to port we passed in getaddrinfo()
 	if (bind(sockfd, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
 	{
 		std::cout << "error\n";
 		exit(1);
 	}
+
+	//someties you don't need bind if you don't care what the local port is. You canjust all connect right away
+	//andit will bind if to an unused local port if necessary
+
+	// //4. connect to a remote host
+	// if (connect(sockfd, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
+	// {
+	// 	std::cout << "error\n";
+	// 	exit(1);
+	// }
+
+	//5. listen - wait for incoming connections so you can handle them in some way
+	if (listen(sockfd, 5) == -1) //we will accept 5 connections in a queue for now
+	{
+		std::cout << "error\n";
+		exit(1);
+	}
+
+	//6. accept pending connection and get a new socket fd
+	//create a struct sockaddr_storage to store connecting host's information
+	struct sockaddr_storage connector_info;
+	int connector_fd;
+	socklen_t	addr_size;
+
+	addr_size = sizeof(struct sockaddr_storage);
+	connector_fd = accept(sockfd, (struct sockaddr *)&connector_info, &addr_size); //dont forget to cast connector_info!
+	if (connector_fd == -1)
+	{
+		std::cout << "error\n";
+		exit(1);
+	}
+
+	//Now we're ready to communicate on connector fd!
+
+	
 
 
 

@@ -225,7 +225,7 @@ bind(sockfd, (struct sockaddr *)&my_addr, sizeof my_addr);
 can also use INADDR_ANY on s_addr field to bind to local IP address (or in6addr_any)
 
 make sure to use ports above 1024 up to 65535
-don't need to use bind() if you are connect() - ing to a remote machine and odn't care about what your local port is
+don't need to use bind() if you are connect() - ing to a remote machine and don't care about what your local port is
 
 ---------
 CONNECT()
@@ -238,3 +238,177 @@ int connect(int sockfd, struct sockaddr *serv_addr, int addrlen);
 1. sockfd - socket fd
 2. serv_addr - struct sockaddr containing destination port and IP address
 3. addrlen - length of second parameter
+
+use this to connect to a remote host
+
+--------
+LISTEN()
+--------
+int listen(int sockfd, int backlog); 
+
+wait for incoming connections and handle in some way 
+-> listen first then accept
+1. sockfd
+2. backlog - number of connections allowed on incoming queue
+	-most systems allow up to 20
+
+basically incoming connections are going to wait in a queue until you accept.
+backlog is the max number of connections allowed go queue up
+
+use listen with bind
+
+1. getaddrinfo
+2. socket
+3. bind
+4. listen
+5. accept
+
+return -1 on error
+
+--------
+ACCEPT()
+--------
+-someone tries to connect to your machine on a port that you are listen() ing on
+-the connection queues up waiting to be accept() ed
+-you call accept() and tell it to get pending connection
+-accept() returns a new socket fd
+-original socket fd -> listening
+ new socket fd -> used to send() an recv()
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); 
+
+1. sockfd - fd associated with listen()
+2. addr - pointer to local struct sockaddr_storage
+	the struct will give info about which host is calling you from port
+3. addrlen - size of addr
+
+returns -1 on error
+
+-----------------
+SEND() and RECV()
+-----------------
+int send(int sockfd, const void *msg, int len, int flags); 
+1. sockfd - the socket fd that you want to send data to (could be either listening socket or the accept socket)
+2. msg - pointer to the data you want to send
+3. len - len of msg
+4. flags - set to 0
+
+send returns the number of bytes actually sent out - which could be less than what you've sent!!!!!
+always check send value, and send the rest of msg if needed
+returns -1 on error
+
+int recv(int sockfd, void *buf, int len, int flags);
+1. sockfd - same as send
+2. buf - buffer to read information into
+3. len - max length of buf
+4. flags - 0
+
+recv sends number of bytes actually read into the buffer
+returns -1 on error
+if return 0, it means that remote side has closed connection
+
+note: use sendto() amd recvfrom() for dgram sockets
+
+----------------------
+CLOSE() and SHUTDOWN()
+----------------------
+we know how close works already
+
+int shutdown(int sockfd, int how); 
+
+0	Further receives are disallowed
+1	Further sends are disallowed
+2	Further sends and receives are disallowed (like close())
+
+shutdown does NOT free the fd. we need to use close for that.
+shutdown only changes socket usability
+
+-------------
+GETPEERNAME()
+-------------
+#include <sys/socket.h>
+
+int getpeername(int sockfd, struct sockaddr *addr, int *addrlen); 
+this gives you the name of the other person at the end of a connected stream socket
+
+-------------
+GETHOSTNAME()
+-------------
+returns name of the computer that your program is running on
+name can then be used by getaddrinfo() to determine IP address of local machine
+
+-------------
+CLIENT/SERVER
+-------------
+Client sends REQUEST to Server
+Server sends RESPONSE to Client 
+
+everytime a user uses an application like telnet, ftp or Firefox(considered clients actually)
+they connect with a server (telnetd, ftpd, Apache) to send information to you
+
+Usually there will be one server on a machine, and server handles multiple clients using fork
+But for the purposes of this project we won't be doing that
+
+
+--------
+BLOCKING
+--------
+basically it means sleep
+recv will wait if there's no data until something arrives
+this can cause delays in traffic
+to make a socket non-blocking, use fcntl();
+
+then we can "poll" socket for information
+setting it so that we continuously poll a socket is a bad idea however
+
+------
+POLL()
+------
+We want to monitor a bunch of sockets at once and handle the ones that already have data
+This way we don't have to coninuously poll all of the sockets to see which are ready to read
+
+poll() allows us to ask operating system to do the work for us and alert us when data is ready to
+be read on socket
+In the meantime, process can go to sleep
+
+Keep an array of struct pollfds with information about 
+	1. which socket descriptor we want to monitor
+	2. which kinds of events we want to monitor for
+
+OS will block on poll() call until an event occurs or until a user-spcified timeout occurs
+a listen() socket will return "ready to read" when new incoming connection is ready to be accept()
+
+#include <poll.h>
+
+int poll(struct pollfd fds[], nfds_t nfds, int timeout);
+1. fds - array of struct pollfd
+2. nfds - count of elements in array
+3. timeout - specify our timeout in milliseconds(1000 milliseconds in a second)
+
+returns number of elements in ararya that have had an event occur
+
+struct pollfd {
+    int fd;         // the socket descriptor
+    short events;   // bitmap of events we're interested in
+    short revents;  // when poll() returns, bitmap of events that occurred
+};
+
+we will manually set each struct
+fd - the fd we want to monitor
+events - can be a bitwise or 
+1. POLLIN - alert when data is ready to be recv() on socket
+2. POLLOUT - alert when we can send() data to socket without blocking
+
+revents will be filled out for us by poll()
+we can scan the array until we reach the number that is returned by poll to signify the events that occurred
+
+to delete any fds we don't need anymore, we can set the fd field to a neg number
+poll will ignore those fds
+
+
+
+
+

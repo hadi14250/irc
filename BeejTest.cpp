@@ -6,7 +6,7 @@
 
 int main()
 {
-	//1. set up addrinfo struct for usage later
+	//1. set up addrinfo struct for usage later. We are setting it up so that it can take either ipv4 or ipv6
 	int status;
 	struct addrinfo hints;
 	struct addrinfo *servinfo;

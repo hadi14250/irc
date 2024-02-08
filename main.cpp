@@ -5,11 +5,13 @@ int main(int argc, char **argv){
 	{
 		std::cout << "Usage: ./ircserv <port> <password>\n";
 		Server::printPasswordPolicy();
+		return (1);
 	}
 	
 	try
 	{
 		Server server(argv[1], argv[2]);
+		server.createServer();
 	}
 	catch(Server::InvalidPasswordException())
 	{

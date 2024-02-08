@@ -1,18 +1,23 @@
 #pragma once
 
-# include <vector>
+# include <deque>
 # include <poll.h>
 # include <string>
 # include <iostream>
 # include <sstream>
+# include <sys/socket.h>
+# include <sys/types.h>
+# include <netdb.h>
 
 //should we make this a static class?
 class Server{
 private:
-	std::string	_port;
-	std::string	_password;
-	int			_listenSocket;
-	std::vector<struct pollfd>	_fds;
+	std::string					_port;
+	std::string					_password;
+	struct pollfd*				_pfds;
+	std::deque<struct pollfd>	_pfdsDeq;
+	int							_pfdsCount;
+	int							_listenSocketfd;
 
 	Server();
 	Server(Server const &);
@@ -20,12 +25,19 @@ private:
 
 	void	checkPassword() const;
 	void	checkPort() const;
-	void	createServer();
 public:
+
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 
 	static void	printPasswordPolicy();
+	void	createServer();
+
+	/********************** UTILITIES **********************/
+	
+
+
+	/********************** EXCEPTIONS **********************/
 
 	class InvalidPasswordException : public std::exception{
 		const char *what() const throw(){return "Invalid password";}
@@ -36,6 +48,8 @@ public:
 	class Error : public std::exception{
 		const char *what() const throw(){return "generic error msg";}
 	};
+
+
 };
 
 /*

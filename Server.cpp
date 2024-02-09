@@ -3,7 +3,7 @@
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
 		_password(pswd),
-		_pfds(new struct pollfd[5]()), //we might not need this, and fdsize should be variable
+		_pfds(NULL),
 		_pfdsCount(0),
 		_listenSocketfd(-1)
 {
@@ -13,9 +13,11 @@ Server::Server(std::string const & port, std::string const & pswd)
 
 Server::~Server()
 {
-	delete [] _pfds;
+	if (_pfds)
+		delete [] _pfds;
 }
 
+/* can change pswd policy later */
 void	Server::printPasswordPolicy()
 {
 	std::cout	<< "Password must be 8 - 12 characters in length and may only "
@@ -38,7 +40,11 @@ void	Server::checkPassword() const
 	}
 }
 
-//this method does not accept a port that is entered as a decimal (ex 3000.0)
+/* 
+1. check port length (so we're not parsing huge numbers or strings)
+2. convert string to int with istringstream and check. 65535 is max port number
+NOTE: this method does not accept a port that is entered as a decimal (ex 3000.0)
+*/
 void	Server::checkPort() const
 {
 	int	port;
@@ -52,44 +58,137 @@ void	Server::checkPort() const
 		throw InvalidPortException();
 }
 
-void	Server::createServer()
+/* 
+1. make a single struct addrinfo (hints) with info about host for server like: ip type, socket type, flags
+2. generate linked list of struct addrinfo (serv) using getaddrinfo
+3. socket() - create a socket fd with info from serv
+4. bind() - bind our socket fd to port
+5. listen() - make our socket fd a listening socket with a queue of 5 - check this number later
+6. initialize _pfdsMap, _pfdsCount, and _pfds array to hold our listen socket fd (addNewPfd and copyNewPfdMapToArray)
+*/
+void	Server::makelistenSockfd()
 {
-	//create a listening socket
-	int				listenSockfd;
 	struct addrinfo	hints;
-	struct addrinfo	*serv; //note that serv is a linked list that is created by getaddrinfo
+	struct addrinfo	*serv;
 
-	memset(&hints, 0, sizeof(hints));
-	// hints.ai_family = AF_UNSPEC; //can be ipv4 or 6
+	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM; //using stream sockets
 	hints.ai_flags = AI_PASSIVE; //assign address of local host to socket structures
 
-	//fill out serv struct with relevant info; we have NULL as first parameter bc we used AI_PASSIVE flag. otherwise use specific ip address
-	if (getaddrinfo(NULL, _port.c_str(), &hints, &serv) != 0) 
+	//we have NULL as first parameter bc we used AI_PASSIVE flag. otherwise use specific ip address
+	//NOTE: we may want to throw custom error msgs so keeping statements separate for now
+	if (getaddrinfo(NULL, _port.c_str(), &hints, &serv) != 0 ||) 
 		throw Error();
-	//create socket
-	if ((listenSockfd = socket(serv->ai_family, serv->ai_socktype, serv->ai_protocol)) == -1)
+	if ((_listenSockfd = socket(serv->ai_family, serv->ai_socktype, serv->ai_protocol)) == -1)
 		throw Error();
-	//bind socket to port
-	if (bind(listenSockfd, serv->ai_addr, serv->ai_addrlen) == -1)
+	if (bind(_listenSockfd, serv->ai_addr, serv->ai_addrlen) == -1)
 		throw Error();
-	//make socket a listening socket and can take in queue of 5
 	if (listen(listenSockfd, 5) == -1)
 		throw Error();
+	
+	addNewPfd(listenSockfd);
+	copyPfdMapToArray();
+}
 
-	//add listener to pfds and set that listener to POLLIN
-	// listener reports it is ready to read incoming connections (recv())
-	// _pfds[0].fd = listenSockfd;
-	// _pfds[0].events = POLLIN;
-	// _pfdsCount++; //update the count
-	struct pollfd	newFdtoPoll;
-	newFdtoPoll.fd = listenSockfd;
-	newFdtoPoll.events = POLLIN;
-	_pfdsDeq.push_front(newFdtoPoll);
+/*
+1. create new struct pollfd for input parameter int pfd and add to Map
+2. create new _pfds array from map
+*/
 
+void	Server::addNewPfd(int pfd)
+{
+	struct pollfd newPfd = {};
+	newPfd.fd = listenSockfd;
+	newPfd.events = POLLIN;
+	_pfdsMap[listenSockfd] = newPfd;
+}
 
+/* 
+1. update _pfdsCount to _pfdsMap.length()
+2. delete _pfds array if needed and create new array based on Map
+*/
+void	Server::copyPfdMapToArray()
+{
+	_pfdsCount = _pfdsMap.length();	
 
+	if (_pfds)
+		delete [] _pfds;
+	_pfds = new struct pollfd[_pfdsCount]();
+	int i = 0;
+	for (std::map<int, struct pollfd>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
+		_pfds[i++] = it->second;
+}
+
+/* 
+1. Print error msg
+2. close fd
+3. erase fd from map
+*/
+void	Server::deletePfd(int pfd, int err)
+{
+	if (err == 0)
+		std::cout << "connection for client closed!\n";
+	else if (err < 0)
+		std::cerr << "recv error\n";
+	close(pfd);
+	_pfdsMap.erase(pfd);
+}
+
+/* NOTES:
+we need to insert fcntl somewhere??
+*/
+
+void	Server::createServer()
+{
+	//create a listening socket
+	makelistenSockfd();
+
+	//we may have to move this into while loop but i dont think so
+	socklen_t addrsize = sizeof(struct sockaddr_in);
+
+	while (1)
+	{
+		//-1 means that poll will block indefinitely until it gets something from any file descriptors in pfds
+		int change = 0;
+		int pollCount = poll(pfds, _pfdsCount, -1);
+		if (pollCount == -1)
+			throw Error();
+		for (int i = 0; i < _pfdsCount; i++)
+		{
+			if (i == pollCount) //if we've handled all fds that have an event, we don't have to iterate through the rest
+				break ;
+			//if it's the listen socket and revents is set to POLLIN
+			if (pfds[i] == _listenSocketfd && (pfds[i].revents & POLLIN))
+			{
+				//check for the password in this block too?
+				struct sockaddr_in clientInfo;
+				int newPfd = accept(_listenSocketfd, (struct sockaddr *)&clientInfo, &addrlen);
+				if (newPfd == -1)
+					throw Error(); //but maybe we won't want to exit and jsut print an error here instead
+					continue; //???
+				addNewPfd(newPFd);
+				change = 1;
+			}
+			else if (pfds[i].revents & POLLIN) //if it's a client, read what client has sent into a buffer
+			{
+				//510 is max len we can send. see notes
+				char buf[510] = {}; //can we do this?
+				int nbytes = recv(pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
+				if (nbytes <= 0)
+				{
+					deletePfd(pfds[i].fd);
+					change = 1;
+				}
+				else
+				{
+					//send the message according to client parcel
+				}
+			}
+			if (change == 1)
+				copyPfdMapToArray();
+		}
+	}
 	freeaddrinfo(serv);
 }
 
@@ -116,7 +215,7 @@ IN WHILE LOOP
 			-fd reports it is ready to send data to socket
 		-update count
 		-add to our pfds
-		NOTE: to update our pfds, I think we should use a vector so we can always check its size
+		NOTE: to update our pfds, I think we should use a container so we can always check its size
 			if we ever need to expand our array, we can just delete the array and then create a new one from the vector so we don't have to keep resizing it
 	b. if it's the client
 		int nbytes = recv()
@@ -131,10 +230,19 @@ IN WHILE LOOP
 	ctrl+c will close
 	ctrl+d - ??
 	ctrl+z - ??
+
+
+IRC messages are always lines of characters terminated with a CR-LF
+(Carriage Return - Line Feed) pair, and these messages SHALL NOT
+exceed 512 characters in length, counting all characters including
+the trailing CR-LF. Thus, there are 510 characters maximum allowed
+for the command and its parameters. - from rfc 2813
 */
 
 /* 
 DRAFTS:
+
+	// hints.ai_family = AF_UNSPEC; //can be ipv4 or 6
 
 	//for science, lets check how many items are in this linked list serv
 	//there will be two if we use AF_UNSPEC - probably an ipv4 and ipv6

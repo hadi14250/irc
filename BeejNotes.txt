@@ -287,6 +287,14 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 
 returns -1 on error
 
+Why do we pass a socklen_t *addrlen and not just a regular addrlen
+That's because It's an input/output parameter and you have no other choice in C-interfaced functions than to pass a pointer on the variable so it can be changed by the callee if needed.
+From the man pages:
+The addrlen argument is a value-result argument: the caller must initialize it to contain the size (in bytes) of the structure pointed to by addr; on return it will contain the actual size of the peer address."
+As you see, even if you specify a size, the system returns the actual size (which may be different from the one you specified)
+and also for this case:
+When addr is NULL, nothing is filled in; in this case, addrlen is not used, and should also be NULL.
+
 -----------------
 SEND() and RECV()
 -----------------

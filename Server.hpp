@@ -15,9 +15,9 @@ private:
 	std::string					_port;
 	std::string					_password;
 	struct pollfd*				_pfds;
-	std::deque<struct pollfd>	_pfdsDeq;
+	std::map<int, struct pollfd>	_pfdsMap;
 	int							_pfdsCount;
-	int							_listenSocketfd;
+	int							_listenSockfd;
 
 	Server();
 	Server(Server const &);

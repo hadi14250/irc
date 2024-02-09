@@ -1,6 +1,6 @@
 #pragma once
 
-# include <deque>
+# include <map>
 # include <poll.h>
 # include <string>
 # include <iostream>
@@ -8,16 +8,20 @@
 # include <sys/socket.h>
 # include <sys/types.h>
 # include <netdb.h>
+# include <unistd.h>
+# include <fcntl.h>
+# include "Client.hpp"
 
 //should we make this a static class?
 class Server{
 private:
-	std::string					_port;
-	std::string					_password;
-	struct pollfd*				_pfds;
+	std::string						_port;
+	std::string						_password;
+	int								_listenSockfd;
+	int								_pfdsCount;
+	struct addrinfo*				_serv;
+	struct pollfd*					_pfds;
 	std::map<int, struct pollfd>	_pfdsMap;
-	int							_pfdsCount;
-	int							_listenSockfd;
 
 	Server();
 	Server(Server const &);
@@ -25,6 +29,11 @@ private:
 
 	void	checkPassword() const;
 	void	checkPort() const;
+	void	makeListenSockfd();
+	void	addNewPfd(int pfd);
+	void	copyPfdMapToArray();
+	void	deletePfd(int pfd, int err);
+
 public:
 
 	Server(std::string const & port, std::string const & pswd);
@@ -33,10 +42,7 @@ public:
 	static void	printPasswordPolicy();
 	void	createServer();
 
-	/********************** UTILITIES **********************/
 	
-
-
 	/********************** EXCEPTIONS **********************/
 
 	class InvalidPasswordException : public std::exception{

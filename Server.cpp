@@ -3,9 +3,10 @@
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
 		_password(pswd),
-		_pfds(NULL),
+		_listenSockfd(-1),
 		_pfdsCount(0),
-		_listenSocketfd(-1)
+		_serv(NULL),
+		_pfds(NULL)
 {
 	checkPassword();
 	checkPort();
@@ -60,16 +61,16 @@ void	Server::checkPort() const
 
 /* 
 1. make a single struct addrinfo (hints) with info about host for server like: ip type, socket type, flags
-2. generate linked list of struct addrinfo (serv) using getaddrinfo
-3. socket() - create a socket fd with info from serv
+2. generate linked list of struct addrinfo (_serv) using getaddrinfo
+3. socket() - create a socket fd with info from _serv
 4. bind() - bind our socket fd to port
 5. listen() - make our socket fd a listening socket with a queue of 5 - check this number later
-6. initialize _pfdsMap, _pfdsCount, and _pfds array to hold our listen socket fd (addNewPfd and copyNewPfdMapToArray)
+6. make listen socket nonblocking
+7. initialize _pfdsMap, _pfdsCount, and _pfds array to hold our listen socket fd (addNewPfd and copyNewPfdMapToArray)
 */
-void	Server::makelistenSockfd()
+void	Server::makeListenSockfd()
 {
 	struct addrinfo	hints;
-	struct addrinfo	*serv;
 
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -78,30 +79,31 @@ void	Server::makelistenSockfd()
 
 	//we have NULL as first parameter bc we used AI_PASSIVE flag. otherwise use specific ip address
 	//NOTE: we may want to throw custom error msgs so keeping statements separate for now
-	if (getaddrinfo(NULL, _port.c_str(), &hints, &serv) != 0 ||) 
+	if (getaddrinfo(NULL, _port.c_str(), &hints, &_serv) != 0 ||) 
 		throw Error();
-	if ((_listenSockfd = socket(serv->ai_family, serv->ai_socktype, serv->ai_protocol)) == -1)
+	if ((_listenSockfd = socket(_serv->ai_family, _serv->ai_socktype, _serv->ai_protocol)) == -1)
 		throw Error();
-	if (bind(_listenSockfd, serv->ai_addr, serv->ai_addrlen) == -1)
+	if (bind(_listenSockfd, _serv->ai_addr, _serv->ai_addrlen) == -1)
 		throw Error();
-	if (listen(listenSockfd, 5) == -1)
+	if (listen(_listenSockfd, 5) == -1)
 		throw Error();
-	
-	addNewPfd(listenSockfd);
+	addNewPfd(_listenSockfd);
 	copyPfdMapToArray();
 }
 
 /*
-1. create new struct pollfd for input parameter int pfd and add to Map
-2. create new _pfds array from map
+1. set fd to nonblocking 
+2. create new struct pollfd for input parameter int pfd and add to Map
+3. create new _pfds array from map
 */
 
 void	Server::addNewPfd(int pfd)
 {
+	fcntl(pfd, F_SETFL, O_NONBLOCK);
 	struct pollfd newPfd = {};
-	newPfd.fd = listenSockfd;
+	newPfd.fd = _listenSockfd;
 	newPfd.events = POLLIN;
-	_pfdsMap[listenSockfd] = newPfd;
+	_pfdsMap[_listenSockfd] = newPfd;
 }
 
 /* 
@@ -110,7 +112,7 @@ void	Server::addNewPfd(int pfd)
 */
 void	Server::copyPfdMapToArray()
 {
-	_pfdsCount = _pfdsMap.length();	
+	_pfdsCount = _pfdsMap.size();	
 
 	if (_pfds)
 		delete [] _pfds;
@@ -135,23 +137,16 @@ void	Server::deletePfd(int pfd, int err)
 	_pfdsMap.erase(pfd);
 }
 
-/* NOTES:
-we need to insert fcntl somewhere??
-*/
-
 void	Server::createServer()
 {
 	//create a listening socket
-	makelistenSockfd();
+	makeListenSockfd();
 
-	//we may have to move this into while loop but i dont think so
-	socklen_t addrsize = sizeof(struct sockaddr_in);
-
-	while (1)
+	while (true)
 	{
-		//-1 means that poll will block indefinitely until it gets something from any file descriptors in pfds
+		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		int change = 0;
-		int pollCount = poll(pfds, _pfdsCount, -1);
+		int pollCount = poll(_pfds, _pfdsCount, -1);
 		if (pollCount == -1)
 			throw Error();
 		for (int i = 0; i < _pfdsCount; i++)
@@ -159,29 +154,34 @@ void	Server::createServer()
 			if (i == pollCount) //if we've handled all fds that have an event, we don't have to iterate through the rest
 				break ;
 			//if it's the listen socket and revents is set to POLLIN
-			if (pfds[i] == _listenSocketfd && (pfds[i].revents & POLLIN))
+			if (_pfds[i].fd == _listenSockfd && (_pfds[i].revents & POLLIN))
 			{
-				//check for the password in this block too?
-				struct sockaddr_in clientInfo;
-				int newPfd = accept(_listenSocketfd, (struct sockaddr *)&clientInfo, &addrlen);
-				if (newPfd == -1)
-					throw Error(); //but maybe we won't want to exit and jsut print an error here instead
-					continue; //???
-				addNewPfd(newPFd);
-				change = 1;
+				try
+				{
+					Client newClient(_listenSockfd);
+					//map<int pfd, Client>
+					//for listen int pfd - c
+					addNewPfd(newClient.getSockFd());
+					change = 1;
+				}
+				catch(const std::exception& e)
+				{
+					std::cerr << e.what() << '\n';
+				}
 			}
-			else if (pfds[i].revents & POLLIN) //if it's a client, read what client has sent into a buffer
+			else if (_pfds[i].revents & POLLIN) //if it's a client, read what client has sent into a buffer
 			{
 				//510 is max len we can send. see notes
 				char buf[510] = {}; //can we do this?
-				int nbytes = recv(pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
+				int nbytes = recv(_pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
 				if (nbytes <= 0)
 				{
-					deletePfd(pfds[i].fd);
+					deletePfd(_pfds[i].fd, nbytes);
 					change = 1;
 				}
 				else
 				{
+					//parse 
 					//send the message according to client parcel
 				}
 			}
@@ -189,7 +189,7 @@ void	Server::createServer()
 				copyPfdMapToArray();
 		}
 	}
-	freeaddrinfo(serv);
+	freeaddrinfo(_serv);
 }
 
 /* 
@@ -200,9 +200,9 @@ since we're working with ipv4, better to use sockaddr_in -> then we don't have t
 in c++11 and later, we are actually able to get a pointer from the container using data()
 
 IN WHILE LOOP
-1. we run poll on our collection of pfds and check poll_count
+1. we run poll on our collection of _pfds and check poll_count
 	if poll_count == - 1, error
-2. now we loop through our pfds (this is an inner loop)
+2. now we loop through our _pfds (this is an inner loop)
 	a. We check if the it's the listener fd and if its revents is set at POLLIN
 		if yes, it means listener is ready to read!
 		create new variables ready to take a client
@@ -211,18 +211,18 @@ IN WHILE LOOP
 		-int newClientSockfd = accept();
 		-if newClientSockfd == -1
 			throw error
-		-if accept was successful, add new fd to pfds and set to POLLIN
+		-if accept was successful, add new fd to _pfds and set to POLLIN
 			-fd reports it is ready to send data to socket
 		-update count
-		-add to our pfds
-		NOTE: to update our pfds, I think we should use a container so we can always check its size
+		-add to our _pfds
+		NOTE: to update our _pfds, I think we should use a container so we can always check its size
 			if we ever need to expand our array, we can just delete the array and then create a new one from the vector so we don't have to keep resizing it
 	b. if it's the client
 		int nbytes = recv()
 		if nbytes <= 0
 			error or connection was closed
 			close the fd
-			make sure to delete this client from pfds!
+			make sure to delete this client from _pfds!
 		otherwise we've got info! hurray!
 			send the data accordingly -> idk how we're going to do this yet 
 				but i'm starting to understand why we might need a whole client class
@@ -231,12 +231,39 @@ IN WHILE LOOP
 	ctrl+d - ??
 	ctrl+z - ??
 
-
 IRC messages are always lines of characters terminated with a CR-LF
 (Carriage Return - Line Feed) pair, and these messages SHALL NOT
 exceed 512 characters in length, counting all characters including
 the trailing CR-LF. Thus, there are 510 characters maximum allowed
 for the command and its parameters. - from rfc 2813
+
+TODO:
+CHECK FOR EAGAIN OR EWOULDBLOCK
+JOIN #channel-name password
+
+3.1 Connection Registration (see rfc 2812)
+
+
+   The commands described here are used to register a connection with an
+   IRC server as a user as well as to correctly disconnect.
+
+   A "PASS" command is not required for a client connection to be
+   registered, but it MUST precede the latter of the NICK/USER
+   combination (for a user connection) or the SERVICE command (for a
+   service connection). The RECOMMENDED order for a client to register
+   is as follows:
+
+                           1. Pass message
+           2. Nick message                 2. Service message
+           3. User message
+
+   Upon success, the client will receive an RPL_WELCOME (for users) or
+   RPL_YOURESERVICE (for services) message indicating that the
+   connection is now registered and known the to the entire IRC network.
+   The reply message MUST contain the full client identifier upon which
+   it was registered.
+
+
 */
 
 /* 
@@ -244,12 +271,12 @@ DRAFTS:
 
 	// hints.ai_family = AF_UNSPEC; //can be ipv4 or 6
 
-	//for science, lets check how many items are in this linked list serv
+	//for science, lets check how many items are in this linked list _serv
 	//there will be two if we use AF_UNSPEC - probably an ipv4 and ipv6
 	// struct addrinfo *s;
-	// s = serv;
+	// s = _serv;
 	// int i = 0;
 	// for (; s != NULL; s = s->ai_next)
 	// 	i++;
-	// std::cout << "there are " << i << " structs in serv\n";
+	// std::cout << "there are " << i << " structs in _serv\n";
 */

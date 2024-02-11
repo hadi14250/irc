@@ -1,0 +1,187 @@
+STEPS
+
+Create socket
+Bind socket to IP / port
+Mark socket for listening in
+Accept a call
+Close listening socket
+While receiving display message, echo message
+Close socket
+
+FUNCTIONS
+
+#include <sys/socket.h>
+int socket(int domain, int type, int protocol);
+creates an endpoint for communication and returns file descriptor that refers to that endpoint
+successful - returns lowest fd not in use
+error - returns -1
+domain - specifies communication domain - selects protocol family (see man)
+type - specifies communication semantics. Or more generally, socket type
+	-most common is SOCK_STREAM and SOCK_DGRAM
+	-type can also be used to modify socket behavior with Values/tags (see man)
+protocol - usually only one protocol exists, so default is 0
+	-protocol number to use is specific to communication domain (??)
+
+#include <arpa/inet.h>
+int inet_pton(int af, const char *restrict src, void *restrict dst);
+converts characer string src into network address struct in af family, then copies network address structure to dst
+returns 1 if successful
+returns 0 if src is not valid network address
+returns -1 if af does not contain valid address family
+-supports ipv6
+-af is either AF_INET or AF_INET6
+-if AF_INET, src points to an IPV4 network address in dotted decimal format "ddd.ddd.ddd.ddd" (ddd is 0 - 255)
+	-address converted to a struct in_addr and copied to dst
+	-dst needs to be sizeof(struct in_addr) - 4 bytes long
+
+#include <sys/socket.h>
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+bind function assigns address specified by addr to socket referred to by file descripter sockfd
+addrlen - size in bytes of address struct pointed to by addr
+"assigning a name to a socket"
+-returns 0 on success
+-returns -1 on error
+
+#include <sys/socket.h>
+int listen(int sockfd, int backlog);
+marks socket referred to by sockfd as a passive socket (aka socket that will be used to accept incoming connection requests using accept() funcion);
+sockfd must refer to SOCK_STREAM or SOCK_SEQPACKET
+backlog is max length to which queue of pending connections for sockfd may grow
+returns 0 on success
+returns -1 on error
+
+#include <sys/socket.h>
+int accept(int sockfd, struct sockaddr *_Nullable restrict addr, socklen_t *_Nullable restrict addrlen);
+extracts first connection request on queue of pending connections for listening socket sockfd
+creates new connected socket and returns fd to new socket
+new socket NOT in listening state
+does not affect original sockfd
+used with connection based socket so SOCK_STREAM AND SOCK_SEQPACKET
+addr is a pointer to a sockaddr structure 
+
+#include <sys/socket.h>
+#include <netdb.h>
+int getnameinfo(const struct sockaddr *restrict addr, socklen_t addrlen,
+                       char host[_Nullable restrict .hostlen],
+                       socklen_t hostlen,
+                       char serv[_Nullable restrict .servlen],
+                       socklen_t servlen,
+                       int flags);
+Inverse of getaddrinfo
+converts socket address to correesponding host and service in protocol independent manner
+function extracts info from first parameter (sockaddr struct) such as IP address and port number
+it then converts it to human readable host name and service name
+returns 0 on success
+returns a bunch of nonzero error codes if error
+
+#include <arpa/inet.h>
+const char *inet_ntop(int af, const void *restrict src,
+					  char dst[restrict .size], socklen_t size);
+converts network address src in af address family into a character string.
+resulting string is sopied to buffer pointed to by dst
+dst must be non null ptr 
+
+#include <arpa/inet.h>
+uint16_t ntohs(uint16_t netshort);
+converst unsigned short integer netshort from network byte order to host byte order
+
+#include <sys/socket.h>
+ssize_t recv(int sockfd, void buf[.len], size_t len, int flags);
+used to receive messages from a socket
+recv is normally used only with connected sockets
+recv is generally equivalent with read() but has flags
+returns -1 if error
+on success, returns number of bytes read
+
+#include <sys/socket.h>
+ssize_t send(int sockfd, const void buf[.len], size_t len, int flags);
+can only be used wih socket is connected (intended recipient is known)
+similar to write(but with flags)
+sockfd is fd of sending socket
+buf contains info you want to send
+send buf + 1 which includes null to terminate string
+
+#include <fcntl.h>
+int fcntl(int fd, int cmd, ... /* arg */ );
+something to do with nonblocking
+performs operation specified by cmd on fd
+args are dependent on what cmd is
+F_SETFL (int) - set file status flags to value specified by arg 
+	* note file access mode (ex O_RDONLY) and file creation flags(ex O_CREAT) are ignored
+	use O_NONBLOCK so that fd will operate in nonblocking mode 
+	this means that certain operations on the file descriptor returns immediately even if they cannot be completed at the moemtn
+	ex: you want to read or write data, without waiting for operation to completed
+		with a nonblocking fd, you can perform other tasks or check for readiness then return to operation later
+
+	when operation is performed on nonblocking fd and it cannot be completed immediately, the func returns immediately instead of waiting
+	func will return a specific error code to indicate that operation would block in a blockingcontext
+		ex EAGAIN or EWOULDBLOCK
+		these errors indicate that te operation couldn't be performed immediately but it's not a real error condition
+		up to the program to decide what to do with these operations that couldn't be performed immediately
+
+ #include <poll.h>
+int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+waits for one of a set of fds to become ready to perform I/O
+
+other similar functions that we can use: select(), kqueue, epoll
+-set of file descriptors to be monitored is specified in fds argument in below form
+	struct pollfd {
+               int   fd;         /* file descriptor */
+               short events;     /* requested events */
+               short revents;    /* returned events */
+           };
+-nfds is number of fds
+-if fd in the struct contains a neg number, events and revents is 0
+-events is a bit mask and input parameter
+	ex: POLLIN - for data available to read
+		POLLOUT - for space available to write
+-revents is an output parameter filled by the kernel wtih events that actually occurred
+	-this is filled by the function (kernel)
+	-it will show the events that acutally occured
+-timeout - value in milliseconds
+	if timeout = -1, poll blocks indefinitely until an event occurs
+	if timeout = 0, poll returns immediately 
+	if timeout > 0, specifies max time in millisecond to wait for an event
+
+#include <sys/epoll.h>
+epoll is supposedly faster - it scales well with the nuber of fds being monitored
+	-more suitable for high performance applications with many connections
+	-it's an api?
+	-it also maintains a list of fd and efficiently notify the program when one becomes I/O ready
+	to use:
+		1. create epoll instance using epoll_create or epoll_creat1. returns a fd representing epoll instance
+			int epoll_fd = epoll_create1(0); //returns fd for epoll isntance
+		2. use epoll_ctl to add fds to monitor. make the struct and add it in
+			struct epoll_event event;
+			event.events = EPOLLIN;  // Interested in readability
+			event.data.fd = sockfd;  // The file descriptor to monitor
+			int result = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sockfd, &event);
+		3. Wait for events
+			-use epoll_wait to wait for events
+			-this call will block until 1+ fds become ready for specified event or until timeout occurs
+			struct epoll_event events[MAX_EVENTS];  // Array to store events
+			int num_events = epoll_wait(epoll_fd, events, MAX_EVENTS, timeout);
+		4. once epoll_wait returns, program will process all events that occured on monitored fds
+			for (int i = 0; i < num_events; ++i) {
+				if (events[i].events & EPOLLIN) {
+					// The file descriptor is ready for reading, perform read operation
+				}
+				if (events[i].events & EPOLLOUT) {
+					// The file descriptor is ready for writing, perform write operation
+				}
+				// ... handle other events
+			}
+			don't forget that EPOLLIN and EPOLLOUT are bitwise masks
+		5. you can also modify or remove fds using epoll_ctl with EPOLL_CTL_MOD or EPOLL_CTL_DEL
+	kqueue is available on macos and freebsd
+	epoll is available on linux
+
+IRC clients - software apps that allow users to connect to and participate in IRC networks
+clients provide users with a graphical or command line interface to interact with irc servers and channels
+Check out these below
+	-HexChat (windows and linux only)
+	-Irssi
+	-Xchat (windows and linux)
+	-WeeChat
+	-Quassel IRC
+	-KVIrc

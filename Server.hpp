@@ -5,23 +5,32 @@
 # include <string>
 # include <iostream>
 # include <sstream>
+# include <fstream>
 # include <sys/socket.h>
 # include <sys/types.h>
 # include <netdb.h>
 # include <unistd.h>
 # include <fcntl.h>
+# include <cstring>
 # include "Client.hpp"
 
-//should we make this a static class?
+class Client;
+
+enum Tags
+{
+	LISTENFD,
+	CLIENTFD
+};
+
 class Server{
 private:
-	std::string						_port;
-	std::string						_password;
-	int								_listenSockfd;
-	int								_pfdsCount;
-	struct addrinfo*				_serv;
-	struct pollfd*					_pfds;
-	std::map<int, struct pollfd>	_pfdsMap;
+	std::string				_port;
+	std::string				_password;
+	int						_listenSockfd;
+	int						_pfdsCount;
+	struct addrinfo*		_serv;
+	struct pollfd*			_pfds;
+	std::map<int, Client>	_pfdsMap;
 
 	Server();
 	Server(Server const &);
@@ -30,9 +39,11 @@ private:
 	void	checkPassword() const;
 	void	checkPort() const;
 	void	makeListenSockfd();
-	void	addNewPfd(int pfd);
+	void	addNewPfd(int tag);
 	void	copyPfdMapToArray();
 	void	deletePfd(int pfd, int err);
+
+	void	printPfdsMap();
 
 public:
 
@@ -54,8 +65,6 @@ public:
 	class Error : public std::exception{
 		const char *what() const throw(){return "generic error msg";}
 	};
-
-
 };
 
 /*

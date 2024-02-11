@@ -1,6 +1,6 @@
 NAME = irc
 
-SRCS = main.cpp Server.cpp
+SRCS = main.cpp Server.cpp Client.cpp
 
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 

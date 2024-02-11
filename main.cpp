@@ -3,7 +3,7 @@
 int main(int argc, char **argv){
 	if (argc != 3)
 	{
-		std::cout << "Usage: ./ircserv <port> <password>\n";
+		std::cout << "Usage: ./irc <port> <password>\n";
 		Server::printPasswordPolicy();
 		return (1);
 	}

@@ -8,8 +8,8 @@ Server::Server(std::string const & port, std::string const & pswd)
 		_serv(NULL),
 		_pfds(NULL)
 {
-	checkPassword();
 	checkPort();
+	checkPassword();
 }
 
 Server::~Server()
@@ -79,31 +79,47 @@ void	Server::makeListenSockfd()
 
 	//we have NULL as first parameter bc we used AI_PASSIVE flag. otherwise use specific ip address
 	//NOTE: we may want to throw custom error msgs so keeping statements separate for now
-	if (getaddrinfo(NULL, _port.c_str(), &hints, &_serv) != 0 ||) 
+	if (getaddrinfo(NULL, _port.c_str(), &hints, &_serv) != 0) 
 		throw Error();
 	if ((_listenSockfd = socket(_serv->ai_family, _serv->ai_socktype, _serv->ai_protocol)) == -1)
 		throw Error();
+	// fcntl(_listenSockfd, F_SETFL, O_NONBLOCK);
 	if (bind(_listenSockfd, _serv->ai_addr, _serv->ai_addrlen) == -1)
 		throw Error();
 	if (listen(_listenSockfd, 5) == -1)
 		throw Error();
-	addNewPfd(_listenSockfd);
+	addNewPfd(LISTENFD);
 	copyPfdMapToArray();
 }
 
 /*
-1. set fd to nonblocking 
-2. create new struct pollfd for input parameter int pfd and add to Map
-3. create new _pfds array from map
+1. create new client object - different object is created if it's a listening fd
+2. set fd to nonblocking and check for error
+3. create new struct pollfd with inputted fd and set events to POLLIN
+4. add fd and Client pair to map
 */
-
-void	Server::addNewPfd(int pfd)
+void	Server::addNewPfd(int tag)
 {
-	fcntl(pfd, F_SETFL, O_NONBLOCK);
+	Client newClient;
+	if (tag == LISTENFD)
+	{
+		newClient = Client();
+		newClient._sockfd = _listenSockfd; //set our fd to listensockfd;
+	}
+	else if (tag == CLIENTFD)
+	{
+		std::cout << "making new client object\n";
+		newClient = Client(_listenSockfd); //this constructor fills out _sockfd for us
+	}
+	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
+		throw Error();
+	
 	struct pollfd newPfd = {};
-	newPfd.fd = _listenSockfd;
+	newPfd.fd = newClient._sockfd;
 	newPfd.events = POLLIN;
-	_pfdsMap[_listenSockfd] = newPfd;
+	newClient._pfd = newPfd;
+
+	_pfdsMap[newClient._sockfd] = newClient;
 }
 
 /* 
@@ -118,8 +134,8 @@ void	Server::copyPfdMapToArray()
 		delete [] _pfds;
 	_pfds = new struct pollfd[_pfdsCount]();
 	int i = 0;
-	for (std::map<int, struct pollfd>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
-		_pfds[i++] = it->second;
+	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
+		_pfds[i++] = it->second._pfd;
 }
 
 /* 
@@ -141,28 +157,31 @@ void	Server::createServer()
 {
 	//create a listening socket
 	makeListenSockfd();
-
+	int yes = 1;
+	setsockopt(_listenSockfd, SOL_SOCKET,SO_REUSEADDR, &yes, sizeof(int));
 	while (true)
 	{
-		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		int change = 0;
+		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
+		std::cout << "running poll\n";
 		int pollCount = poll(_pfds, _pfdsCount, -1);
+		std::cout << "polled\n";
 		if (pollCount == -1)
 			throw Error();
+		std::cout << "Pollcount: " << pollCount << "\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
-			if (i == pollCount) //if we've handled all fds that have an event, we don't have to iterate through the rest
-				break ;
+			// if (i == pollCount) //if we've handled all fds that have an event, we don't have to iterate through the rest
+			// 	break ;
 			//if it's the listen socket and revents is set to POLLIN
-			if (_pfds[i].fd == _listenSockfd && (_pfds[i].revents & POLLIN))
+			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
 				{
-					Client newClient(_listenSockfd);
-					//map<int pfd, Client>
-					//for listen int pfd - c
-					addNewPfd(newClient.getSockFd());
+					std::cout << "attempting to add a new client\n";
+					addNewPfd(CLIENTFD);
 					change = 1;
+					std::cout << "finished adding newpfd\n";
 				}
 				catch(const std::exception& e)
 				{
@@ -171,26 +190,85 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLIN) //if it's a client, read what client has sent into a buffer
 			{
+				std::cout << "client messaging\n";
 				//510 is max len we can send. see notes
+				//I think the parsing goes here -> parse into a message object in client?
 				char buf[510] = {}; //can we do this?
 				int nbytes = recv(_pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
+				std::cout << "buf: " << buf;
 				if (nbytes <= 0)
 				{
+					std::cout << "recv failed\n";
 					deletePfd(_pfds[i].fd, nbytes);
 					change = 1;
 				}
 				else
 				{
-					//parse 
-					//send the message according to client parcel
+					
+					// executeCmd(_pfdsMap[_pfds[i].fd]);
+					//execute the command here if it's valid
+					std::cout << "buf: " << buf << "\n";
+					std::cout << "we execute something here\n";
+					// if (send (_pfds[i].fd, buf, nbytes, 0) == -1)
+					// 	std::cout << "send unsuccessful\n";
 				}
 			}
-			if (change == 1)
-				copyPfdMapToArray();
 		}
+		if (change == 1)
+		{
+			copyPfdMapToArray();
+			printPfdsMap();
+		}
+		std::cout << "returning to main while loop\n";
 	}
 	freeaddrinfo(_serv);
 }
+
+void	Server::printPfdsMap()
+{
+	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
+	{
+		it->second.printClient();
+	}
+}
+
+/* 
+1. If user already authenticated, return
+2. if password matches, authenticate
+3. else print error message and delete the connection
+*/
+// void Server::Pass(Client& client)
+// {
+// 	if (client._authenticated == TRUE)
+// 	{
+// 		std::cout << "Account already authenticated\n"; //ERR_ALREADYREGISTRED
+// 		return ;
+// 	}
+// 	if (client._msg./*param*/ == _password)
+// 		client._authenticated = true;
+// 	else
+// 	{
+// 		std::cerr << "Invalid password entered\n";
+// 		deletePFD(client._fd, 0); //connection for client closed! can adjust msg later
+// 	}
+// }
+
+// /*
+// 1. if client is not authenticated, send error message and delete connection
+// -nick must be unique and can be changed
+// -user does not have to be unique and cannot be changed
+// -user comes with real name and mode as well
+// */
+// void Server::User(Client &client)
+// {
+// 	if (client._authenticated == FALSE)
+// 	{
+// 		std::cerr << "Account not authenticated\n"; //we need to send this message back to the client
+// 		deletePFD(client._fd, 0); //connectin for client closed!
+// 	}
+	
+	
+// }
 
 /* 
 NOTES:

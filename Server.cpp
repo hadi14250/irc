@@ -163,7 +163,6 @@ void	Server::createServer()
 	{
 		int change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
-		std::cout << "running poll\n";
 		int pollCount = poll(_pfds, _pfdsCount, -1);
 		std::cout << "polled\n";
 		if (pollCount == -1)
@@ -178,10 +177,8 @@ void	Server::createServer()
 			{
 				try
 				{
-					std::cout << "attempting to add a new client\n";
 					addNewPfd(CLIENTFD);
 					change = 1;
-					std::cout << "finished adding newpfd\n";
 				}
 				catch(const std::exception& e)
 				{
@@ -204,22 +201,48 @@ void	Server::createServer()
 				}
 				else
 				{
-					
-					// executeCmd(_pfdsMap[_pfds[i].fd]);
+					std::string buffer = buf;
+					if (buffer.find("CAP LS") != std::string::npos)
+					{
+						std::string ret = "CAP * LS :multi-prefix userhost-in-names\n";
+						if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
+							std::cout << "send unsuccessful\n";
+						std::cout << "sent " << ret.c_str() << "\n"; 
+					}
+					else if (buffer.find("CAP REQ") != std::string::npos)
+					{
+						std::string ret = "CAP * ACK\n";
+						if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
+							std::cout << "send unsuccessful\n";
+						std::cout << "sent " << ret.c_str() << "\n"; 
+					}
+					else if (buffer.find("JOIN") != std::string::npos)
+					{
+						std::string ret = ": 451   :invalid registration\n";
+						if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
+							std::cout << "send unsuccessful\n";
+						std::cout << "sent " << ret.c_str() << "\n"; 
+					}
+					// else 
+					// {
+					// 	std::string ret = ":!@127.0.0.1 NICK  user :user\n";
+					// 	if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
+					// 		std::cout << "send unsuccessful\n";
+					// 	std::cout << "sent " << ret.c_str() << "\n"; 
+					// }
+					// std::string ret = "001 user :Welcome to the Internet Relay Network user";
+					//executeCmd(_pfdsMap[_pfds[i].fd]);
 					//execute the command here if it's valid
-					std::cout << "buf: " << buf << "\n";
-					std::cout << "we execute something here\n";
-					// if (send (_pfds[i].fd, buf, nbytes, 0) == -1)
-					// 	std::cout << "send unsuccessful\n";
+					// std::cout << "we execute something here\n";
 				}
 			}
 		}
 		if (change == 1)
 		{
 			copyPfdMapToArray();
-			printPfdsMap();
+			// printPfdsMap();
 		}
-		std::cout << "returning to main while loop\n";
+		// std::cout << "returning to main while loop\n";
 	}
 	freeaddrinfo(_serv);
 }
@@ -341,6 +364,9 @@ JOIN #channel-name password
    The reply message MUST contain the full client identifier upon which
    it was registered.
 
+	NOTES:
+	check for POLLHUP
+	check for POLLOUT
 
 */
 

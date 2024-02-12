@@ -1,56 +1,58 @@
 #include <iostream>
-#include <cstring>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
+#include <string.h>
+
+#define PORT 6667 // IRC default port
 
 int main() {
-    // Create socket
-    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == -1) {
-        std::cerr << "Error creating socket\n";
-        return 1;
+    int server_fd, new_socket;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
+    char buffer[1024] = {0};
+    
+    // Creating socket file descriptor
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
     }
 
-    // Bind socket
-    struct sockaddr_in serverAddr;
-    std::memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(6667); // Port 6667 for IRC
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
-        std::cerr << "Error binding socket\n";
-        close(serverSocket);
-        return 1;
+    // Forcefully attaching socket to the port
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
     }
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
 
-    // Listen for connections
-    if (listen(serverSocket, 5) == -1) {
-        std::cerr << "Error listening on socket\n";
-        close(serverSocket);
-        return 1;
+    // Forcefully attaching socket to the port
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
     }
-
-    // Accept connections
-    struct sockaddr_in clientAddr;
-    socklen_t clientAddrLen = sizeof(clientAddr);
-    int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrLen);
-    if (clientSocket == -1) {
-        std::cerr << "Error accepting connection\n";
-        close(serverSocket);
-        return 1;
+    if (listen(server_fd, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
     }
-
-    // Send message to client
-    const char* message = "Hello, Irssi!\n";
-    if (send(clientSocket, message, std::strlen(message), 0) == -1) {
-        std::cerr << "Error sending message to client\n";
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
+        perror("accept");
+        exit(EXIT_FAILURE);
     }
-
-    // Close sockets
-    // close(clientSocket);
-    // close(serverSocket);
-
+    ssize_t valread;
+    const char* response = "Received your message!";
+    while (true) {
+        valread = read(new_socket, buffer, 1024);
+        if (valread > 0) {
+            printf("Received: %s\n", buffer);
+            // Here you can process the received message, e.g., parse IRC commands
+            // and send responses back to the client
+            send(new_socket, response, strlen(response), 0);
+        }
+    }
     return 0;
 }
 

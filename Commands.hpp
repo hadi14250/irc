@@ -11,6 +11,7 @@ public:
 	// void	OPER();
 	// void	PING();
 	// void	QUIT();
+	// void	MODE();
 
 	// void	JOIN();
 	// void	PART();

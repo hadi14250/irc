@@ -200,27 +200,33 @@ void	Server::createServer()
 				else
 				{
 					std::string buffer = buf;
+					std::string ret;
 					if (buffer.find("CAP LS") != std::string::npos)
 					{
-						std::string ret = "CAP * LS :multi-prefix userhost-in-names\n";
-						if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
-							std::cout << "send unsuccessful\n";
-						std::cout << "sent " << ret.c_str() << "\n"; 
+						ret = "CAP * LS :multi-prefix userhost-in-names\r\n";
 					}
 					else if (buffer.find("CAP REQ") != std::string::npos)
 					{
-						std::string ret = "CAP * ACK multi-prefix\n";
-						if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
-							std::cout << "send unsuccessful\n";
-						std::cout << "sent " << ret.c_str() << "\n"; 
+						ret = "CAP * ACK multi-prefix\r\n:localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
 					}
-					else if (buffer.find("JOIN") != std::string::npos)
+					else if (buffer.find("MODE") != std::string::npos)
 					{
-						std::string ret = ": 451   :need to register first\n";
-						if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
-							std::cout << "send unsuccessful\n";
-						std::cout << "sent " << ret.c_str() << "\n"; 
+						ret = ":localhost 403 h hbui-vu :No such channel\r\n";
 					}
+					else if (buffer.find("PING") != std::string::npos)
+					{
+						ret = ":localhost PONG localhost :localhost\r\n";
+					}
+					if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
+						std::cout << "send unsuccessful\n";
+					std::cout << "sent " << ret.c_str() << "\n"; 
+					// else if (buffer.find("JOIN") != std::string::npos)
+					// {
+					// 	std::string ret = ": 451   :need to register first\r\n";
+					// 	if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
+					// 		std::cout << "send unsuccessful\n";
+					// 	std::cout << "sent " << ret.c_str() << "\n"; 
+					// }
 					// else 
 					// {
 					// 	std::string ret = ":!@127.0.0.1 NICK  user :user\n";

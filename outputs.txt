@@ -33,3 +33,22 @@ pushSendBuff: :host.docker.internal 375 user :Message of the Day
 pushSendBuff: :host.docker.internal 372 user 
 
 pushSendBuff: :host.docker.internal 372 user 
+
+input is in takeInput: NICK huong
+
+pushSendBuff: :user!~user@127.0.0.1 NICK  huong :huong
+
+POLLIN: i: 1
+input is: userhost huong
+
+input is in takeInput: userhost huong
+
+pushSendBuff: :host.docker.internal 421 huong  :command not found
+
+POLLIN: i: 1
+input is: QUIT :leaving
+
+input is in takeInput: QUIT :leaving
+
+Client has quit
+Client 4 deleted

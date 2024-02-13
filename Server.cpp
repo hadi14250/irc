@@ -164,10 +164,8 @@ void	Server::createServer()
 		int change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		int pollCount = poll(_pfds, _pfdsCount, -1);
-		std::cout << "polled\n";
 		if (pollCount == -1)
 			throw Error();
-		std::cout << "Pollcount: " << pollCount << "\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
 			// if (i == pollCount) //if we've handled all fds that have an event, we don't have to iterate through the rest
@@ -211,14 +209,14 @@ void	Server::createServer()
 					}
 					else if (buffer.find("CAP REQ") != std::string::npos)
 					{
-						std::string ret = "CAP * ACK\n";
+						std::string ret = "CAP * ACK multi-prefix\n";
 						if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
 							std::cout << "send unsuccessful\n";
 						std::cout << "sent " << ret.c_str() << "\n"; 
 					}
 					else if (buffer.find("JOIN") != std::string::npos)
 					{
-						std::string ret = ": 451   :invalid registration\n";
+						std::string ret = ": 451   :need to register first\n";
 						if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
 							std::cout << "send unsuccessful\n";
 						std::cout << "sent " << ret.c_str() << "\n"; 

@@ -12,6 +12,7 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <cstring>
+# include <csignal>
 # include "Client.hpp"
 
 class Client;
@@ -31,27 +32,29 @@ private:
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
 	std::map<int, Client>	_pfdsMap;
+	static bool				_run;
 
 	Server();
 	Server(Server const &);
 	Server const &	operator=(Server const &);
 
-	void	checkPassword() const;
-	void	checkPort() const;
-	void	makeListenSockfd();
-	void	addNewPfd(int tag);
-	void	copyPfdMapToArray();
-	void	deletePfd(int pfd, int err);
+	void		checkPassword() const;
+	void		checkPort() const;
+	void		makeListenSockfd();
+	void		addNewPfd(int tag);
+	void		copyPfdMapToArray();
+	void		deletePfd(int pfd);
+	static void	signalHandler(int signum);
 
 	void	printPfdsMap();
 
 public:
-
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 
 	static void	printPasswordPolicy();
-	void	createServer();
+	void		createServer();
+	static void	setSignals();
 
 	
 	/********************** EXCEPTIONS **********************/
@@ -66,7 +69,7 @@ public:
 		const char *what() const throw(){return "getaddrinfo failed";}
 	};
 	class SocketException : public std::exception{
-		const char *what() const throw(){return "failed to create socket";}
+		const char *what() const throw(){return "socket failed";}
 	};
 	class BindException : public std::exception{
 		const char *what() const throw(){return "bind failed";}
@@ -82,6 +85,9 @@ public:
 	};
 	class PollException : public std::exception{
 		const char *what() const throw(){return "poll failed";}
+	};
+	class AcceptException : public std::exception{
+		const char *what() const throw(){return "accept failed";}
 	};
 	class Error : public std::exception{
 		const char *what() const throw(){return "generic error msg";}

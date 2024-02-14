@@ -100,7 +100,7 @@ void	Server::makeListenSockfd()
 }
 
 /*
-1. create new client object - different object is created if it's a listening fd
+1. create new client object (listen or client) and set client's fd
 2. fcntl - set fd to nonblocking and check for error
 3. create new struct pollfd with inputted fd and set events to POLLIN
 4. add fd and Client pair to map
@@ -110,15 +110,23 @@ void	Server::addNewPfd(int tag)
 	Client newClient;
 	if (tag == LISTENFD)
 	{
-		newClient = Client();
+		newClient._listenSock = true; //redundant but put here for better readability
 		newClient._sockfd = _listenSockfd; //set our fd to listensockfd;
 	}
 	else if (tag == CLIENTFD)
-		newClient = Client(_listenSockfd); //this constructor fills out _sockfd for us
+	{
+		newClient._listenSock = false;
+		//taking this out of Client construction for better readability
+		socklen_t addrlen = sizeof(struct sockaddr_in);
+		struct sockaddr_in clientInfo;
+		newClient._sockfd = accept(_listenSockfd, (struct sockaddr *)&clientInfo, &addrlen);
+		if (newClient._sockfd == -1)
+			throw AcceptException();
+	}
 	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
 		throw FcntlException();
 	
-	struct pollfd newPfd = {};
+	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
 	newPfd.events = POLLIN;
 	newClient._pfd = newPfd;
@@ -147,12 +155,9 @@ void	Server::copyPfdMapToArray()
 2. close fd
 3. erase fd from map
 */
-void	Server::deletePfd(int pfd, int err)
+void	Server::deletePfd(int pfd)
 {
-	if (err == 0)
-		std::cout << "connection for client closed!\n";
-	else if (err < 0)
-		std::cerr << "recv error\n";
+	std::cout << "Closed connection for client " << _pfdsMap[pfd]._nick << "!\n";
 	close(pfd);
 	_pfdsMap.erase(pfd);
 }
@@ -171,7 +176,7 @@ In while loop
  */
 void	Server::createServer()
 {
-	//create a listening socket
+	setSignals();
 	makeListenSockfd();
 	while (true)
 	{
@@ -185,12 +190,11 @@ void	Server::createServer()
 			{
 				try
 				{
-					addNewPfd(CLIENTFD);
+					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 					change = 1;
 				}
 				catch(const std::exception& e)
 				{
-					//disconnect fd bc we couldn't make it unblocking
 					std::cerr << e.what() << '\n';
 				}
 			}
@@ -207,13 +211,31 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLHUP)
 			{
-				//client has disconnected or closed
-				//delete their fd here
+				deletePfd(_pfds[i].fd);
 			}
 		}
 		if (change == 1)
 			copyPfdMapToArray();
 	}
+}
+
+void	Server::signalHandler(int signum)
+{
+	(void)signum;
+	_run = false;
+	std::cout << "\nending program\n";
+}
+
+/* 
+1. SIGINT = ctrl+c
+2. SIGTSTP = ctrl+z
+3. SIGQUIT = ctrl+\
+*/
+void	Server::setSignals()
+{
+	std::signal(SIGINT, signalHandler);
+	std::signal(SIGTSTP, signalHandler);
+	std::signal(SIGQUIT, signalHandler);
 }
 
 void	Server::printPfdsMap()
@@ -225,78 +247,28 @@ void	Server::printPfdsMap()
 }
 
 /* 
-1. If user already authenticated, return
-2. if password matches, authenticate
-3. else print error message and delete the connection
-*/
-// void Server::Pass(Client& client)
-// {
-// 	if (client._authenticated == TRUE)
-// 	{
-// 		std::cout << "Account already authenticated\n"; //ERR_ALREADYREGISTRED
-// 		return ;
-// 	}
-// 	if (client._msg./*param*/ == _password)
-// 		client._authenticated = true;
-// 	else
-// 	{
-// 		std::cerr << "Invalid password entered\n";
-// 		deletePFD(client._fd, 0); //connection for client closed! can adjust msg later
-// 	}
-// }
-
-// /*
-// 1. if client is not authenticated, send error message and delete connection
-// -nick must be unique and can be changed
-// -user does not have to be unique and cannot be changed
-// -user comes with real name and mode as well
-// */
-// void Server::User(Client &client)
-// {
-// 	if (client._authenticated == FALSE)
-// 	{
-// 		std::cerr << "Account not authenticated\n"; //we need to send this message back to the client
-// 		deletePFD(client._fd, 0); //connectin for client closed!
-// 	}
-	
-	
-// }
-
-/* 
 NOTES:
-to initialize things to 0 for new, add () after
-note sockaddr_storage can be used since it's flexible with ipv4 or ipv6.
-since we're working with ipv4, better to use sockaddr_in -> then we don't have to static cast the struct after
-in c++11 and later, we are actually able to get a pointer from the container using data()
+-nick must be unique and can be changed
+-user does not have to be unique and cannot be changed
+-user comes with real name and mode as well
 
-IN WHILE LOOP
-1. we run poll on our collection of _pfds and check poll_count
-	if poll_count == - 1, error
-2. now we loop through our _pfds (this is an inner loop)
-	a. We check if the it's the listener fd and if its revents is set at POLLIN
-		if yes, it means listener is ready to read!
-		create new variables ready to take a client
-		-struct sockaddr_in (use this for ipv4, use sockaddr_in for ipv6, or sockaddr_storage if you don't know and then typcast to the correct one after)
-		-socklen_t addrsize = sizeof(struct sockaddr_in)
-		-int newClientSockfd = accept();
-		-if newClientSockfd == -1
-			throw error
-		-if accept was successful, add new fd to _pfds and set to POLLIN
-			-fd reports it is ready to send data to socket
-		-update count
-		-add to our _pfds
-		NOTE: to update our _pfds, I think we should use a container so we can always check its size
-			if we ever need to expand our array, we can just delete the array and then create a new one from the vector so we don't have to keep resizing it
-	b. if it's the client
-		int nbytes = recv()
-		if nbytes <= 0
-			error or connection was closed
-			close the fd
-			make sure to delete this client from _pfds!
-		otherwise we've got info! hurray!
-			send the data accordingly -> idk how we're going to do this yet 
-				but i'm starting to understand why we might need a whole client class
-3. check for signals
+-to initialize things to 0 for new, add () after
+
+-note sockaddr_storage can be used since it's flexible with ipv4 or ipv6.
+since we're working with ipv4, better to use sockaddr_in -> then we don't have to static cast the struct after
+
+-in c++11 and later, we are actually able to get a pointer to an array of elements from the container using data()
+
+checking nbyte:
+	int nbytes = recv()
+	if nbytes <= 0
+		error or connection was closed
+		close the fd
+		make sure to delete this client from _pfds!
+	otherwise we've got info! hurray!
+		send the data accordingly -> idk how we're going to do this yet 
+			but i'm starting to understand why we might need a whole client class
+check for signals
 	ctrl+c will close
 	ctrl+d - ??
 	ctrl+z - ??
@@ -307,13 +279,7 @@ exceed 512 characters in length, counting all characters including
 the trailing CR-LF. Thus, there are 510 characters maximum allowed
 for the command and its parameters. - from rfc 2813
 
-TODO:
-CHECK FOR EAGAIN OR EWOULDBLOCK
-JOIN #channel-name password
-
 3.1 Connection Registration (see rfc 2812)
-
-
    The commands described here are used to register a connection with an
    IRC server as a user as well as to correctly disconnect.
 
@@ -333,63 +299,64 @@ JOIN #channel-name password
    The reply message MUST contain the full client identifier upon which
    it was registered.
 
-	NOTES:
-	check for POLLHUP
-	check for POLLOUT
+TODO:
+https://stackoverflow.com/questions/37849173/signal-handling-inside-class
+https://stackoverflow.com/questions/343219/is-it-possible-to-use-signal-inside-a-c-class
+https://stackoverflow.com/questions/37849173/signal-handling-inside-class
 
 */
 
 /* 
 DRAFTS:
 
-	// hints.ai_family = AF_UNSPEC; //can be ipv4 or 6
+TESTING AF_UNSPEC
+hints.ai_family = AF_UNSPEC; //can be ipv4 or 6
 
-	//for science, lets check how many items are in this linked list _serv
-	//there will be two if we use AF_UNSPEC - probably an ipv4 and ipv6
-	// struct addrinfo *s;
-	// s = _serv;
-	// int i = 0;
-	// for (; s != NULL; s = s->ai_next)
-	// 	i++;
-	// std::cout << "there are " << i << " structs in _serv\n";
+for science, lets check how many items are in this linked list _serv
+there will be two if we use AF_UNSPEC - probably an ipv4 and ipv6
+struct addrinfo *s;
+s = _serv;
+int i = 0;
+for (; s != NULL; s = s->ai_next)
+	i++;
+std::cout << "there are " << i << " structs in _serv\n";
 
 
-	//510 is max len we can send. see notes
-				//I think the parsing goes here -> parse into a message object in client?
-				char buf[510] = {}; //can we do this?
-				int nbytes = recv(_pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
-				std::cout << "buf: " << buf;
-				if (nbytes <= 0)
-				{
-					std::cout << "recv failed\n";
-					deletePfd(_pfds[i].fd, nbytes);
-					change = 1;
-				}
-				else
-				{
-					std::string buffer = buf;
-					std::string ret;
-					if (buffer.find("CAP LS") != std::string::npos)
-					{
-						ret = "CAP * LS :multi-prefix userhost-in-names\r\n";
-						// ret = "CAP * LS\r\n";
-					}
-					else if (buffer.find("CAP REQ") != std::string::npos)
-					{
-						ret = ": 451   :need to register first\r\nCAP * ACK :multi-prefix\r\n";
-					}
-					else if (buffer.find("MODE") != std::string::npos)
-					{
-						ret = ":localhost 403 h hbui-vu :No such channel\r\n";
-					}
-					else if (buffer.find("PING") != std::string::npos)
-					{
-						ret = ":localhost PONG localhost :localhost\r\n";
-					}
-					std::cout << "sending to: " << _pfds[i].fd << "\n";
-					if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
-						std::cout << "send unsuccessful\n";
-					std::cout << "sent " << ret.c_str() << "\n"; 
-					// :localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
-				}
+TESTING FOR CAP
+char buf[510] = {}; //can we do this?
+int nbytes = recv(_pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
+std::cout << "buf: " << buf;
+if (nbytes <= 0)
+{
+	std::cout << "recv failed\n";
+	deletePfd(_pfds[i].fd, nbytes);
+	change = 1;
+}
+else
+{
+	std::string buffer = buf;
+	std::string ret;
+	if (buffer.find("CAP LS") != std::string::npos)
+	{
+		ret = "CAP * LS :multi-prefix userhost-in-names\r\n";
+		// ret = "CAP * LS\r\n";
+	}
+	else if (buffer.find("CAP REQ") != std::string::npos)
+	{
+		ret = ": 451   :need to register first\r\nCAP * ACK :multi-prefix\r\n";
+	}
+	else if (buffer.find("MODE") != std::string::npos)
+	{
+		ret = ":localhost 403 h hbui-vu :No such channel\r\n";
+	}
+	else if (buffer.find("PING") != std::string::npos)
+	{
+		ret = ":localhost PONG localhost :localhost\r\n";
+	}
+	std::cout << "sending to: " << _pfds[i].fd << "\n";
+	if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
+		std::cout << "send unsuccessful\n";
+	std::cout << "sent " << ret.c_str() << "\n"; 
+	// :localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
+}
 */

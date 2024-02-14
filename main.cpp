@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+bool	Server::_run = true;
+
 int main(int argc, char **argv){
 	if (argc != 3)
 	{
@@ -10,6 +12,7 @@ int main(int argc, char **argv){
 	
 	try
 	{
+		// Server::setSignals();
 		Server server(argv[1], argv[2]);
 		server.createServer();
 	}

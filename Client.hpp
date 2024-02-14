@@ -22,22 +22,15 @@ private:
 	bool				_authenticated;
 	bool				_registered;
 	struct pollfd		_pfd;
-	struct sockaddr_in	_clientInfo;
 	// Message				_msg;
 
 	// Client const & operator=(Client const & src);
 public:
 	Client();
-	// Client(Client const & src);
-	Client(int fd);
+	// Client(Client const & src);;
 	// ~Client();
 
-	void	printClient();
-
-	class InvalidClientConnectionException : public std::exception{
-		const char *what() const throw(){return "Can't connect client";}
-	};
- 
+	void	printClient(); 
 };
 
 /* NOTES:

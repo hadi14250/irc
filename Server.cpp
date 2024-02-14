@@ -14,11 +14,16 @@ Server::Server(std::string const & port, std::string const & pswd)
 
 Server::~Server()
 {
+	if (_serv)
+		freeaddrinfo(_serv);
 	if (_pfds)
 		delete [] _pfds;
+	//close any fds here
 }
 
-/* can change pswd policy later */
+/*
+we can change pswd policy later 
+*/
 void	Server::printPasswordPolicy()
 {
 	std::cout	<< "Password must be 8 - 12 characters in length and may only "
@@ -55,7 +60,7 @@ void	Server::checkPort() const
 	std::istringstream ss(_port);
 	ss >> port;
 	if (ss.fail() || ss.get() != EOF ||
-		port < 0 || port > 65535) //can we use ports 0 - 1024?
+		port < 1024 || port > 65535) //ports 0 - 1024 are reserved (system ports)
 		throw InvalidPortException();
 }
 
@@ -63,14 +68,16 @@ void	Server::checkPort() const
 1. make a single struct addrinfo (hints) with info about host for server like: ip type, socket type, flags
 2. generate linked list of struct addrinfo (_serv) using getaddrinfo
 3. socket() - create a socket fd with info from _serv
-4. bind() - bind our socket fd to port
-5. listen() - make our socket fd a listening socket with a queue of 5 - check this number later
-6. make listen socket nonblocking
-7. initialize _pfdsMap, _pfdsCount, and _pfds array to hold our listen socket fd (addNewPfd and copyNewPfdMapToArray)
+4. setsockopt() - sometimes the socket isn't cleared from port right away after a program run - this allows our listen socket to reuse port immediately
+5. bind() - bind our socket fd to port
+6. listen() - make our socket fd a listening socket with a queue of 5 - check this number later
+7. make listen socket nonblocking
+8. initialize _pfdsMap, _pfdsCount, and _pfds array to hold our listen socket fd (addNewPfd and copyNewPfdMapToArray)
 */
 void	Server::makeListenSockfd()
 {
 	struct addrinfo	hints;
+	int yes = 1;
 
 	std::memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -78,23 +85,23 @@ void	Server::makeListenSockfd()
 	hints.ai_flags = AI_PASSIVE; //assign address of local host to socket structures
 
 	//we have NULL as first parameter bc we used AI_PASSIVE flag. otherwise use specific ip address
-	//NOTE: we may want to throw custom error msgs so keeping statements separate for now
 	if (getaddrinfo(NULL, _port.c_str(), &hints, &_serv) != 0) 
-		throw Error();
+		throw GetaddrinfoException();
 	if ((_listenSockfd = socket(_serv->ai_family, _serv->ai_socktype, _serv->ai_protocol)) == -1)
-		throw Error();
-	// fcntl(_listenSockfd, F_SETFL, O_NONBLOCK);
+		throw SocketException();
+	if (setsockopt(_listenSockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+		throw SetsockoptException();
 	if (bind(_listenSockfd, _serv->ai_addr, _serv->ai_addrlen) == -1)
-		throw Error();
+		throw BindException();
 	if (listen(_listenSockfd, 5) == -1)
-		throw Error();
+		throw ListenException();
 	addNewPfd(LISTENFD);
 	copyPfdMapToArray();
 }
 
 /*
 1. create new client object - different object is created if it's a listening fd
-2. set fd to nonblocking and check for error
+2. fcntl - set fd to nonblocking and check for error
 3. create new struct pollfd with inputted fd and set events to POLLIN
 4. add fd and Client pair to map
 */
@@ -107,12 +114,9 @@ void	Server::addNewPfd(int tag)
 		newClient._sockfd = _listenSockfd; //set our fd to listensockfd;
 	}
 	else if (tag == CLIENTFD)
-	{
-		std::cout << "making new client object\n";
 		newClient = Client(_listenSockfd); //this constructor fills out _sockfd for us
-	}
 	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
-		throw Error();
+		throw FcntlException();
 	
 	struct pollfd newPfd = {};
 	newPfd.fd = newClient._sockfd;
@@ -153,24 +157,30 @@ void	Server::deletePfd(int pfd, int err)
 	_pfdsMap.erase(pfd);
 }
 
+/* 
+1. create listening socket
+In while loop
+2. set a switch int change - tracks if any fds have been added to array
+3. poll all fds - this function will switch revents (in struct) if fd is ready for some kind of action
+4. iterate through every fd and check if there is POLLIN/POLLOUT/POLLHUP in revents
+	POLLIN - data can be read from fd without blocking
+	POLLOUT - data can be written to fd without blocking
+	POLLHUP - fd has been closed or disconnected - delete it from our array
+5. if a new client has been added, modify our array accordingly
+7. free addrinfo struct (and everything else that needs to be freed)
+ */
 void	Server::createServer()
 {
 	//create a listening socket
 	makeListenSockfd();
-	int yes = 1;
-	setsockopt(_listenSockfd, SOL_SOCKET,SO_REUSEADDR, &yes, sizeof(int));
 	while (true)
 	{
 		int change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
-		int pollCount = poll(_pfds, _pfdsCount, -1);
-		if (pollCount == -1)
-			throw Error();
+		if (poll(_pfds, _pfdsCount, -1) == -1)
+			throw PollException();
 		for (int i = 0; i < _pfdsCount; i++)
 		{
-			// if (i == pollCount) //if we've handled all fds that have an event, we don't have to iterate through the rest
-			// 	break ;
-			//if it's the listen socket and revents is set to POLLIN
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
@@ -180,75 +190,30 @@ void	Server::createServer()
 				}
 				catch(const std::exception& e)
 				{
+					//disconnect fd bc we couldn't make it unblocking
 					std::cerr << e.what() << '\n';
 				}
 			}
-			else if (_pfds[i].revents & POLLIN) //if it's a client, read what client has sent into a buffer
+			else if (_pfds[i].revents & POLLIN)
 			{
-				std::cout << "client messaging\n";
-				//510 is max len we can send. see notes
-				//I think the parsing goes here -> parse into a message object in client?
-				char buf[510] = {}; //can we do this?
-				int nbytes = recv(_pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
-				std::cout << "buf: " << buf;
-				if (nbytes <= 0)
-				{
-					std::cout << "recv failed\n";
-					deletePfd(_pfds[i].fd, nbytes);
-					change = 1;
-				}
-				else
-				{
-					std::string buffer = buf;
-					std::string ret;
-					if (buffer.find("CAP LS") != std::string::npos)
-					{
-						ret = "CAP * LS :multi-prefix userhost-in-names\r\n";
-					}
-					else if (buffer.find("CAP REQ") != std::string::npos)
-					{
-						ret = "CAP * ACK multi-prefix\r\n:localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
-					}
-					else if (buffer.find("MODE") != std::string::npos)
-					{
-						ret = ":localhost 403 h hbui-vu :No such channel\r\n";
-					}
-					else if (buffer.find("PING") != std::string::npos)
-					{
-						ret = ":localhost PONG localhost :localhost\r\n";
-					}
-					if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
-						std::cout << "send unsuccessful\n";
-					std::cout << "sent " << ret.c_str() << "\n"; 
-					// else if (buffer.find("JOIN") != std::string::npos)
-					// {
-					// 	std::string ret = ": 451   :need to register first\r\n";
-					// 	if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
-					// 		std::cout << "send unsuccessful\n";
-					// 	std::cout << "sent " << ret.c_str() << "\n"; 
-					// }
-					// else 
-					// {
-					// 	std::string ret = ":!@127.0.0.1 NICK  user :user\n";
-					// 	if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
-					// 		std::cout << "send unsuccessful\n";
-					// 	std::cout << "sent " << ret.c_str() << "\n"; 
-					// }
-					// std::string ret = "001 user :Welcome to the Internet Relay Network user";
-					//executeCmd(_pfdsMap[_pfds[i].fd]);
-					//execute the command here if it's valid
-					// std::cout << "we execute something here\n";
-				}
+				//client is ready to read any messages
+				//USE RCV MSG HERE
+				//ADD PARSING HERE
+			}
+			else if (_pfds[i].revents & POLLOUT)
+			{
+				//client is ready to send out a message to the server (or another client)
+				//USE SEND MSG HERE
+			}
+			else if (_pfds[i].revents & POLLHUP)
+			{
+				//client has disconnected or closed
+				//delete their fd here
 			}
 		}
 		if (change == 1)
-		{
 			copyPfdMapToArray();
-			// printPfdsMap();
-		}
-		// std::cout << "returning to main while loop\n";
 	}
-	freeaddrinfo(_serv);
 }
 
 void	Server::printPfdsMap()
@@ -387,4 +352,44 @@ DRAFTS:
 	// for (; s != NULL; s = s->ai_next)
 	// 	i++;
 	// std::cout << "there are " << i << " structs in _serv\n";
+
+
+	//510 is max len we can send. see notes
+				//I think the parsing goes here -> parse into a message object in client?
+				char buf[510] = {}; //can we do this?
+				int nbytes = recv(_pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
+				std::cout << "buf: " << buf;
+				if (nbytes <= 0)
+				{
+					std::cout << "recv failed\n";
+					deletePfd(_pfds[i].fd, nbytes);
+					change = 1;
+				}
+				else
+				{
+					std::string buffer = buf;
+					std::string ret;
+					if (buffer.find("CAP LS") != std::string::npos)
+					{
+						ret = "CAP * LS :multi-prefix userhost-in-names\r\n";
+						// ret = "CAP * LS\r\n";
+					}
+					else if (buffer.find("CAP REQ") != std::string::npos)
+					{
+						ret = ": 451   :need to register first\r\nCAP * ACK :multi-prefix\r\n";
+					}
+					else if (buffer.find("MODE") != std::string::npos)
+					{
+						ret = ":localhost 403 h hbui-vu :No such channel\r\n";
+					}
+					else if (buffer.find("PING") != std::string::npos)
+					{
+						ret = ":localhost PONG localhost :localhost\r\n";
+					}
+					std::cout << "sending to: " << _pfds[i].fd << "\n";
+					if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
+						std::cout << "send unsuccessful\n";
+					std::cout << "sent " << ret.c_str() << "\n"; 
+					// :localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
+				}
 */

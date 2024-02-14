@@ -62,6 +62,27 @@ public:
 	class InvalidPortException : public std::exception{
 		const char *what() const throw(){return "Invalid port";}
 	};
+	class GetaddrinfoException : public std::exception{
+		const char *what() const throw(){return "getaddrinfo failed";}
+	};
+	class SocketException : public std::exception{
+		const char *what() const throw(){return "failed to create socket";}
+	};
+	class BindException : public std::exception{
+		const char *what() const throw(){return "bind failed";}
+	};
+	class SetsockoptException : public std::exception{
+		const char *what() const throw(){return "setsockopt failed";}
+	};
+	class ListenException : public std::exception{
+		const char *what() const throw(){return "listen failed";}
+	};
+	class FcntlException : public std::exception{
+		const char *what() const throw(){return "fcntl failed";}
+	};
+	class PollException : public std::exception{
+		const char *what() const throw(){return "poll failed";}
+	};
 	class Error : public std::exception{
 		const char *what() const throw(){return "generic error msg";}
 	};

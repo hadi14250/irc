@@ -1,0 +1,11 @@
+<< CAP LS 302
+<< JOIN :
+>> CAP * LS :multi-prefix userhost-in-names
+<< CAP REQ :multi-prefix
+>> : 451   :need to register first
+>> CAP * ACK multi-prefix
+<< CAP END
+<< PASS helloworld
+<< NICK h
+<< USER user user host.docker.internal :Unknown
+>> : 464  04 :password doesn't match

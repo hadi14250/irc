@@ -1,0 +1,4 @@
+<< CAP LS 302
+<< JOIN :
+>> CAP * LS :multi-prefix userhost-in-names
+<< CAP REQ :multi-prefix

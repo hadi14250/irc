@@ -14,6 +14,7 @@ Server::Server(std::string const & port, std::string const & pswd)
 
 Server::~Server()
 {
+	std::cout << "Server destructor called\n";
 	if (_serv)
 		freeaddrinfo(_serv);
 	if (_pfds)
@@ -176,9 +177,8 @@ In while loop
  */
 void	Server::createServer()
 {
-	setSignals();
 	makeListenSockfd();
-	while (true)
+	while (_run == 1)
 	{
 		int change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
@@ -222,7 +222,7 @@ void	Server::createServer()
 void	Server::signalHandler(int signum)
 {
 	(void)signum;
-	_run = false;
+	_run = 0;
 	std::cout << "\nending program\n";
 }
 
@@ -300,10 +300,10 @@ for the command and its parameters. - from rfc 2813
    it was registered.
 
 TODO:
-https://stackoverflow.com/questions/37849173/signal-handling-inside-class
-https://stackoverflow.com/questions/343219/is-it-possible-to-use-signal-inside-a-c-class
-https://stackoverflow.com/questions/37849173/signal-handling-inside-class
-
+-client to client communication
+	-we will probably need some kind of array to hold messages until messages can be sent out
+	-this message object should contain receiver and sender
+-channels
 */
 
 /* 

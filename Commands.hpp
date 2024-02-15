@@ -26,5 +26,5 @@ public:
 
 	// void	WHOIS();
 
-	void	KILL();
+	// void	KILL();
 };

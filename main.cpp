@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-bool	Server::_run = true;
+volatile sig_atomic_t Server::_run = 1;
 
 int main(int argc, char **argv){
 	if (argc != 3)
@@ -9,10 +9,9 @@ int main(int argc, char **argv){
 		Server::printPasswordPolicy();
 		return (1);
 	}
-	
 	try
 	{
-		// Server::setSignals();
+		Server::setSignals();
 		Server server(argv[1], argv[2]);
 		server.createServer();
 	}

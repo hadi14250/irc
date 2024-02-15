@@ -32,7 +32,7 @@ private:
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
 	std::map<int, Client>	_pfdsMap;
-	static bool				_run;
+
 
 	Server();
 	Server(Server const &);
@@ -49,6 +49,8 @@ private:
 	void	printPfdsMap();
 
 public:
+	static volatile sig_atomic_t _run;
+	
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 

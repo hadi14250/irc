@@ -20,7 +20,7 @@ class Client;
 enum Tags
 {
 	LISTENFD,
-	CLIENTFD
+	CLIENTFD,
 };
 
 class Server{
@@ -29,10 +29,11 @@ private:
 	std::string				_password;
 	int						_listenSockfd;
 	int						_pfdsCount;
+	int						_readBytes;
+	char					_buf[512];
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
 	std::map<int, Client>	_pfdsMap;
-
 
 	Server();
 	Server(Server const &);
@@ -54,9 +55,10 @@ public:
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 
-	static void	printPasswordPolicy();
-	void		createServer();
-	static void	setSignals();
+	static void			printPasswordPolicy();
+	void				createServer();
+	static void			setSignals();
+	// static std::string	getPassword();
 
 	
 	/********************** EXCEPTIONS **********************/

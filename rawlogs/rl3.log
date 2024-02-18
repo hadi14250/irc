@@ -1,0 +1,64 @@
+<< CAP LS
+<< NICK h
+<< USER hbui-vu hbui-vu irc.libera.chat :hbui-vu
+>> :zinc.libera.chat NOTICE * :*** Checking Ident
+>> :zinc.libera.chat NOTICE * :*** Looking up your hostname...
+>> :zinc.libera.chat NOTICE * :*** Couldn't look up your hostname
+>> :zinc.libera.chat NOTICE * :*** No Ident response
+>> :zinc.libera.chat CAP * LS :account-notify away-notify chghost extended-join multi-prefix sasl tls account-tag cap-notify echo-message server-time solanum.chat/identify-msg solanum.chat/oper solanum.chat/realhost
+<< CAP REQ :multi-prefix
+>> :zinc.libera.chat 433 * h :Nickname is already in use.
+<< NICK h_
+>> :zinc.libera.chat CAP * ACK :multi-prefix
+<< CAP END
+>> :zinc.libera.chat 433 * h_ :Nickname is already in use.
+<< NICK h__
+>> :zinc.libera.chat 433 * h__ :Nickname is already in use.
+<< NICK h___
+>> :zinc.libera.chat 001 h___ :Welcome to the Libera.Chat Internet Relay Chat Network h___
+>> :zinc.libera.chat 002 h___ :Your host is zinc.libera.chat[195.148.124.80/6697], running version solanum-1.0-dev
+>> :zinc.libera.chat 003 h___ :This server was created Mon Nov 13 2023 at 07:50:18 UTC
+>> :zinc.libera.chat 004 h___ zinc.libera.chat solanum-1.0-dev DGIMQRSZaghilopsuwz CFILMPQRSTbcefgijklmnopqrstuvz bkloveqjfI
+>> :zinc.libera.chat 005 h___ ACCOUNTEXTBAN=a WHOX CALLERID=g SAFELIST ELIST=CMNTU MONITOR=100 ETRACE FNC KNOCK CHANTYPES=# EXCEPTS INVEX :are supported by this server
+>> :zinc.libera.chat 005 h___ CHANMODES=eIbq,k,flj,CFLMPQRSTcgimnprstuz CHANLIMIT=#:250 PREFIX=(ov)@+ MAXLIST=bqeI:100 MODES=4 NETWORK=Libera.Chat STATUSMSG=@+ CASEMAPPING=rfc1459 NICKLEN=16 MAXNICKLEN=16 CHANNELLEN=50 TOPICLEN=390 :are supported by this server
+>> :zinc.libera.chat 005 h___ DEAF=D TARGMAX=NAMES:1,LIST:1,KICK:1,WHOIS:1,PRIVMSG:4,NOTICE:4,ACCEPT:,MONITOR: EXTBAN=$,agjrxz :are supported by this server
+>> :zinc.libera.chat 251 h___ :There are 65 users and 33104 invisible on 28 servers
+>> :zinc.libera.chat 252 h___ 40 :IRC Operators online
+>> :zinc.libera.chat 253 h___ 73 :unknown connection(s)
+>> :zinc.libera.chat 254 h___ 22646 :channels formed
+>> :zinc.libera.chat 255 h___ :I have 2165 clients and 1 servers
+>> :zinc.libera.chat 265 h___ 2165 2968 :Current local users 2165, max 2968
+>> :zinc.libera.chat 266 h___ 33169 36895 :Current global users 33169, max 36895
+>> :zinc.libera.chat 250 h___ :Highest connection count: 2969 (2968 clients) (184002 connections received)
+>> :zinc.libera.chat 375 h___ :- zinc.libera.chat Message of the Day - 
+>> :zinc.libera.chat 372 h___ :- Welcome to Libera Chat, the IRC network for
+>> :zinc.libera.chat 372 h___ :- free & open-source software and peer directed projects.
+>> :zinc.libera.chat 372 h___ :-  
+>> :zinc.libera.chat 372 h___ :- Use of Libera Chat is governed by our network policies.
+>> :zinc.libera.chat 372 h___ :-  
+>> :zinc.libera.chat 372 h___ :- To reduce network abuses we perform open proxy checks
+>> :zinc.libera.chat 372 h___ :- on hosts at connection time.
+>> :zinc.libera.chat 372 h___ :-  
+>> :zinc.libera.chat 372 h___ :- Please visit us in #libera for questions and support.
+>> :zinc.libera.chat 372 h___ :-  
+>> :zinc.libera.chat 372 h___ :- Website and documentation:  https://libera.chat
+>> :zinc.libera.chat 372 h___ :- Webchat:                    https://web.libera.chat
+>> :zinc.libera.chat 372 h___ :- Network policies:           https://libera.chat/policies
+>> :zinc.libera.chat 372 h___ :- Email:                      support@libera.chat
+>> :zinc.libera.chat 376 h___ :End of /MOTD command.
+>> :h___ MODE h___ :+Ziw
+<< MODE h___ +i
+<< WHOIS h
+>> :zinc.libera.chat 311 h___ h h capatcha.oddprotocol.org * :h
+--> nickfind event whois
+>> :zinc.libera.chat 312 h___ h zirconium.libera.chat :Milano, IT
+--> event empty
+>> :zinc.libera.chat 671 h___ h :is using a secure connection
+--> event empty
+>> :zinc.libera.chat 338 h___ h 2605:6400:30:fc15:e151:9ca6:a143:1ad7 :actually using host
+--> event empty
+>> :zinc.libera.chat 318 h___ h :End of /WHOIS list.
+--> event empty
+<< PING zinc.libera.chat
+>> :zinc.libera.chat PONG zinc.libera.chat :zinc.libera.chat
+--> lag pong

@@ -5,24 +5,28 @@
 # include <netdb.h>
 # include <poll.h>
 # include "Server.hpp"
+# include <deque>
+// # include "Message.hpp"
 
 class Server;
+// class Message;
 
 class Client
 {
 private:
-	friend class Server;
+	friend class Server; //Allows Server to access private members of Client
+	// friend class Message;
 
-	int 				_sockfd;
-	std::string			_nick;
-	std::string			_user;
-	std::string			_realName;
-	char				_mode; //do we need this?
-	bool				_listenSock;
-	bool				_authenticated;
-	bool				_registered;
-	struct pollfd		_pfd;
-	// Message				_msg;
+	int 					_sockfd;
+	std::string				_nick;
+	std::string				_user;
+	std::string				_realName;
+	char					_mode; //do we need this?
+	bool					_listenSock;
+	bool					_authenticated;
+	bool					_registered;
+	struct pollfd			_pfd;
+	std::deque<std::string>	_messages;
 
 	// Client const & operator=(Client const & src);
 public:

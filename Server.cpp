@@ -5,6 +5,7 @@ Server::Server(std::string const & port, std::string const & pswd)
 		_password(pswd),
 		_listenSockfd(-1),
 		_pfdsCount(0),
+		_readbytes(0),
 		_serv(NULL),
 		_pfds(NULL)
 {
@@ -163,6 +164,30 @@ void	Server::deletePfd(int pfd)
 	_pfdsMap.erase(pfd);
 }
 
+void	Server::readMsg(int fd)
+{
+	std::memset(_buf, 0, sizeof(_buf));
+	_readBytes = recv(fd, _buf, sizeof(buf), 0);
+	if (_readBytes <= 0)
+		deletePfd(fd) //have deletePfd throw an error for us too
+	else 
+	{
+		//Message msg = parsemsg()
+		//exectue msg -> push appropriate send messages to receivers containers
+	}
+}
+
+void	Server::sendMsg(inf fd)
+{
+	std::vector<>::iterator it = _pfdsMap[fd]._messages.begin();
+	for (; it != _pfdsMap[fd]._messages.end(; it++))
+	{
+		if (send(fd, _messages._msg, _messages._msg.length(), 0) == -1)
+			std::cerr << "Failed to send msg: " << _messages.msg << std::endl;
+	}
+	_pfdsMap[fd]._messages.clear();
+}
+
 /* 
 1. create listening socket
 In while loop
@@ -200,14 +225,13 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLIN)
 			{
-				//client is ready to read any messages
-				//USE RCV MSG HERE
-				//ADD PARSING HERE
+				//fd is ready for reading - USE RCV MSG AND PARSING HERE
+				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
-				//client is ready to send out a message to the server (or another client)
-				//USE SEND MSG HERE
+				//fd is ready for writing - use SEND HERE
+				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)
 			{
@@ -245,6 +269,11 @@ void	Server::printPfdsMap()
 		it->second.printClient();
 	}
 }
+
+// std::string	Server::getPassword()
+// {
+// 	return _password;
+// }
 
 /* 
 NOTES:

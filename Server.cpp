@@ -2,13 +2,14 @@
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
-		_password(pswd),
 		_listenSockfd(-1),
 		_pfdsCount(0),
-		_readbytes(0),
+		_readBytes(0),
+		_change(0),
 		_serv(NULL),
 		_pfds(NULL)
 {
+	_password = pswd;
 	checkPort();
 	checkPassword();
 }
@@ -106,6 +107,7 @@ void	Server::makeListenSockfd()
 2. fcntl - set fd to nonblocking and check for error
 3. create new struct pollfd with inputted fd and set events to POLLIN
 4. add fd and Client pair to map
+5. set _change to 1
 */
 void	Server::addNewPfd(int tag)
 {
@@ -134,6 +136,7 @@ void	Server::addNewPfd(int tag)
 	newClient._pfd = newPfd;
 
 	_pfdsMap[newClient._sockfd] = newClient;
+	_change = 1;
 }
 
 /* 
@@ -156,36 +159,51 @@ void	Server::copyPfdMapToArray()
 1. Print error msg
 2. close fd
 3. erase fd from map
+4. erase fd from nickMap
+5. set change to 1
+//should this throw some more error messages?
 */
-void	Server::deletePfd(int pfd)
+void	Server::deletePfd(int fd)
 {
-	std::cout << "Closed connection for client " << _pfdsMap[pfd]._nick << "!\n";
-	close(pfd);
-	_pfdsMap.erase(pfd);
+	Client client = _pfdsMap[fd];
+	std::string nick = client._nick;
+
+	std::cout << "Closed connection for client " << nick << " at fd: " << fd << "!\n";
+	//use ERROR  command to send to client to report a fatal error (aka shutdown)
+	close(fd);
+	_pfdsMap.erase(fd);
+
+	std::map<std::string, int>::iterator it = _nickMap.find(nick);
+	if (it != _nickMap.end())
+		_nickMap.erase(nick);
+	
+	_change = 1;
 }
 
 void	Server::readMsg(int fd)
 {
 	std::memset(_buf, 0, sizeof(_buf));
-	_readBytes = recv(fd, _buf, sizeof(buf), 0);
+	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
 	if (_readBytes <= 0)
-		deletePfd(fd) //have deletePfd throw an error for us too
+		deletePfd(fd);
 	else 
 	{
-		//Message msg = parsemsg()
-		//exectue msg -> push appropriate send messages to receivers containers
+	// 	//Message msg = parsemsg()
+	// 	//exectue msg -> push appropriate send messages to receivers containers
 	}
 }
 
-void	Server::sendMsg(inf fd)
+void	Server::sendMsg(int fd)
 {
-	std::vector<>::iterator it = _pfdsMap[fd]._messages.begin();
-	for (; it != _pfdsMap[fd]._messages.end(; it++))
+	Client client = _pfdsMap[fd];
+	std::deque<std::string>::iterator it = client._messages.begin();
+
+	for (; it != client._messages.end(); it++)
 	{
-		if (send(fd, _messages._msg, _messages._msg.length(), 0) == -1)
-			std::cerr << "Failed to send msg: " << _messages.msg << std::endl;
+		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
+			std::cerr << "Failed to send msg: " << *it << std::endl;
 	}
-	_pfdsMap[fd]._messages.clear();
+	client._messages.clear();
 }
 
 /* 
@@ -205,7 +223,7 @@ void	Server::createServer()
 	makeListenSockfd();
 	while (_run == 1)
 	{
-		int change = 0;
+		_change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
@@ -216,7 +234,6 @@ void	Server::createServer()
 				try
 				{
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
-					change = 1;
 				}
 				catch(const std::exception& e)
 				{
@@ -238,7 +255,7 @@ void	Server::createServer()
 				deletePfd(_pfds[i].fd);
 			}
 		}
-		if (change == 1)
+		if (_change == 1)
 			copyPfdMapToArray();
 	}
 }
@@ -270,10 +287,10 @@ void	Server::printPfdsMap()
 	}
 }
 
-// std::string	Server::getPassword()
-// {
-// 	return _password;
-// }
+std::string	Server::getPassword()
+{
+	return _password;
+}
 
 /* 
 NOTES:

@@ -11,6 +11,7 @@ public:
 	void	PASS();
 	void	NICK();
 	void	USER();
+	// void	ERROR();
 	// void	OPER();
 	// void	PING();
 	// void	QUIT();

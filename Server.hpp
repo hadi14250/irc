@@ -26,15 +26,16 @@ enum Tags
 class Server{
 private:
 	std::string				_port;
-	std::string				_password;
 	int						_listenSockfd;
 	int						_pfdsCount;
 	int						_readBytes;
+	int						_change;
 	char					_buf[512];
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
-	std::map<int, Client>	_pfdsMap;
-	//std::map<std::string, int> _nickLookup
+	
+	static std::string		_password;
+	static std::string		_hostname;
 
 	Server();
 	Server(Server const &);
@@ -45,13 +46,17 @@ private:
 	void		makeListenSockfd();
 	void		addNewPfd(int tag);
 	void		copyPfdMapToArray();
-	void		deletePfd(int pfd);
+	void		deletePfd(int fd);
+	void		readMsg(int fd);
+	void		sendMsg(int fd);
 	static void	signalHandler(int signum);
 
 	void	printPfdsMap();
 
 public:
-	static volatile sig_atomic_t _run;
+	static volatile sig_atomic_t 		_run;
+	static std::map<int, Client>		_pfdsMap;
+	static std::map<std::string, int>	_nickMap;
 	
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
@@ -59,7 +64,8 @@ public:
 	static void			printPasswordPolicy();
 	void				createServer();
 	static void			setSignals();
-	// static std::string	getPassword();
+	static std::string	getPassword();
+	static std::string	getHostname();
 
 	
 	/********************** EXCEPTIONS **********************/

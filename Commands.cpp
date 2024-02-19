@@ -1,6 +1,18 @@
 #include "Commands.hpp"
 
 /* 
+class Message
+{
+public:
+	std::string 				_command;
+	std::vector<std::string>	_param;
+	int							_fd;
+	std::string					_sender;
+	std::string					_recevier;
+}
+*/
+
+/* 
 All command functions should:
 1. Set info (if applicable)
 2. generate a message (if applicable)
@@ -10,10 +22,11 @@ All command functions should:
 //for now we will not give any capabilities to our server
 void	Commands::CAP()
 {
-	if 	(_param[0] == "LS")
+	if 	(_param.front() == "LS")
 	{
 		std::string msg = "CAP * LS :\r\n";
-		Server::_pfdsMap[_sender]._messages.push_back(msg);
+		Client& client = Server::_pfdsMap[_fd];
+		client._messages.push_back(msg);
 	}
 	// else if (_param[0] == "REQ")
 	// 	//send CAP * ACK :param[1]
@@ -22,14 +35,19 @@ void	Commands::CAP()
 
 void	Commands::PASS()
 {
-	if (_param[0] == Server::getpassword())
-		_authenticated = true;
-	else if (_param[0] != password)
-	{
-		std::string msg = source + ERR_PASSWDMISMATCH + _pfdsMap[_sender]._nick + ": Password is invalid\r\n";
-		Server::_pfdsMap[_sender]._messages.push_back(msg);
-		//should we terminate the connection here? but if we terminate it now, then we can't send the error message
-	}	
+	//if pass is not correct -> ERR_PASSWDMISMATCH
+	//if pass is not present -> ERR_NEEDMOREPARAMS
+	//if already authenticated -> ERR_ALREADYREGISTERED
+	Client& client = Server::_pfdsMap[_fd];
+	if (_param.empty())
+		generateMessage(Server::getHostname(), ERR_NEEDMOREPARAMS, client);
+	else if (client._authenticated == true)
+		generateMessage(Server::getHostname(), ERR_ALREADYREGISTERED, client);
+	else if (_param.front() != Server::getPassword())
+		generateMessage(Server::getHostname(), ERR_PASSWDMISMATCH, client);
+	else
+		client._authenticated = true;
+	//should we terminate the connction if there is passowrd error? if we do, we have to send ERROR command	
 }
 
 /*
@@ -64,17 +82,82 @@ void	Commands::NICK(Client client)
 	}
 }
 
+/* USER username hostname servername(of user) :<realname(can contain spaces)*/
 void	Commands::USER()
 {
-	//if not yet authenticated, send error msg
-	//user, mode, and Real name
-	//if not registered and nick is set, register and add to nicklookup
-	//if registered, send welcome message
+	Client& client = Server::_pfdsMap[_fd];
+
+	if (client._authenticated == false)
+		return ;
+	if (client._registered == true || !client._username.empty()) //but what happens if no nick
+		generateMessage(Server::getHostname(), ERR_ALREADYREGISTERED, client);
+	else if (_param.size() < 4)
+		//ERR_NEEDMOREPARAMS
+	else
+	{
+		client._username = _param[0];
+		client._hostname = _param[1];
+		client._server = _param[2];
+		client._realname = _param[3];
+		if (_nick != "")
+			completeRegistration(client);
+	}
+	if (!msg.empty())
+		client._messages.push_back(msg);
 }
 
-void	Commands::QUIT()
+void	Commands::completeRegistration(Client& client)
+{
+	client._registered = true;
+	client._identifier = client._nick + "!" + client._username + "@" + client._hostname;
+	makeMessage(Server::getHostname(), RPL_WELCOME, client)
+	Server::nickMap[_nick] = client._pfd;
+}
 
-void	Commands::EXIT()
+void	Commands::generateMessage(std::string src, int code, Client &client)
+{
+	std::string paramMsg;
+	switch(code) //can't use switch with strings...maybe make code a number and then convert to string
+	{
+		case RPL_WELCOME: 
+			paramMsg = "Welcome to ft-irc " + client._identifier + "!"; break;
+		case ERR_NEEDMOREPARAMS:
+			paramMsg = "More parameters needed"; break; //we may need to add comand to this too
+			//"<client> <command> :Not enough parameters"
+		case ERR_ALREADYREGISTERED:
+			paramMsg = "You are already registered"; break;
+		case ERR_PASSWDMISMATCH
+			paramMsg = "Invalid password"; break;
+		
+	}
+	std::string codeStr = //convert code to string
+	std::string msg = ":" + src + " " + code + " " + client._nick + " :" + ParamMsg + "\r\n";
+	client._messages.push_back(msg);
+}
+
+// void	Commands::QUIT()
+
+// void	Commands::EXIT()
+
+/*
+<type> <command> <code> [<context>...] <description>
+type: FAIL, WARN, or NOTE, 
+command: Indicates the user command which this reply is related to, or is * for messages initiated outside client commands (for example, an on-connect message).
+code: Machine-readable reply code representing the meaning of the message to client software.
+context: Optional parameters that give humans extra context as to where and why the reply was spawned (for example, a particular subcommand or sub-process).
+description:  required plain-text description of the reply which is shown to users.
+*/
+// std::string generateFailMessage(std::string type, std::string command, std::string code)
+// {
+// 	std::string msg;
+// 	if (type == "FAIL")
+// 	{
+// 		msg = type + " " + command + " " + code;
+// 		if (code == "NEED_REGISTRATION")
+// 			msg += " :You are not yet registered\r\n";
+// 	}
+// 	return (msg);
+// }
 
 /* NOTES:
 CAP = client capability negotiation

@@ -19,9 +19,12 @@ private:
 
 	int 					_sockfd;
 	std::string				_nick;
-	std::string				_user;
-	std::string				_realName;
-	char					_mode; //do we need this?
+	std::string				_username;
+	std::string				_hostname;
+	std::string				_server;
+	std::string				_realname;
+	std::string				_identifier: //<nick>!<user>@<host>
+	// char					_mode; //do we need this?
 	bool					_listenSock;
 	bool					_authenticated;
 	bool					_registered;

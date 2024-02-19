@@ -56,6 +56,7 @@ void	Commands::NICK(Client client)
 			if (/* client registration is false && user has already been filled out*/)
 				//set registration to true
 				//msg = welcome msg
+				//add to nicklookup
 			else (/*if client registration is set already*/)
 				//msg ex: :h!~hbui-vu@127.0.0.1 NICK  hello :hello
 		}
@@ -67,7 +68,7 @@ void	Commands::USER()
 {
 	//if not yet authenticated, send error msg
 	//user, mode, and Real name
-	//is nick already set, check _registered
+	//if not registered and nick is set, register and add to nicklookup
 	//if registered, send welcome message
 }
 

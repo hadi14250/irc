@@ -34,6 +34,7 @@ private:
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
 	std::map<int, Client>	_pfdsMap;
+	//std::map<std::string, int> _nickLookup
 
 	Server();
 	Server(Server const &);

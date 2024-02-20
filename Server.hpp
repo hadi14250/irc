@@ -49,9 +49,13 @@ private:
 	void		deletePfd(int fd);
 	void		readMsg(int fd);
 	void		sendMsg(int fd);
+	void		parseMsg(int fd, std::string msg);
 	static void	signalHandler(int signum);
 
 	void	printPfdsMap();
+
+	//handle commands
+	void	cap(int fd, std::string msg);
 
 public:
 	static volatile sig_atomic_t 		_run;

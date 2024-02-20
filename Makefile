@@ -1,6 +1,7 @@
 NAME = irc
 
-SRCS = main.cpp Server.cpp Client.cpp
+SRCS_CMD = $(addprefix commands/, registration.cpp)
+SRCS = main.cpp Server.cpp Client.cpp $(SRCS_CMD)
 
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 

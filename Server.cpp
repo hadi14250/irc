@@ -16,7 +16,7 @@ Server::Server(std::string const & port, std::string const & pswd)
 {
 	_password = pswd;
 	checkPort();
-	checkPassword();
+	// checkPassword();
 }
 
 Server::~Server()
@@ -137,7 +137,7 @@ void	Server::addNewPfd(int tag)
 	
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
-	newPfd.events = POLLIN;
+	newPfd.events = POLLIN | POLLOUT;
 	newClient._pfd = newPfd;
 
 	_pfdsMap[newClient._sockfd] = newClient;
@@ -193,6 +193,7 @@ void	Server::readMsg(int fd)
 		deletePfd(fd);
 	else 
 	{
+		parseMsg(fd, _buf);
 	// 	//Message msg = parsemsg()
 	// 	//exectue msg -> push appropriate send messages to receivers containers
 	}

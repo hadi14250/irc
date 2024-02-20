@@ -1,12 +1,17 @@
 #pragma once
 
 #include "Server.hpp"
+#include "Message.hpp"
+#include "Codes.hpp"
+#include "Client.hpp"
 
 //commands should inherit from message
 class Commands : public Message
 {
-private:
 public:
+	bool	invalidNick();
+	void	completeRegistration();
+
 	void	CAP();
 	void	PASS();
 	void	NICK();

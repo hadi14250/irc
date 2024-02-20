@@ -1,7 +1,5 @@
 #include "Server.hpp"
 
-volatile sig_atomic_t Server::_run = 1;
-
 int main(int argc, char **argv){
 	if (argc != 3)
 	{

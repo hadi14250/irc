@@ -46,18 +46,18 @@
 #define RPL_WHOISCHANNELS 319
 #define RPL_WHOISSPECIAL 320
 #define RPL_LISTSTART(servername, nick) \
-	":" + servername + " 321 " + nick + " Channel :Users Name\r\n"
+	":" + servername + " 321 " + nick + " Channel :Users Name\n"
 #define RPL_LIST(servername, nick, channel, users, mode, topic) \
-	":" + servername + " 322 " + nick + " " + channel + " " + users + " " + mode + " :" + topic + "\r\n"
+	":" + servername + " 322 " + nick + " " + channel + " " + users + " " + mode + " :" + topic + "\n"
 #define RPL_LISTEND(servername, nick) \
-	":" + servername + " 323 " + nick + " :End of /LIST\r\n"
+	":" + servername + " 323 " + nick + " :End of /LIST\n"
 #define RPL_CHANNELMODEIS(servername, nick, channel, modes) \
-	":" + servername + " 324 " + nick + " " + channel + " :+" + modes + "\r\n"
+	":" + servername + " 324 " + nick + " " + channel + " :+" + modes + "\n"
 #define RPL_CREATIONTIME 329
 #define RPL_WHOISACCOUNT 330
-#define RPL_NOTOPIC(servername, nick, channel) ":" + servername + " 331 " + nick + " " + channel + " :No topic is set\r\n"
+#define RPL_NOTOPIC(servername, nick, channel) ":" + servername + " 331 " + nick + " " + channel + " :No topic is set\n"
 #define RPL_TOPIC(servername, nick, channel, topic) \
-	":" + servername + " 332 " + nick + " " + channel + " :" + topic + "\r\n"
+	":" + servername + " 332 " + nick + " " + channel + " :" + topic + "\n"
 #define RPL_TOPICWHOTIME 333
 #define RPL_WHOISACTUALLY 338
 #define RPL_INVITING 341

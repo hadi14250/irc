@@ -13,7 +13,7 @@ public:
 	void	USER();
 	// void	ERROR();
 	// void	OPER();
-	// void	PING();
+	void	PONG();
 	// void	QUIT();
 	// void	MODE();
 

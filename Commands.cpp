@@ -9,6 +9,9 @@ public:
 	int							_fd;
 	std::string					_sender;
 	std::string					_recevier;
+	Client&	Sender; --> instead of std::string _sender and int _fd, just have a reference of the client object so it has all the details.
+	std::vector<Client &> _Recevier; --> vector of clients for _receiver incase of multiple fds when sending to channel
+
 }
 */
 
@@ -133,6 +136,11 @@ void	Commands::generateMessage(std::string src, int code, Client &client)
 	std::string codeStr = //convert code to string
 	std::string msg = ":" + src + " " + code + " " + client._nick + " :" + ParamMsg + "\r\n";
 	client._messages.push_back(msg);
+}
+
+void	Commands::PONG(Client &client){
+	//server PONG server nick
+	std::cout << client.
 }
 
 // void	Commands::QUIT()

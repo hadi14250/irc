@@ -65,7 +65,7 @@ public:
 	void				createServer();
 	static void			setSignals();
 	static std::string	getPassword();
-	// static std::string	getServerName();
+	static std::string	getServername();
 
 	
 	/********************** EXCEPTIONS **********************/

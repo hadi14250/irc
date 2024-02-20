@@ -35,7 +35,7 @@ private:
 	struct pollfd*			_pfds;
 	
 	static std::string		_password;
-	static std::string		_hostname;
+	static std::string		_servername;
 
 	Server();
 	Server(Server const &);
@@ -65,7 +65,7 @@ public:
 	void				createServer();
 	static void			setSignals();
 	static std::string	getPassword();
-	static std::string	getHostname();
+	// static std::string	getServerName();
 
 	
 	/********************** EXCEPTIONS **********************/

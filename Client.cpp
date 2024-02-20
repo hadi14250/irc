@@ -1,8 +1,8 @@
 #include "Client.hpp"
 
+// _mode('\0'),
 Client::Client()
-	:	_mode('\0'),
-		_listenSock(true),
+	:	_listenSock(true),
 		_authenticated(false),
 		_registered(false)
 {
@@ -13,9 +13,12 @@ void Client::printClient()
 	std::cout << "*****PRINTING CLIENT INFO*****\n";
 	std::cout	<< "_sockfd: " << _sockfd << "\n"
 				<< "_nick: " << _nick << "\n"
-				<< "_user: " << _user << "\n"
-				<< "_realName: " << _realName << "\n"
-				<< "_mode: " << _mode << "\n"
+				<< "_username: " << _username << "\n"
+				<< "_hostname: " << _hostname << "\n"
+				<< "_server: " << _server << "\n"
+				<< "_realname: " << _realname << "\n"
+				// << "_mode: " << _mode << "\n"
+				<< "_identifier: " << _identifier << "\n"
 				<< "_listenSock: " << _listenSock << "\n"
 				<< "_authenticated: " << _authenticated << "\n"
 				<< "_registered: " << _registered << "\n"

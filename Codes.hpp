@@ -1,12 +1,17 @@
 #pragma once
 
 //WELCOME
-#define RPL_WELCOME 001
+#define RPL_WELCOME(servername, nick, identifier) \
+":" + servername + " 001 " + nick + " :Welcome to the Internet Relay Network " + identifier + "\r\n"
 
 //PASS / USER
-#define ERR_NEEDMOREPARAMS 461
-#define ERR_ALREADYREGISTERED 462
-#define ERR_PASSWDMISMATCH 464
+//we might need to add command here
+#define ERR_NEEDMOREPARAMS (servername, nick) \
+":" + servername + " 461 " + nick + " :Need more parameters" + "\r\n"
+#define ERR_ALREADYREGISTERED (servername, nick) \
+":" + servername + " 462 " + nick + " :You are already registered" + "\r\n"
+#define ERR_PASSWDMISMATCH (servername, nick) \
+":" + servername + " 464 " + nick + " :You are already registered" + "\r\n"
 
 //NICK
 #define ERR_NONICKNAMEGIVEN 431

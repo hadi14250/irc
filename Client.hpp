@@ -6,16 +6,18 @@
 # include <poll.h>
 # include "Server.hpp"
 # include <deque>
-// # include "Message.hpp"
+# include "Message.hpp"
+# include "Commands.hpp"
 
 class Server;
-// class Message;
+// class Message; 
 
 class Client
 {
 private:
 	friend class Server; //Allows Server to access private members of Client
-	// friend class Message;
+	friend class Message;
+	friend class Commands;
 
 	int 					_sockfd;
 	std::string				_nick;
@@ -23,14 +25,13 @@ private:
 	std::string				_hostname;
 	std::string				_server;
 	std::string				_realname;
-	std::string				_identifier: //<nick>!<user>@<host>
-	// char					_mode; //do we need this?
+	std::string				_identifier; //<nick>!<user>@<host>
 	bool					_listenSock;
 	bool					_authenticated;
 	bool					_registered;
 	struct pollfd			_pfd;
 	std::deque<std::string>	_messages;
-
+	// char					_mode; //do we need this?
 	// Client const & operator=(Client const & src);
 public:
 	Client();

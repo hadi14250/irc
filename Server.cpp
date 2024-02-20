@@ -1,5 +1,10 @@
 #include "Server.hpp"
 
+volatile sig_atomic_t 		Server::_run = 1;
+std::map<int, Client>		Server::_pfdsMap;
+std::map<std::string, int>	Server::_nickMap;
+std::string					Server::_password;
+
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
 		_listenSockfd(-1),
@@ -291,6 +296,11 @@ std::string	Server::getPassword()
 {
 	return _password;
 }
+
+// std::string	getServername()
+// {
+// 	return _servername;
+// }
 
 /* 
 NOTES:

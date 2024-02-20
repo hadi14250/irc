@@ -22,29 +22,26 @@ All command functions should:
 //for now we will not give any capabilities to our server
 void	Commands::CAP()
 {
+	Client& client = Server::_pfdsMap[_fd];
 	if 	(_param.front() == "LS")
-	{
-		std::string msg = "CAP * LS :\r\n";
-		Client& client = Server::_pfdsMap[_fd];
-		client._messages.push_back(msg);
-	}
+		client._messages.push_back("CAP * LS :\r\n");
 	// else if (_param[0] == "REQ")
 	// 	//send CAP * ACK :param[1]
 
 }
 
+//if pass is not correct -> ERR_PASSWDMISMATCH
+//if pass is not present -> ERR_NEEDMOREPARAMS
+//if already authenticated -> ERR_ALREADYREGISTERED
 void	Commands::PASS()
 {
-	//if pass is not correct -> ERR_PASSWDMISMATCH
-	//if pass is not present -> ERR_NEEDMOREPARAMS
-	//if already authenticated -> ERR_ALREADYREGISTERED
 	Client& client = Server::_pfdsMap[_fd];
 	if (_param.empty())
-		generateMessage(Server::getHostname(), ERR_NEEDMOREPARAMS, client);
+		client._messages.push_back(ERR_NEEDMOREPARAMS(Server::getServername(), client._nick));
 	else if (client._authenticated == true)
-		generateMessage(Server::getHostname(), ERR_ALREADYREGISTERED, client);
+		client._messages.push_back(ERR_ALREADYREGISTERED(Server::getServername(), client._nick));
 	else if (_param.front() != Server::getPassword())
-		generateMessage(Server::getHostname(), ERR_PASSWDMISMATCH, client);
+		client._messages.push_back(ERR_PASSWDMISMATCH(Server::getServername(), client._nick));
 	else
 		client._authenticated = true;
 	//should we terminate the connction if there is passowrd error? if we do, we have to send ERROR command	
@@ -54,8 +51,10 @@ void	Commands::PASS()
 check for:
 -if nick is in use
 -if nick is invalid (no leading #, no leading " ", no leading :)*/
-void	Commands::NICK(Client client)
+void	Commands::NICK()
 {
+	Client& client = Server::_pfdsMap[_fd];
+
 	if (Server::_pfdsMap[_sender]._authenticated == false)
 		return ;
 	std::string msg;
@@ -114,27 +113,6 @@ void	Commands::completeRegistration(Client& client)
 	Server::nickMap[_nick] = client._pfd;
 }
 
-void	Commands::generateMessage(std::string src, int code, Client &client)
-{
-	std::string paramMsg;
-	switch(code) //can't use switch with strings...maybe make code a number and then convert to string
-	{
-		case RPL_WELCOME: 
-			paramMsg = "Welcome to ft-irc " + client._identifier + "!"; break;
-		case ERR_NEEDMOREPARAMS:
-			paramMsg = "More parameters needed"; break; //we may need to add comand to this too
-			//"<client> <command> :Not enough parameters"
-		case ERR_ALREADYREGISTERED:
-			paramMsg = "You are already registered"; break;
-		case ERR_PASSWDMISMATCH
-			paramMsg = "Invalid password"; break;
-		
-	}
-	std::string codeStr = //convert code to string
-	std::string msg = ":" + src + " " + code + " " + client._nick + " :" + ParamMsg + "\r\n";
-	client._messages.push_back(msg);
-}
-
 // void	Commands::QUIT()
 
 // void	Commands::EXIT()
@@ -190,3 +168,26 @@ authenticate securely before joining channels or sending messages.
 2. Client then must send standard nick and user to complete registration
 3. Server use 
 */
+
+/* DRAFTS:
+
+void	Commands::generateMessage(std::string src, int code, Client &client)
+{
+	std::string paramMsg;
+	switch(code) //can't use switch with strings...maybe make code a number and then convert to string
+	{
+		case RPL_WELCOME: 
+			paramMsg = "Welcome to ft-irc " + client._identifier + "!"; break;
+		case ERR_NEEDMOREPARAMS:
+			paramMsg = "More parameters needed"; break; //we may need to add comand to this too
+			//"<client> <command> :Not enough parameters"
+		case ERR_ALREADYREGISTERED:
+			paramMsg = "You are already registered"; break;
+		case ERR_PASSWDMISMATCH
+			paramMsg = "Invalid password"; break;
+		
+	}
+	std::string codeStr = //convert code to string
+	std::string msg = ":" + src + " " + code + " " + client._nick + " :" + ParamMsg + "\r\n";
+	client._messages.push_back(msg);
+}*/

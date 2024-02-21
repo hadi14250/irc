@@ -113,10 +113,7 @@ void	Server::addNewPfd(int tag)
 	
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
-	if(tag == LISTENFD)
-		newPfd.events = POLLIN;
-	else if (tag == CLIENTFD)
-		newPfd.events = POLLOUT;
+	newPfd.events = POLLIN | POLLOUT;
 	newClient._pfd = newPfd;
 
 	_pfdsMap[newClient._sockfd] = newClient;
@@ -164,44 +161,41 @@ void	Server::deletePfd(int fd)
 	_change = 1;
 }
 
-void	Server::readMsg(int fd)
+void Server::trimTrailingWhitespace(std::string& str) {
+    size_t endpos = str.find_last_not_of(" \t\r\n");
+    if (endpos != std::string::npos) {
+        str = str.substr(0, endpos + 1);
+    } else {
+        str.clear();
+    }
+}
+void	Server::testParse(Commands &msg)
 {
-	std::memset(_buf, 0, sizeof(_buf));
-	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
-	if (_readBytes <= 0)
-		deletePfd(fd);
-	else 
-	{
-		//PARSE MESSAGE:
-		std::cout << "buf: " << _buf << std::endl;
-		std::vector<std::string>	param;
-		std::vector<std::string>	receiver;
-		// std::vector<std::reference_wrapper<Client&> >	receiver;
-		// receiver.emplace_back(std::ref(Server::_pfdsMap[fd]));
-		char delimiter = ' ';
-		std::string token;
-		std::vector<std::string> tokens;
+	std::vector<std::string>	param;
+	std::vector<Client *>		receiver;
 
-		std::istringstream stream(_buf);
-		while (std::getline(stream, token))
+	std::string token;
+	std::vector<std::string> tokens;
+
+	std::istringstream stream(_buf);
+	while (std::getline(stream, token))
+	{
+		std::istringstream stream2(token);
+		std::string token2;
+		while (std::getline(stream2, token2, ' '))
 		{
-			std::istringstream stream2(token);
-			std::string token2;
-			while (std::getline(stream2, token2, delimiter))
+			trimTrailingWhitespace(token2);
+			if (!token2.empty())
 				tokens.push_back(token2);
-		}
-		for (std::vector<std::string>::iterator it = tokens.begin(); it != tokens.end(); it++ ){
-			std::cout << "token: " << *it << std::endl;
 		}
 		std::vector<std::string>::iterator it = tokens.begin();
 		it++;
 		for (; it != tokens.end(); it++)
 			param.push_back(*it);
-		Commands msg(fd, tokens.front(), param, Server::_pfdsMap[fd], receiver);
-		std::cout << "msg command: " << msg._command << std::endl;
-		for (std::vector<std::string>::iterator it = msg._param.begin(); it != msg._param.end(); it++)
-			std::cout << "msg param: " << *it << "\n";
-		//exectue msg -> push appropriate send messages to receivers containers
+		msg._command = tokens.front();
+		msg._param = param;
+		msg._receiver = receiver;
+		msg.printMsg();
 		if (msg._command == "CAP")
 			msg.CAP();
 		else if (msg._command == "PASS")
@@ -212,24 +206,38 @@ void	Server::readMsg(int fd)
 			msg.USER();
 		else if (msg._command == "PING")
 			msg.PONG();
+		tokens.clear();
+		param.clear();
+	}
+	
+}
+
+void	Server::readMsg(int fd)
+{
+	std::memset(_buf, 0, sizeof(_buf));
+	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
+	if (_readBytes <= 0)
+		deletePfd(fd);
+	else 
+	{
+		//PARSE AND EXECUTE ALL MESSAGES:
+		Commands msg(fd, Server::_pfdsMap[fd]);
+		testParse(msg);
+		Server::_pfdsMap[fd].printPendingMsgs();
 	}
 
 }
 
 void	Server::sendMsg(int fd)
 {
-	std::cout << "inside sendmsg\n";
 	Client &client = _pfdsMap[fd];
-	std::cout << "fd: " << fd << std::endl;
 	std::deque<std::string>::iterator it = client._messages.begin();
-	std::cout << "string: " << *it << std::endl;
 	for (; it != client._messages.end(); it++)
 	{
 		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
 			std::cerr << "Failed to send msg: " << *it << std::endl;
 	}
 	client._messages.clear();
-	std::cout << "end sendmsg\n";
 }
 
 /* 
@@ -247,18 +255,14 @@ In while loop
 void	Server::createServer()
 {
 	makeListenSockfd();
-	// printPfdsMap();
 	while (_run == 1)
 	{
 		_change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
-		std::cout << "polled\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
-			std::cout << "inside for loop\n";
-			std::cout << "_pfdsCount: " << _pfdsCount << "\n";
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
@@ -273,14 +277,12 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLIN)
 			{
-				std::cout << "POLLIN\n";
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
 				//fd is ready for writing - use SEND HERE
-				std::cout << "go here?\n"; 
 				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)

@@ -1,22 +1,40 @@
 #include "Commands.hpp"
 
-Commands::Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver)
+// Commands::Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver)
+// 	:	_senderFd(fd),
+// 		_command(command),
+// 		_param(param),
+// 		_sender(sender),
+// 		_receiver(receiver)
+// {
+// }
+
+Commands::Commands(int fd, Client & sender)
 	:	_senderFd(fd),
-		_command(command),
-		_param(param),
-		_sender(sender),
-		_receiver(receiver)
+		_sender(sender)
 {
+}
+
+void	Commands::printMsg()
+{
+	std::cout 	<< "MESSSAGE:\n"
+				<< "_senderFd: " << _senderFd << "\n"
+				<< "_command: " << _command << "\n"
+				<< "param: " << std::flush;
+	for (std::vector<std::string>::iterator it = _param.begin(); it != _param.end(); it++)
+		std::cout << *it << ", ";
+	std::cout	<< "\n"
+				<< "_sender: " << _sender._nick << "\n"
+				<< "_receiver: " << std::flush;
+	for (std::vector<Client *>::iterator it = _receiver.begin(); it != _receiver.end(); it++)
+		std::cout << (*it)->_nick << ", ";
+	std::cout << std::endl;
 }
 
 //for now we will not give any capabilities to our server
 void	Commands::CAP()
 {
-	// std::cout << "_param: [" << _param.front() << "]" << std::endl;
-	std::cout << "inside CAP function\n";
-	std::cout << "CAP PARAM: [" << _param.front() << "]" << std::endl;
 	if 	(_param[0].find("LS") != std::string::npos){
-		std::cout << "here\n";
 		_sender._messages.push_back("CAP * LS :\r\n");
 	}
 	// else if (_param[0] == "REQ")
@@ -75,6 +93,7 @@ bool	Commands::invalidNick()
 
 void	Commands::NICK()
 {
+	std::cout << "inside Nick function\n";
 	if (_sender._authenticated == false)
 		return ;
 	if (_param.empty())

@@ -70,8 +70,8 @@ public:
 	static std::string	getServername();
 
 	/********************** TEMPORARY ***********************/
-	// Message	parseMsg(char *buf, int fd);
-
+	void	testParse(Commands & msg);
+	void	trimTrailingWhitespace(std::string& str);
 	
 	/********************** EXCEPTIONS **********************/
 

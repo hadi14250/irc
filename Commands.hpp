@@ -15,8 +15,10 @@ public:
 	std::string 				_command;
 	std::vector<std::string>	_param;
 	Client&						_sender;
-	std::vector<std::string>	_receiver;
-	Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver);
+	std::vector<Client *>		_receiver;
+	
+	Commands(int fd, Client & sender);
+	void	printMsg();
 
 	void	WelcomeMsg();
 	void	MOTD();

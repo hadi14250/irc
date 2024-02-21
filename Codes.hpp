@@ -24,7 +24,7 @@
 #define ERR_ALREADYREGISTERED(servername, nick) \
 	":" + servername + " 462 " + nick + " :You are already registered\r\n"
 #define ERR_PASSWDMISMATCH(servername, nick) \
-	":" + servername + " 464 " + nick + " :You are already registered\r\n"
+	":" + servername + " 464 " + nick + " :invalid password\r\n"
 
 //NICK
 #define ERR_NONICKNAMEGIVEN(servername, nick) \

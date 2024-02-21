@@ -33,5 +33,4 @@
 	":" + servername + " 432 " + nick + " :Invalid nickname\r\n"
 #define ERR_NICKNAMEINUSE(servername, nick) \
 	":" + servername + " 433 * " + nick + " :Nickname already in use\r\n"
-#define NICKNAME(identifier, nick) \
-	":" + identifier + " NICK :" + nick + "\r\n"
+#define NICKNAME(identifier, nick) ":" + identifier + " NICK :" + nick + "\r\n"

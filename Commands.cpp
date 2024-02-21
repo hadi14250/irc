@@ -12,8 +12,13 @@ Commands::Commands(int fd, std::string command, std::vector<std::string> param, 
 //for now we will not give any capabilities to our server
 void	Commands::CAP()
 {
-	if 	(_param.front() == "LS")
+	// std::cout << "_param: [" << _param.front() << "]" << std::endl;
+	std::cout << "inside CAP function\n";
+	std::cout << "CAP PARAM: [" << _param.front() << "]" << std::endl;
+	if 	(_param[0].find("LS") != std::string::npos){
+		std::cout << "here\n";
 		_sender._messages.push_back("CAP * LS :\r\n");
+	}
 	// else if (_param[0] == "REQ")
 	// 	//send CAP * ACK :param[1]
 
@@ -117,6 +122,10 @@ void	Commands::USER()
 	}
 }
 
+void	Commands::PONG(){
+	_sender._messages.push_back(Server::getServername()
+        + " PONG " + Server::getServername() + " :" + _sender._nick + "\r\n");
+}
 
 // void	Commands::QUIT()
 

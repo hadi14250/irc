@@ -29,6 +29,7 @@ private:
 	bool					_listenSock;
 	bool					_authenticated;
 	bool					_registered;
+	bool					_isOper;
 	struct pollfd			_pfd;
 	std::deque<std::string>	_messages;
 	// char					_mode; //do we need this?

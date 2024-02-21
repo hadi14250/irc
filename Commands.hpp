@@ -17,7 +17,7 @@ public:
 	void	NICK();
 	void	USER();
 	// void	ERROR();
-	// void	OPER();
+	void	OPER();
 	void	PONG();
 	// void	QUIT();
 	// void	MODE();

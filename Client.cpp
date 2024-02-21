@@ -4,7 +4,8 @@
 Client::Client()
 	:	_listenSock(true),
 		_authenticated(false),
-		_registered(false)
+		_registered(false),
+		_isOper(false);
 {
 }
 
@@ -22,6 +23,7 @@ void Client::printClient()
 				<< "_listenSock: " << _listenSock << "\n"
 				<< "_authenticated: " << _authenticated << "\n"
 				<< "_registered: " << _registered << "\n"
+				<< "_isOper: " << _isOper << "\n"
 				<< "FD STRUCT INFO:" << "\n"
 				<< "fd: " << _pfd.fd << "\n";
 	if (_pfd.events == POLLIN)

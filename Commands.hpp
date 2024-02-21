@@ -9,6 +9,8 @@
 class Commands : public Message
 {
 public:
+	void	WelcomeMsg();
+	void	MOTD();
 	bool	invalidNick();
 	void	completeRegistration();
 
@@ -28,7 +30,6 @@ public:
 	// void	INVITE();
 	// void	KICK();
 
-	// void	MOTD();
 	// void	MODE();
 	// void	PRIVMSG();
 	// void	NOTICE();

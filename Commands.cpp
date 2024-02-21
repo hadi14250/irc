@@ -23,17 +23,30 @@ void	Commands::PASS()
 	//should we terminate the connction if there is passowrd error? if we do, we have to send ERROR command	
 }
 
+//adjust welcome message
+void	Commands::WelcomeMsg()
+{
+	_sender._messages.push_back(RPL_WELCOME(Server::getServername(), _sender._nick, _sender._identifier));
+	_sender._messages.push_back(RPL_YOURHOST(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_CREATED(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_MYINFO(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_ISUPPORT(Server::getServername(), _sender._nick));
+}
+
+//adjust motd
+void	Commands::MOTD()
+{
+	_sender._messages.push_back(RPL_MOTDSTART(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_MOTD(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_ENDOFMOTD(Server::getServername(), _sender._nick));
+}
+
 void	Commands::completeRegistration()
 {
 	_sender._registered = true;
 	_sender._identifier = _sender._nick + "!" + _sender._username + "@" + _sender._hostname;
-	_sender._messages.push_back(RPL_WELCOME(Server::getServername(), _sender._nick, _sender._identifier));
-	//send 002-005
-	//send 251-255
-	//265, 266, 250, 
-	//375 - MOTD START
-	//372 - MOTD
-	//376 - MOTD END
+	WelcomeMsg();
+	MOTD();
 	Server::_nickMap[_sender._nick] = _sender._pfd.fd;
 }
 
@@ -44,6 +57,7 @@ bool	Commands::invalidNick()
 		return true;
 	return false;
 }
+
 
 void	Commands::NICK()
 {

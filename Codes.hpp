@@ -3,7 +3,20 @@
 //WELCOME
 #define RPL_WELCOME(servername, nick, identifier) \
 	":" + servername + " 001 " + nick + " :Welcome to the Internet Relay Network " + identifier + "\r\n"
-
+#define RPL_YOURHOST(servername, nick) \
+	":" + servername + " 002 " + nick + " :Your host is " + servername + "\r\n"
+#define RPL_CREATED(servername, nick) \
+	":" + servername + " 003 " + nick + " :This server was created February 29, 2024\r\n"
+#define RPL_MYINFO(servername, nick) \
+	":" + servername + " 004 " + nick + " " + "\r\n"
+#define RPL_ISUPPORT(servername, nick) \
+	":" + servername + " 005 " + nick + " " + "\r\n"
+#define RPL_MOTD(servername, nick) \
+	":" + servername + " 372 " + nick + " :-MOTD MAIN BODY\r\n"
+#define RPL_MOTDSTART(servername, nick) \
+	":" + servername + " 375 " + nick + " :-Message of the day\r\n"
+#define RPL_ENDOFMOTD(servername, nick) \
+	":" + servername + " 376 " + nick + " :End of /MOTD command\r\n"
 //PASS / USER
 //we might need to add command here
 #define ERR_NEEDMOREPARAMS(command) \

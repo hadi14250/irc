@@ -1,5 +1,14 @@
 #include "Commands.hpp"
 
+Commands::Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver)
+	:	_senderFd(fd),
+		_command(command),
+		_param(param),
+		_sender(sender),
+		_receiver(receiver)
+{
+}
+
 //for now we will not give any capabilities to our server
 void	Commands::CAP()
 {
@@ -89,7 +98,7 @@ void	Commands::NICK()
 /* USER username hostname servername(of user) :<realname(can contain spaces)*/
 void	Commands::USER()
 {
-	Client& _sender = Server::_pfdsMap[_fd];
+	Client& _sender = Server::_pfdsMap[_senderFd];
 
 	if (_sender._authenticated == false)
 		return ;

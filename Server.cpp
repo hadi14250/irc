@@ -17,7 +17,7 @@ Server::Server(std::string const & port, std::string const & pswd)
 {
 	_password = pswd;
 	checkPort();
-	checkPassword();
+	// checkPassword();
 }
 
 Server::~Server()
@@ -28,31 +28,6 @@ Server::~Server()
 	if (_pfds)
 		delete [] _pfds;
 	//close any fds here
-}
-
-/*
-we can change pswd policy later 
-*/
-void	Server::printPasswordPolicy()
-{
-	std::cout	<< "Password must be 8 - 12 characters in length and may only "
-				<< "contain uppercase letters, lowercase letters, numbers, and "
-				<< "the following symbols: !, @, $, *"
-				<< std::endl;
-}
-
-void	Server::checkPassword() const
-{
-	size_t	len = _password.length();
-
-	if (len < 8 || len > 12)
-		throw InvalidPasswordException();
-	for (std::string::const_iterator it = _password.begin(); it != _password.end(); it++)
-	{
-		if (!std::isalnum(*it) && 
-			(*it != '!' || *it != '@' || *it != '$' || *it != '*'))
-			throw InvalidPasswordException();
-	}
 }
 
 /* 
@@ -194,8 +169,35 @@ void	Server::readMsg(int fd)
 		deletePfd(fd);
 	else 
 	{
-	// 	//Message msg = parsemsg()
-	// 	//exectue msg -> push appropriate send messages to receivers containers
+		//PARSE MESSAGE:
+
+		std::vector<std::string>	param;
+		std::vector<std::string>	receiver;
+		// std::vector<std::reference_wrapper<Client&> >	receiver;
+		// receiver.emplace_back(std::ref(Server::_pfdsMap[fd]));
+		char delimiter = ' ';
+		std::string token;
+		std::vector<std::string> tokens;
+
+		std::istringstream stream(_buf);
+		while (std::getline(stream, token, delimiter))
+			tokens.push_back(token);
+
+		std::vector<std::string>::iterator it = tokens.begin();
+		it++;
+		for (; it != tokens.end(); it++)
+			param.push_back(*it);
+		Commands msg(fd, tokens.front(), param, Server::_pfdsMap[fd], receiver);
+		
+		//exectue msg -> push appropriate send messages to receivers containers
+		if (msg._command == "CAP")
+			msg.CAP();
+		else if (msg._command == "PASS")
+			msg.PASS();
+		else if (msg._command == "NICK")
+			msg.NICK();
+		else if (msg._command == "USER")
+			msg.USER();
 	}
 }
 
@@ -227,18 +229,21 @@ In while loop
 void	Server::createServer()
 {
 	makeListenSockfd();
+	// printPfdsMap();
 	while (_run == 1)
 	{
 		_change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
+		std::cout << "polled\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
 				{
+					std::cout << "adding a new client\n";
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 				}
 				catch(const std::exception& e)
@@ -265,6 +270,8 @@ void	Server::createServer()
 			copyPfdMapToArray();
 	}
 }
+
+
 
 void	Server::signalHandler(int signum)
 {
@@ -416,4 +423,26 @@ else
 	std::cout << "sent " << ret.c_str() << "\n"; 
 	// :localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
 }
+
+// void	Server::printPasswordPolicy()
+// {
+// 	std::cout	<< "Password must be 8 - 12 characters in length and may only "
+// 				<< "contain uppercase letters, lowercase letters, numbers, and "
+// 				<< "the following symbols: !, @, $, *"
+// 				<< std::endl;
+// }
+
+// void	Server::checkPassword() const
+// {
+// 	size_t	len = _password.length();
+
+// 	if (len < 8 || len > 12)
+// 		throw InvalidPasswordException();
+// 	for (std::string::const_iterator it = _password.begin(); it != _password.end(); it++)
+// 	{
+// 		if (!std::isalnum(*it) && 
+// 			(*it != '!' || *it != '@' || *it != '$' || *it != '*'))
+// 			throw InvalidPasswordException();
+// 	}
+// }
 */

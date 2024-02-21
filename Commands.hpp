@@ -1,14 +1,23 @@
 #pragma once
 
-#include "Server.hpp"
-#include "Message.hpp"
-#include "Codes.hpp"
-#include "Client.hpp"
+# include "Server.hpp"
+# include "Codes.hpp"
+# include "Client.hpp"
+# include <vector>
+# include <map>
 
-//commands should inherit from message
-class Commands : public Message
+class Client;
+
+class Commands
 {
 public:
+	int							_senderFd;
+	std::string 				_command;
+	std::vector<std::string>	_param;
+	Client&						_sender;
+	std::vector<std::string>	_receiver;
+	Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver);
+
 	void	WelcomeMsg();
 	void	MOTD();
 	bool	invalidNick();

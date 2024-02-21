@@ -14,6 +14,8 @@
 # include <cstring>
 # include <csignal>
 # include "Client.hpp"
+# include "Commands.hpp"
+# include "sstream"
 
 class Client;
 
@@ -41,7 +43,7 @@ private:
 	Server(Server const &);
 	Server const &	operator=(Server const &);
 
-	void		checkPassword() const;
+	// void		checkPassword() const;
 	void		checkPort() const;
 	void		makeListenSockfd();
 	void		addNewPfd(int tag);
@@ -65,11 +67,14 @@ public:
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 
-	static void			printPasswordPolicy();
+	// static void			printPasswordPolicy();
 	void				createServer();
 	static void			setSignals();
 	static std::string	getPassword();
-	// static std::string	getServerName();
+	static std::string	getServername();
+
+	/********************** TEMPORARY ***********************/
+	// Message	parseMsg(char *buf, int fd);
 
 	
 	/********************** EXCEPTIONS **********************/

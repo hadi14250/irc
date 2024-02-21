@@ -1,116 +1,130 @@
 #include "Commands.hpp"
 
-/* 
-class Message
+Commands::Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver)
+	:	_senderFd(fd),
+		_command(command),
+		_param(param),
+		_sender(sender),
+		_receiver(receiver)
 {
-public:
-	std::string 				_command;
-	std::vector<std::string>	_param;
-	int							_fd;
-	std::string					_sender;
-	std::string					_recevier;
 }
-*/
-
-/* 
-All command functions should:
-1. Set info (if applicable)
-2. generate a message (if applicable)
-3. push message to appropriate clients
-*/
 
 //for now we will not give any capabilities to our server
 void	Commands::CAP()
 {
-	Client& client = Server::_pfdsMap[_fd];
-	if 	(_param.front() == "LS")
-		client._messages.push_back("CAP * LS :\r\n");
+	// std::cout << "_param: [" << _param.front() << "]" << std::endl;
+	std::cout << "inside CAP function\n";
+	std::cout << "CAP PARAM: [" << _param.front() << "]" << std::endl;
+	if 	(_param[0].find("LS") != std::string::npos){
+		std::cout << "here\n";
+		_sender._messages.push_back("CAP * LS :\r\n");
+	}
 	// else if (_param[0] == "REQ")
 	// 	//send CAP * ACK :param[1]
 
 }
 
-//if pass is not correct -> ERR_PASSWDMISMATCH
-//if pass is not present -> ERR_NEEDMOREPARAMS
-//if already authenticated -> ERR_ALREADYREGISTERED
 void	Commands::PASS()
 {
-	Client& client = Server::_pfdsMap[_fd];
 	if (_param.empty())
-		client._messages.push_back(ERR_NEEDMOREPARAMS(Server::getServername(), client._nick));
-	else if (client._authenticated == true)
-		client._messages.push_back(ERR_ALREADYREGISTERED(Server::getServername(), client._nick));
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
+	else if (_sender._authenticated == true)
+		_sender._messages.push_back(ERR_ALREADYREGISTERED(Server::getServername(), _sender._nick));
 	else if (_param.front() != Server::getPassword())
-		client._messages.push_back(ERR_PASSWDMISMATCH(Server::getServername(), client._nick));
+		_sender._messages.push_back(ERR_PASSWDMISMATCH(Server::getServername(), _sender._nick));
 	else
-		client._authenticated = true;
+		_sender._authenticated = true;
 	//should we terminate the connction if there is passowrd error? if we do, we have to send ERROR command	
 }
 
-/*
-check for:
--if nick is in use
--if nick is invalid (no leading #, no leading " ", no leading :)*/
+//adjust welcome message
+void	Commands::WelcomeMsg()
+{
+	_sender._messages.push_back(RPL_WELCOME(Server::getServername(), _sender._nick, _sender._identifier));
+	_sender._messages.push_back(RPL_YOURHOST(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_CREATED(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_MYINFO(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_ISUPPORT(Server::getServername(), _sender._nick));
+}
+
+//adjust motd
+void	Commands::MOTD()
+{
+	_sender._messages.push_back(RPL_MOTDSTART(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_MOTD(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_ENDOFMOTD(Server::getServername(), _sender._nick));
+}
+
+void	Commands::completeRegistration()
+{
+	_sender._registered = true;
+	_sender._identifier = _sender._nick + "!" + _sender._username + "@" + _sender._hostname;
+	WelcomeMsg();
+	MOTD();
+	Server::_nickMap[_sender._nick] = _sender._pfd.fd;
+}
+
+bool	Commands::invalidNick()
+{
+	char c = _param[0][0];
+	if (c == '#' || c == '&' || c == ':' || _param[0].find_first_of(" ") != std::string::npos)
+		return true;
+	return false;
+}
+
+
 void	Commands::NICK()
 {
-	Client& client = Server::_pfdsMap[_fd];
-
-	if (Server::_pfdsMap[_sender]._authenticated == false)
+	if (_sender._authenticated == false)
 		return ;
-	std::string msg;
-	if (/*param is empty*/)
-		msg = src + ERR_NONICKNAMEGIVEN + _nick + ":no nickname given\r\n";
+	if (_param.empty())
+		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(Server::getServername(), _sender._nick));
 	else
 	{
-		std::map<int, Client>::iterator it = Server::_pfdsMap.find(_param[0]);
-		if (it != Server::_pfdsMap.end())
-			msg = src + ERR_NICKNAMEINUSE + _nick + ":nickname already taken. Please choose another nickname\r\n";
-		else if (/*check for invalid nickname format*/)
-			msg = src + ERR_ERRONEUSNICKNAME + _nick + ":invalid nickname\r\n";
+		std::map<std::string, int>::iterator it = Server::_nickMap.find(_param[0]);
+		if (it != Server::_nickMap.end())
+			_sender._messages.push_back(ERR_NICKNAMEINUSE(Server::getServername(), _sender._nick));
+		else if (invalidNick())
+			_sender._messages.push_back(ERR_ERRONEUSNICKNAME(Server::getServername(), _sender._nick));
 		else
 		{
-			//set client _nick
-			if (/* client registration is false && user has already been filled out*/)
-				//set registration to true
-				//msg = welcome msg
-				//add to nicklookup
-			else (/*if client registration is set already*/)
-				//msg ex: :h!~hbui-vu@127.0.0.1 NICK  hello :hello
+			_sender._nick = _param[0];
+			if (_sender._registered == true)
+			{
+				_sender._messages.push_back(NICKNAME(_sender._identifier, _sender._nick));
+				_sender._identifier = _sender._nick + "!" + _sender._username + "@" + _sender._hostname;
+			}
+			else if (!_sender._username.empty())
+				completeRegistration();
 		}
-		//push message into container
 	}
 }
 
 /* USER username hostname servername(of user) :<realname(can contain spaces)*/
 void	Commands::USER()
 {
-	Client& client = Server::_pfdsMap[_fd];
+	Client& _sender = Server::_pfdsMap[_senderFd];
 
-	if (client._authenticated == false)
+	if (_sender._authenticated == false)
 		return ;
-	if (client._registered == true || !client._username.empty()) //but what happens if no nick
-		generateMessage(Server::getHostname(), ERR_ALREADYREGISTERED, client);
+	if (_sender._registered == true || !_sender._username.empty()) //but what happens if no nick
+		_sender._messages.push_back(ERR_ALREADYREGISTERED(Server::getServername(), _sender._nick));
 	else if (_param.size() < 4)
-		//ERR_NEEDMOREPARAMS
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
 	else
 	{
-		client._username = _param[0];
-		client._hostname = _param[1];
-		client._server = _param[2];
-		client._realname = _param[3];
-		if (_nick != "")
-			completeRegistration(client);
+		_sender._username = _param[0];
+		_sender._hostname = _param[1];
+		_sender._server = _param[2];
+		_sender._realname = _param[3];
+		if (_sender._nick != "")
+			completeRegistration();
 	}
-	if (!msg.empty())
-		client._messages.push_back(msg);
 }
 
-void	Commands::completeRegistration(Client& client)
-{
-	client._registered = true;
-	client._identifier = client._nick + "!" + client._username + "@" + client._hostname;
-	makeMessage(Server::getHostname(), RPL_WELCOME, client)
-	Server::nickMap[_nick] = client._pfd;
+void	Commands::PONG(){
+	_sender._messages.push_back(Server::getServername()
+        + " PONG " + Server::getServername() + " :" + _sender._nick + "\r\n");
 }
 
 // void	Commands::QUIT()
@@ -120,8 +134,8 @@ void	Commands::completeRegistration(Client& client)
 /*
 <type> <command> <code> [<context>...] <description>
 type: FAIL, WARN, or NOTE, 
-command: Indicates the user command which this reply is related to, or is * for messages initiated outside client commands (for example, an on-connect message).
-code: Machine-readable reply code representing the meaning of the message to client software.
+command: Indicates the user command which this reply is related to, or is * for messages initiated outside _sender commands (for example, an on-connect message).
+code: Machine-readable reply code representing the meaning of the message to _sender software.
 context: Optional parameters that give humans extra context as to where and why the reply was spawned (for example, a particular subcommand or sub-process).
 description:  required plain-text description of the reply which is shown to users.
 */
@@ -138,10 +152,10 @@ description:  required plain-text description of the reply which is shown to use
 // }
 
 /* NOTES:
-CAP = client capability negotiation
+CAP = _sender capability negotiation
 allows IRC clients and servers to negotiate new features in a backwards-compatible way
--basically allows client and server to operate with the same version of capabilities (protocol extensions)
-1. upon connection, client will send server a CAP message to start negotiation
+-basically allows _sender and server to operate with the same version of capabilities (protocol extensions)
+1. upon connection, _sender will send server a CAP message to start negotiation
 	-CAP LS [version] - to discover available capabilities on server
 	or 
 	-CAP REQ - to blindly request a set of capabilities
@@ -157,7 +171,7 @@ can receive a list of all modes for each user, allowing for more granular contro
 This capability allows clients to include the full userhost information (nickname!username@hostname) in NAMES list 
 responses. Without this capability, clients only receive nicknames in NAMES responses, and they would need to send 
 additional WHO commands to retrieve userhost information for each nickname. Enabling userhost-in-names reduces the 
-number of required WHO commands and can improve client performance.
+number of required WHO commands and can improve _sender performance.
 
 3. sasl: 
 SASL (Simple Authentication and Security Layer) is a method for authentication between clients and servers. The sasl 
@@ -171,16 +185,16 @@ authenticate securely before joining channels or sending messages.
 
 /* DRAFTS:
 
-void	Commands::generateMessage(std::string src, int code, Client &client)
+void	Commands::generateMessage(std::string src, int code, Client &_sender)
 {
 	std::string paramMsg;
 	switch(code) //can't use switch with strings...maybe make code a number and then convert to string
 	{
 		case RPL_WELCOME: 
-			paramMsg = "Welcome to ft-irc " + client._identifier + "!"; break;
+			paramMsg = "Welcome to ft-irc " + _sender._identifier + "!"; break;
 		case ERR_NEEDMOREPARAMS:
 			paramMsg = "More parameters needed"; break; //we may need to add comand to this too
-			//"<client> <command> :Not enough parameters"
+			//"<_sender> <command> :Not enough parameters"
 		case ERR_ALREADYREGISTERED:
 			paramMsg = "You are already registered"; break;
 		case ERR_PASSWDMISMATCH
@@ -188,6 +202,6 @@ void	Commands::generateMessage(std::string src, int code, Client &client)
 		
 	}
 	std::string codeStr = //convert code to string
-	std::string msg = ":" + src + " " + code + " " + client._nick + " :" + ParamMsg + "\r\n";
-	client._messages.push_back(msg);
+	std::string msg = ":" + src + " " + code + " " + _sender._nick + " :" + ParamMsg + "\r\n";
+	_sender._messages.push_back(msg);
 }*/

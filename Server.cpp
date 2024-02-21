@@ -4,6 +4,7 @@ volatile sig_atomic_t 		Server::_run = 1;
 std::map<int, Client>		Server::_pfdsMap;
 std::map<std::string, int>	Server::_nickMap;
 std::string					Server::_password;
+std::string					Server::_servername;
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
@@ -27,31 +28,6 @@ Server::~Server()
 	if (_pfds)
 		delete [] _pfds;
 	//close any fds here
-}
-
-/*
-we can change pswd policy later 
-*/
-void	Server::printPasswordPolicy()
-{
-	std::cout	<< "Password must be 8 - 12 characters in length and may only "
-				<< "contain uppercase letters, lowercase letters, numbers, and "
-				<< "the following symbols: !, @, $, *"
-				<< std::endl;
-}
-
-void	Server::checkPassword() const
-{
-	size_t	len = _password.length();
-
-	if (len < 8 || len > 12)
-		throw InvalidPasswordException();
-	for (std::string::const_iterator it = _password.begin(); it != _password.end(); it++)
-	{
-		if (!std::isalnum(*it) && 
-			(*it != '!' || *it != '@' || *it != '$' || *it != '*'))
-			throw InvalidPasswordException();
-	}
 }
 
 /* 
@@ -137,7 +113,7 @@ void	Server::addNewPfd(int tag)
 	
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
-	newPfd.events = POLLIN | POLLOUT;
+	newPfd.events = POLLIN;
 	newClient._pfd = newPfd;
 
 	_pfdsMap[newClient._sockfd] = newClient;
@@ -193,23 +169,26 @@ void	Server::readMsg(int fd)
 		deletePfd(fd);
 	else 
 	{
-		parseMsg(fd, _buf);
 	// 	//Message msg = parsemsg()
 	// 	//exectue msg -> push appropriate send messages to receivers containers
 	}
+
 }
 
 void	Server::sendMsg(int fd)
 {
-	Client client = _pfdsMap[fd];
+	std::cout << "inside sendmsg\n";
+	Client &client = _pfdsMap[fd];
+	std::cout << "fd: " << fd << std::endl;
 	std::deque<std::string>::iterator it = client._messages.begin();
-
+	std::cout << "string: " << *it << std::endl;
 	for (; it != client._messages.end(); it++)
 	{
 		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
 			std::cerr << "Failed to send msg: " << *it << std::endl;
 	}
 	client._messages.clear();
+	std::cout << "end sendmsg\n";
 }
 
 /* 
@@ -227,18 +206,23 @@ In while loop
 void	Server::createServer()
 {
 	makeListenSockfd();
+	// printPfdsMap();
 	while (_run == 1)
 	{
 		_change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
+		std::cout << "polled\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
+			std::cout << "inside for loop\n";
+			std::cout << "_pfdsCount: " << _pfdsCount << "\n";
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
 				{
+					std::cout << "adding a new client\n";
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 				}
 				catch(const std::exception& e)
@@ -248,12 +232,14 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLIN)
 			{
+				std::cout << "POLLIN\n";
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
 				//fd is ready for writing - use SEND HERE
+				std::cout << "go here?\n"; 
 				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)
@@ -265,6 +251,8 @@ void	Server::createServer()
 			copyPfdMapToArray();
 	}
 }
+
+
 
 void	Server::signalHandler(int signum)
 {
@@ -298,10 +286,10 @@ std::string	Server::getPassword()
 	return _password;
 }
 
-// std::string	getServername()
-// {
-// 	return _servername;
-// }
+std::string	Server::getServername()
+{
+	return _servername;
+}
 
 /* 
 NOTES:
@@ -416,4 +404,26 @@ else
 	std::cout << "sent " << ret.c_str() << "\n"; 
 	// :localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
 }
+
+// void	Server::printPasswordPolicy()
+// {
+// 	std::cout	<< "Password must be 8 - 12 characters in length and may only "
+// 				<< "contain uppercase letters, lowercase letters, numbers, and "
+// 				<< "the following symbols: !, @, $, *"
+// 				<< std::endl;
+// }
+
+// void	Server::checkPassword() const
+// {
+// 	size_t	len = _password.length();
+
+// 	if (len < 8 || len > 12)
+// 		throw InvalidPasswordException();
+// 	for (std::string::const_iterator it = _password.begin(); it != _password.end(); it++)
+// 	{
+// 		if (!std::isalnum(*it) && 
+// 			(*it != '!' || *it != '@' || *it != '$' || *it != '*'))
+// 			throw InvalidPasswordException();
+// 	}
+// }
 */

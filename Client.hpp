@@ -6,17 +6,15 @@
 # include <poll.h>
 # include "Server.hpp"
 # include <deque>
-# include "Message.hpp"
 # include "Commands.hpp"
 
 class Server;
-// class Message; 
+class Commands;
 
 class Client
 {
 private:
 	friend class Server; //Allows Server to access private members of Client
-	friend class Message;
 	friend class Commands;
 
 	int 					_sockfd;

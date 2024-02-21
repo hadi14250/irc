@@ -67,6 +67,7 @@
 		"utility": "cpp",
 		"vector": "cpp",
 		"csignal": "cpp",
+<<<<<<< HEAD
 		"__verbose_abort": "cpp",
 		"charconv": "cpp",
 		"clocale": "cpp",
@@ -74,5 +75,12 @@
 		"__bits": "cpp",
 		"compare": "cpp",
 		"concepts": "cpp"
+=======
+		"*.tcc": "cpp",
+		"clocale": "cpp",
+		"memory_resource": "cpp",
+		"numeric": "cpp",
+		"random": "cpp"
+>>>>>>> origin/huong
 	}
 }

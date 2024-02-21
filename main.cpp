@@ -4,7 +4,7 @@ int main(int argc, char **argv){
 	if (argc != 3)
 	{
 		std::cout << "Usage: ./irc <port> <password>\n";
-		Server::printPasswordPolicy();
+		// Server::printPasswordPolicy();
 		return (1);
 	}
 	try
@@ -12,10 +12,6 @@ int main(int argc, char **argv){
 		Server::setSignals();
 		Server server(argv[1], argv[2]);
 		server.createServer();
-	}
-	catch(Server::InvalidPasswordException())
-	{
-		Server::printPasswordPolicy();
 	}
 	catch(const std::exception& e)
 	{

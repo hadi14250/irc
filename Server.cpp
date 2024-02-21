@@ -159,33 +159,69 @@ void	Server::deletePfd(int fd)
 	_change = 1;
 }
 
-/* 
-	btw while I was trying to figure out how things were running here, I found few features of the command class
-	that I wouldn't use! first of all I changed the param from vector to string as a suggestion from abdulaziz because commands work differently and
-	having params as a vector could cause more trouble than ease like take privmsg for example it takes the cmd, recipient, and text
-	so if storing in a vecotr it should be split into proper chunks and the other commands work differently too
-	so I created few tiny util funtions that will help us like remove cmd, get command, remove trailing new line, split
-	if u want me to write a small description above those funtions on how they work lemme know!
+void Server::trimTrailingWhitespace(std::string& str) {
+    size_t endpos = str.find_last_not_of(" \t\r\n");
+    if (endpos != std::string::npos) {
+        str = str.substr(0, endpos + 1);
+    } else {
+        str.clear();
+    }
+}
+void	Server::testParse(Commands &msg)
+{
+	std::vector<std::string>	param;
+	std::vector<Client *>		receiver;
 
-	I didn't want to mess with Commands.cpp or destory it so for now I have created CommandsV2, if its good then jsut destroy Commands.*pp
-	and rename CommandsV2 to Commands.* and don't forget to modify the makefile too in that case!
+	std::string token;
+	std::vector<std::string> tokens;
 
- */
+	std::istringstream stream(_buf);
+	while (std::getline(stream, token))
+	{
+		std::istringstream stream2(token);
+		std::string token2;
+		while (std::getline(stream2, token2, ' '))
+		{
+			trimTrailingWhitespace(token2);
+			if (!token2.empty())
+				tokens.push_back(token2);
+		}
+		std::vector<std::string>::iterator it = tokens.begin();
+		it++;
+		for (; it != tokens.end(); it++)
+			param.push_back(*it);
+		msg._command = tokens.front();
+		msg._param = param;
+		msg._receiver = receiver;
+		msg.printMsg();
+		if (msg._command == "CAP")
+			msg.CAP();
+		else if (msg._command == "PASS")
+			msg.PASS();
+		else if (msg._command == "NICK")
+			msg.NICK();
+		else if (msg._command == "USER")
+			msg.USER();
+		else if (msg._command == "PING")
+			msg.PONG();
+		tokens.clear();
+		param.clear();
+	}
+	
+}
+
 void	Server::readMsg(int fd)
 {
 	std::memset(_buf, 0, sizeof(_buf));
 	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
 	if (_readBytes <= 0)
 		deletePfd(fd);
-	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
+	else 
 	{
-		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
-		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
-			std::cout << "." << getCmd(*it) << "." << std::endl;
-			std::cout << "." << removeCmd(*it) << "." << std::endl;
-			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-		}
-		//exectue msg -> push appropriate send messages to receivers containers
+		//PARSE AND EXECUTE ALL MESSAGES:
+		Commands msg(fd, Server::_pfdsMap[fd]);
+		testParse(msg);
+		Server::_pfdsMap[fd].printPendingMsgs();
 	}
 
 }

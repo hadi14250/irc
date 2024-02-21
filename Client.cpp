@@ -9,19 +9,13 @@ Client::Client()
 {
 }
 
-Client & Client::operator=(Client const & src)
-{
-	(void) src;
-	return *this;
-}
-
 void	Client::printPendingMsgs()
 {
 	std::cout << "Pending messages to be sent out for client " << _nick << ":\n";
 	for (std::deque<std::string>::iterator it = _messages.begin(); it != _messages.end(); it++)
 		std::cout << *it << "\n";
-}
 
+}
 void Client::printClient()
 {
 	std::cout << "*****PRINTING CLIENT INFO*****\n";

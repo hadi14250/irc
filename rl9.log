@@ -1,0 +1,36 @@
+<< CAP LS
+<< PASS hello
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> : 001 h :Welcome to the Internet Relay Network h!hbui-vu@hbui-vu
+<< MODE h +i
+>> : 002 h :Your host is 
+>> : 003 h :This server was created February 29, 2024
+>> : 004 h 
+>> : 005 h 
+>> : 375 h :-Message of the day
+>> : 372 h :-MOTD MAIN BODY
+>> : 376 h :End of /MOTD command
+<< PING 
+>>  PONG  :h
+<< CAP LS
+<< PASS hello
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> : 001 h :Welcome to the Internet Relay Network h!hbui-vu@hbui-vu
+<< MODE h +i
+>> : 002 h :Your host is 
+>> : 003 h :This server was created February 29, 2024
+>> : 004 h 
+>> : 005 h 
+>> : 375 h :-Message of the day
+>> : 372 h :-MOTD MAIN BODY
+>> : 376 h :End of /MOTD command
+<< PING 
+>>  PONG  :h
+<< NICK h
+>> : 433 * h :Nickname already in use

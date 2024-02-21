@@ -1,51 +1,40 @@
 #include "Commands.hpp"
 
-// Commands::Commands(int fd, Client & sender)
+// Commands::Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver)
 // 	:	_senderFd(fd),
-// 		_sender(sender)
+// 		_command(command),
+// 		_param(param),
+// 		_sender(sender),
+// 		_receiver(receiver)
 // {
 // }
 
-typedef void (Commands::*cmdPtr)(void);
-using namespace	std;// temporary! 💀, using this for cout and cerr debugs!
-
-Commands::Commands(int fd, std::string command, std::string param, Client& sender)
+Commands::Commands(int fd, Client & sender)
 	:	_senderFd(fd),
-		_command(command),
-		_param(param),
 		_sender(sender)
-		// _receiver(0)
 {
-	cmdPtr	ptr;
-	std::string	cmds[] = {"CAP", "PASS", "NICK", "USER", "PRIVMSG"};
-	size_t	cmd = 0, amtCmds = sizeof(cmds) / sizeof(std::string);
-	for (; cmd < amtCmds && cmds[cmd].compare(_command); cmd++);
-	switch (cmd) {
-		case 0: ptr = &Commands::CAP; break;
-		case 1: ptr = &Commands::PASS; break;
-		case 2: ptr = &Commands::NICK; break;
-		case 3: ptr = &Commands::USER; break;
-		case 4: ptr = &Commands::PRIVMSG; break;
-		default : ptr = &Commands::UNKNOWN;
-	}
-	(this->*ptr)();
-	(void)_senderFd;
 }
 
-// void	Commands::CAP()
-// {
-// 	if 	(_param[0].find("LS") != std::string::npos){
-// 		_sender._messages.push_back("CAP * LS :\r\n");
-// 	}
-// 	// else if (_param[0] == "REQ")
-// 	// 	//send CAP * ACK :param[1]
-// }
+void	Commands::printMsg()
+{
+	std::cout 	<< "MESSSAGE:\n"
+				<< "_senderFd: " << _senderFd << "\n"
+				<< "_command: " << _command << "\n"
+				<< "param: " << std::flush;
+	for (std::vector<std::string>::iterator it = _param.begin(); it != _param.end(); it++)
+		std::cout << *it << ", ";
+	std::cout	<< "\n"
+				<< "_sender: " << _sender._nick << "\n"
+				<< "_receiver: " << std::flush;
+	for (std::vector<Client *>::iterator it = _receiver.begin(); it != _receiver.end(); it++)
+		std::cout << (*it)->_nick << ", ";
+	std::cout << std::endl;
+}
 
-//what capabilities do we want?
-void	Commands::CAP() {//complete, gotta test this later!
-	if (_param.empty())
-		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
-	else if (!_param.compare("LS") || !_param.compare("LS 302"))
+//for now we will not give any capabilities to our server
+void	Commands::CAP()
+{
+	if 	(_param[0].find("LS") != std::string::npos){
 		_sender._messages.push_back("CAP * LS :\r\n");
 	else if (!_param.compare("LIST"))
 		_sender._messages.push_back("CAP * LIST :\r\n");
@@ -97,13 +86,21 @@ void	Commands::completeRegistration()
 	Server::_nickMap[_sender._nick] = _sender._pfd.fd;
 }
 
-void	Commands::NICK() {
-	std::string	invLead = ":#$&0123456789";
+bool	Commands::invalidNick()
+{
+	char c = _param[0][0];
+	if (c == '#' || c == '&' || c == ':' || _param[0].find_first_of(" ") != std::string::npos)
+		return true;
+	return false;
+}
 
-	if (!_sender._authenticated)
-		return ;//can add ERR_NOTREGISTERED and have a custum msg each time this is used! depending on the scenario
-		// _sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));//pass not sup!
-	else if (_param.empty())
+
+void	Commands::NICK()
+{
+	std::cout << "inside Nick function\n";
+	if (_sender._authenticated == false)
+		return ;
+	if (_param.empty())
 		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(Server::getServername(), _sender._nick));
 	// else if (targ_max nicklen!) //will add after we decide on nick len
 	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())

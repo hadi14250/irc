@@ -1,12 +1,17 @@
 #include "Client.hpp"
 
-// _mode('\0'),
 Client::Client()
 	:	_nick("*"),// when returning either an error or reply, if nick is empty u use '*' instead so it made sence to me to set it as default! feel free to remove this comment now that u know y I did this!
-		_listenSock(true),
+		_listenSock(false),
 		_authenticated(false),
 		_registered(false)
 {
+}
+
+Client & Client::operator=(Client const & src)
+{
+	(void) src;
+	return *this;
 }
 
 void	Client::printPendingMsgs()
@@ -14,8 +19,8 @@ void	Client::printPendingMsgs()
 	std::cout << "Pending messages to be sent out for client " << _nick << ":\n";
 	for (std::deque<std::string>::iterator it = _messages.begin(); it != _messages.end(); it++)
 		std::cout << *it << "\n";
-
 }
+
 void Client::printClient()
 {
 	std::cout << "*****PRINTING CLIENT INFO*****\n";
@@ -25,7 +30,6 @@ void Client::printClient()
 				<< "_hostname: " << _hostname << "\n"
 				<< "_server: " << _server << "\n"
 				<< "_realname: " << _realname << "\n"
-				// << "_mode: " << _mode << "\n"
 				<< "_identifier: " << _identifier << "\n"
 				<< "_listenSock: " << _listenSock << "\n"
 				<< "_authenticated: " << _authenticated << "\n"

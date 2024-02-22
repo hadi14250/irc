@@ -28,18 +28,14 @@ private:
 	bool					_listenSock;
 	bool					_authenticated;
 	bool					_registered;
-	bool					_isOper;
 	struct pollfd			_pfd;
 	std::deque<std::string>	_messages;
-	//hadi->    will add a container to include all the channels the user is apart of!
+	//hadi->    will add a container to include all the channels the user is apart of! -> do we need this
 	// and another container to keep track of channel invitations!
 
-	// char					_mode; //do we need this?
-	// Client const & operator=(Client const & src);
+	Client & operator=(Client const & src);
 public:
 	Client();
-	// Client(Client const & src);;
-	// ~Client();
 
 	void	printClient(); 
 	void	printPendingMsgs();

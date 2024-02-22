@@ -17,7 +17,6 @@ Server::Server(std::string const & port, std::string const & pswd)
 {
 	_password = pswd;
 	checkPort();
-	// checkPassword();
 }
 
 Server::~Server()
@@ -101,7 +100,6 @@ void	Server::addNewPfd(int tag)
 	else if (tag == CLIENTFD)
 	{
 		newClient._listenSock = false;
-		//taking this out of Client construction for better readability
 		socklen_t addrlen = sizeof(struct sockaddr_in);
 		struct sockaddr_in clientInfo;
 		newClient._sockfd = accept(_listenSockfd, (struct sockaddr *)&clientInfo, &addrlen);
@@ -114,7 +112,6 @@ void	Server::addNewPfd(int tag)
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
 	newPfd.events = POLLIN | POLLOUT;
-	// newPfd.events = POLLIN; old
 	newClient._pfd = newPfd;
 
 	_pfdsMap[newClient._sockfd] = newClient;

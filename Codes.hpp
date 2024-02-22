@@ -25,8 +25,6 @@
 	":" + servername + " 462 " + nick + " :You are already registered\r\n"
 #define ERR_PASSWDMISMATCH(servername, nick) \
 	":" + servername + " 464 " + nick + " :Password incorrect\r\n"
-// #define ERR_PASSWDMISMATCH(servername, nick) \/💀
-// 	":" + servername + " 464 " + nick + " :You are already registered\r\n"
 
 //NICK
 #define ERR_NONICKNAMEGIVEN(servername, nick) \

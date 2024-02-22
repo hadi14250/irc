@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <map>
+#include "Client.hpp"
 
 class Channel {
 private:
@@ -15,7 +17,7 @@ private:
 	bool						_userLmit;
 
 	// std::map<std::string, bool>	_members;// std::stirng for the nick, and bool for operator status!
-	std::vector<Client *>	_members
+	std::map<Client *, bool>	_members;
 public:
 	Channel();
 };

@@ -1,9 +1,35 @@
 #include "Commands.hpp"
 
-Commands::Commands(int fd, Client & sender)
+// Commands::Commands(int fd, Client & sender)
+// 	:	_senderFd(fd),
+// 		_sender(sender)
+// {
+// }
+
+typedef void (Commands::*cmdPtr)(void);
+using namespace	std;// temporary! 💀, using this for cout and cerr debugs!
+
+Commands::Commands(int fd, std::string command, std::string param, Client& sender)
 	:	_senderFd(fd),
+		_command(command),
+		_param(param),
 		_sender(sender)
+		// _receiver(0)
 {
+	cmdPtr	ptr;
+	std::string	cmds[] = {"CAP", "PASS", "NICK", "USER", "PRIVMSG"};
+	size_t	cmd = 0, amtCmds = sizeof(cmds) / sizeof(std::string);
+	for (; cmd < amtCmds && cmds[cmd].compare(_command); cmd++);
+	switch (cmd) {
+		case 0: ptr = &Commands::CAP; break;
+		case 1: ptr = &Commands::PASS; break;
+		case 2: ptr = &Commands::NICK; break;
+		case 3: ptr = &Commands::USER; break;
+		case 4: ptr = &Commands::PRIVMSG; break;
+		default : ptr = &Commands::UNKNOWN;
+	}
+	(this->*ptr)();
+	(void)_senderFd;
 }
 
 // void	Commands::CAP()
@@ -20,11 +46,11 @@ void	Commands::CAP() {//complete, gotta test this later!
 	if (_param.empty())
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
 	else if (!_param.compare("LS") || !_param.compare("LS 302"))
-		_sender._messages.push_back("CAP * LS :");
+		_sender._messages.push_back("CAP * LS :\r\n");
 	else if (!_param.compare("LIST"))
-		_sender._messages.push_back("CAP * LIST :");
+		_sender._messages.push_back("CAP * LIST :\r\n");
 	else if (!_param.compare("REQ") || !_param.compare(0, 4, "REQ "))
-		_sender._messages.push_back("CAP * NAK : " + _param);
+		_sender._messages.push_back("CAP * NAK : " + _param + "\r\n");
 	else if (!_param.compare("END"))
 		return ;
 	else
@@ -69,14 +95,6 @@ void	Commands::completeRegistration()
 	WelcomeMsg();
 	MOTD();
 	Server::_nickMap[_sender._nick] = _sender._pfd.fd;
-}
-
-bool	Commands::invalidNick()
-{
-	char c = _param[0][0];
-	if (c == '#' || c == '&' || c == ':' || _param[0].find_first_of(" ") != std::string::npos)
-		return true;
-	return false;
 }
 
 void	Commands::NICK() {
@@ -135,6 +153,20 @@ void	Commands::UNKNOWN() {
 void	Commands::PONG(){
 	_sender._messages.push_back(Server::getServername()
         + " PONG " + Server::getServername() + " :" + _sender._nick + "\r\n");
+}
+
+//////////////////////////////////////////////// PRIVMSG //////////////////////////////////////////////////////
+
+void	Commands::MsgChannel(void) {
+	cout << "work in progress!" << endl;
+}
+
+void	Commands::MsgClient(std::string recipient, std::string text) {
+	std::map<std::string, int>::iterator it = Server::_nickMap.find(recipient);
+	if (it == Server::_nickMap.end())
+		_sender._messages.push_back(ERR_NOSUCHNICK(Server::getServername(), _sender._nick, recipient));
+	else 
+		Server::_pfdsMap[it->second]._messages.push_back(text + "\r\n");
 }
 
 void	Commands::printMsg()

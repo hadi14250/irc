@@ -3,8 +3,8 @@
 #include <iostream>
 
 class Channel {
-	private:
-	std::stirng					_name; //channel name just in case!
+private:
+	std::string					_name; //channel name just in case!
 	std::string					_topic;
 	std::string					_topiCreation;// time of topic creation!
 	std::string					_pass;//password if channel is password protected!
@@ -14,8 +14,9 @@ class Channel {
 	bool						_inviteOnly;
 	bool						_userLmit;
 
-	std::map<std::string, bool>	_members;// std::stirng for the nick, and bool for operator status!
-	public:
+	// std::map<std::string, bool>	_members;// std::stirng for the nick, and bool for operator status!
+	std::vector<Client *>	_members
+public:
 	Channel();
 };
 

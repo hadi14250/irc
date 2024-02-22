@@ -1,45 +1,34 @@
 #include "Commands.hpp"
 
-// Commands::Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver)
-// 	:	_senderFd(fd),
-// 		_command(command),
-// 		_param(param),
-// 		_sender(sender),
-// 		_receiver(receiver)
-// {
-// }
-
 Commands::Commands(int fd, Client & sender)
 	:	_senderFd(fd),
 		_sender(sender)
 {
 }
 
-void	Commands::printMsg()
-{
-	std::cout 	<< "MESSSAGE:\n"
-				<< "_senderFd: " << _senderFd << "\n"
-				<< "_command: " << _command << "\n"
-				<< "param: " << std::flush;
-	for (std::vector<std::string>::iterator it = _param.begin(); it != _param.end(); it++)
-		std::cout << *it << ", ";
-	std::cout	<< "\n"
-				<< "_sender: " << _sender._nick << "\n"
-				<< "_receiver: " << std::flush;
-	for (std::vector<Client *>::iterator it = _receiver.begin(); it != _receiver.end(); it++)
-		std::cout << (*it)->_nick << ", ";
-	std::cout << std::endl;
-}
+// void	Commands::CAP()
+// {
+// 	if 	(_param[0].find("LS") != std::string::npos){
+// 		_sender._messages.push_back("CAP * LS :\r\n");
+// 	}
+// 	// else if (_param[0] == "REQ")
+// 	// 	//send CAP * ACK :param[1]
+// }
 
-//for now we will not give any capabilities to our server
-void	Commands::CAP()
-{
-	if 	(_param[0].find("LS") != std::string::npos){
-		_sender._messages.push_back("CAP * LS :\r\n");
-	}
-	// else if (_param[0] == "REQ")
-	// 	//send CAP * ACK :param[1]
-
+//what capabilities do we want?
+void	Commands::CAP() {//complete, gotta test this later!
+	if (_param.empty())
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
+	else if (!_param.compare("LS") || !_param.compare("LS 302"))
+		_sender._messages.push_back("CAP * LS :");
+	else if (!_param.compare("LIST"))
+		_sender._messages.push_back("CAP * LIST :");
+	else if (!_param.compare("REQ") || !_param.compare(0, 4, "REQ "))
+		_sender._messages.push_back("CAP * NAK : " + _param);
+	else if (!_param.compare("END"))
+		return ;
+	else
+		_sender._messages.push_back(ERR_INVALIDCAPCMD(Server::getServername(), _sender._nick, _command));
 }
 
 void	Commands::PASS()
@@ -90,34 +79,32 @@ bool	Commands::invalidNick()
 	return false;
 }
 
+void	Commands::NICK() {
+	std::string	invLead = ":#$&0123456789";
 
-void	Commands::NICK()
-{
-	std::cout << "inside Nick function\n";
-	if (_sender._authenticated == false)
-		return ;
-	if (_param.empty())
+	if (!_sender._authenticated)
+		return ;//can add ERR_NOTREGISTERED and have a custum msg each time this is used! depending on the scenario
+		// _sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));//pass not sup!
+	else if (_param.empty())
 		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(Server::getServername(), _sender._nick));
-	else
-	{
-		std::map<std::string, int>::iterator it = Server::_nickMap.find(_param[0]);
-		if (it != Server::_nickMap.end())
-			_sender._messages.push_back(ERR_NICKNAMEINUSE(Server::getServername(), _sender._nick));
-		else if (invalidNick())
-			_sender._messages.push_back(ERR_ERRONEUSNICKNAME(Server::getServername(), _sender._nick));
-		else
-		{
-			_sender._nick = _param[0];
-			if (_sender._registered == true)
-			{
-				_sender._messages.push_back(NICKNAME(_sender._identifier, _sender._nick));
-				_sender._identifier = _sender._nick + "!" + _sender._username + "@" + _sender._hostname;
-			}
-			else if (!_sender._username.empty())
-				completeRegistration();
+	// else if (targ_max nicklen!) //will add after we decide on nick len
+	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
+		_sender._messages.push_back(ERR_NICKNAMEINUSE(Server::getServername(), _sender._nick));
+	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(" !@*?,.") != std::string::npos)
+		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(Server::getServername(), _sender._nick));
+	else {
+		if (_sender._registered == true) {
+			Server::_nickMap.erase(_sender._nick);
+			_sender._messages.push_back(NICKNAME(_sender._identifier, _param));
+			_sender._identifier = _param + "!" + _sender._username + "@" + _sender._hostname;
+		} else if (!_sender._username.empty()) {
+			completeRegistration(_param);
 		}
+		_sender._nick = _param;
+		Server::_nickMap[_param] = _sender._sockfd;
 	}
 }
+
 
 /* USER username hostname servername(of user) :<realname(can contain spaces)*/
 void	Commands::USER()
@@ -131,14 +118,18 @@ void	Commands::USER()
 	else if (_param.size() < 4)
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
 	else
-	{
-		_sender._username = _param[0];
-		_sender._hostname = _param[1];
-		_sender._server = _param[2];
-		_sender._realname = _param[3];
+	{// the extraction below looks awful, but don't worry this is temporary I'll fix it later, for now it does the job!
+		_sender._username = getCmd(_param);
+		_sender._hostname = getCmd(removeCmd(_param));
+		_sender._server = getCmd(removeCmd(removeCmd(_param)));
+		_sender._realname = getCmd(removeCmd(removeCmd(removeCmd(_param))));
 		if (_sender._nick != "")
-			completeRegistration();
+			completeRegistration(_sender._nick);
 	}
+}
+
+void	Commands::UNKNOWN() {
+	_sender._messages.push_back(ERR_UNKNOWNCOMMAND(Server::getServername(), _sender._nick, _command));
 }
 
 void	Commands::PONG(){
@@ -146,9 +137,22 @@ void	Commands::PONG(){
         + " PONG " + Server::getServername() + " :" + _sender._nick + "\r\n");
 }
 
-// void	Commands::QUIT()
+void	Commands::printMsg()
+{
+	std::cout 	<< "MESSSAGE:\n"
+				<< "_senderFd: " << _senderFd << "\n"
+				<< "_command: " << _command << "\n"
+				<< "param: " << std::flush;
+	for (std::vector<std::string>::iterator it = _param.begin(); it != _param.end(); it++)
+		std::cout << *it << ", ";
+	std::cout	<< "\n"
+				<< "_sender: " << _sender._nick << "\n"
+				<< "_receiver: " << std::flush;
+	for (std::vector<Client *>::iterator it = _receiver.begin(); it != _receiver.end(); it++)
+		std::cout << (*it)->_nick << ", ";
+	std::cout << std::endl;
+}
 
-// void	Commands::EXIT()
 
 /*
 <type> <command> <code> [<context>...] <description>
@@ -204,23 +208,30 @@ authenticate securely before joining channels or sending messages.
 
 /* DRAFTS:
 
-void	Commands::generateMessage(std::string src, int code, Client &_sender)
+void	Commands::NICK()
 {
-	std::string paramMsg;
-	switch(code) //can't use switch with strings...maybe make code a number and then convert to string
+	std::cout << "inside Nick function\n";
+	if (_sender._authenticated == false)
+		return ;
+	if (_param.empty())
+		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(Server::getServername(), _sender._nick));
+	else
 	{
-		case RPL_WELCOME: 
-			paramMsg = "Welcome to ft-irc " + _sender._identifier + "!"; break;
-		case ERR_NEEDMOREPARAMS:
-			paramMsg = "More parameters needed"; break; //we may need to add comand to this too
-			//"<_sender> <command> :Not enough parameters"
-		case ERR_ALREADYREGISTERED:
-			paramMsg = "You are already registered"; break;
-		case ERR_PASSWDMISMATCH
-			paramMsg = "Invalid password"; break;
-		
+		std::map<std::string, int>::iterator it = Server::_nickMap.find(_param[0]);
+		if (it != Server::_nickMap.end())
+			_sender._messages.push_back(ERR_NICKNAMEINUSE(Server::getServername(), _sender._nick));
+		else if (invalidNick())
+			_sender._messages.push_back(ERR_ERRONEUSNICKNAME(Server::getServername(), _sender._nick));
+		else
+		{
+			_sender._nick = _param[0];
+			if (_sender._registered == true)
+			{
+				_sender._messages.push_back(NICKNAME(_sender._identifier, _sender._nick));
+				_sender._identifier = _sender._nick + "!" + _sender._username + "@" + _sender._hostname;
+			}
+			else if (!_sender._username.empty())
+				completeRegistration();
+		}
 	}
-	std::string codeStr = //convert code to string
-	std::string msg = ":" + src + " " + code + " " + _sender._nick + " :" + ParamMsg + "\r\n";
-	_sender._messages.push_back(msg);
 }*/

@@ -62,7 +62,7 @@ public:
 	static volatile sig_atomic_t 		_run;
 	static std::map<int, Client>		_pfdsMap;
 	static std::map<std::string, int>	_nickMap;
-	
+	static std::map<std::string, Channel*> _chanMap;
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 

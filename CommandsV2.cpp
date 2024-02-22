@@ -68,31 +68,6 @@ void	Commands::PASS() {//complete!
 		_sender._authenticated = true;
 }
 
-void	Commands::NICK() {
-	std::string	invLead = ":#$&0123456789";
-
-	if (!_sender._authenticated)
-		return ;//can add ERR_NOTREGISTERED and have a custum msg each time this is used! depending on the scenario
-		// _sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));//pass not sup!
-	else if (_param.empty())
-		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));//ERR_NONICKNAMEGIVEN
-	// else if (targ_max nicklen!) //will add after we decide on nick len
-	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
-		_sender._messages.push_back(ERR_NICKNAMEINUSE(Server::getServername(), _sender._nick));
-	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(" !@*?,.") != std::string::npos)
-		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(Server::getServername(), _sender._nick));
-	else {
-		if (_sender._registered == true) {
-			Server::_nickMap.erase(_sender._nick);
-			_sender._messages.push_back(NICKNAME(_sender._identifier, _param));
-			_sender._identifier = _param + "!" + _sender._username + "@" + _sender._hostname;
-		} else if (!_sender._username.empty()) {
-			completeRegistration(_param);
-		}
-		_sender._nick = _param;
-		Server::_nickMap[_param] = _sender._sockfd;
-	}
-}
 
 void	Commands::USER()
 {
@@ -115,24 +90,9 @@ void	Commands::USER()
 	}
 }
 
-void	Commands::CAP() {//complete, gotta test this later!
-	if (_param.empty())
-		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
-	else if (!_param.compare("LS") || !_param.compare("LS 302"))
-		_sender._messages.push_back("CAP * LS :");
-	else if (!_param.compare("LIST"))
-		_sender._messages.push_back("CAP * LIST :");
-	else if (!_param.compare("REQ") || !_param.compare(0, 4, "REQ "))
-		_sender._messages.push_back("CAP * NAK : " + _param);
-	else if (!_param.compare("END"))
-		return ;
-	else
-		_sender._messages.push_back(ERR_INVALIDCAPCMD(Server::getServername(), _sender._nick, _command));
-}
 
-void	Commands::UNKNOWN() {
-	_sender._messages.push_back(ERR_UNKNOWNCOMMAND(Server::getServername(), _sender._nick, _command));
-}
+
+
 
 //////////////////////////////////////////////// PRIVMSG //////////////////////////////////////////////////////
 

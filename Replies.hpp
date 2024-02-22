@@ -2,6 +2,8 @@
 #ifndef REPLIES_HPP
 #define REPLIES_HPP
 
+//! hadi -> btw do we really need to pass the servername for eah call since its constant?
+
 #define RPL_WELCOME(servername, nick) \
 ":" + servername + " 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "\n"
 #define RPL_WELCOMEBACK(servername, nick) \
@@ -93,8 +95,11 @@
 #define ERR_TOOMANYCHANNELS 405
 #define ERR_WASNOSUCHNICK 406
 #define ERR_NOORIGIN 409
+#define ERR_INVALIDCAPCMD(servername, nick, command) \
+":" + servername + " 410 " + nick + ' ' + command + " :Invalid CAP command\n"
 #define ERR_INPUTTOOLONG 417
-#define ERR_UNKNOWNCOMMAND 421
+#define ERR_UNKNOWNCOMMAND(servername, nick, command) \
+":" + servername + " 421 " + nick + ' ' + command + " :Unknown command\n"
 #define ERR_NOMOTD 422
 #define ERR_NONICKNAMEGIVEN(servername, nick) \
 ":" + servername + " 431 " + nick + " :No nickname given\n"

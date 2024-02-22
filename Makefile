@@ -1,7 +1,7 @@
-NAME = irc
+# NAME = irc <- commented this out becuz subject pdf wants prog name to be ircserv!
+NAME = ircserv
 
-SRCS_CMD = $(addprefix commands/, registration.cpp)
-SRCS = main.cpp Server.cpp Client.cpp $(SRCS_CMD)
+SRCS = main.cpp Server.cpp Client.cpp CommandsV2.cpp Utils.cpp
 
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
@@ -15,7 +15,8 @@ $(NAME): $(OBJS)
 all: $(NAME)
 
 clean:
-	rm -rf *.o
+	$(RM) $(OBJS)
+#	rm -rf *.o     <- this isn't safe! better alt is rm -f $(OBJS)
 
 fclean: clean
 	rm -rf $(NAME)

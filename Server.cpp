@@ -113,7 +113,8 @@ void	Server::addNewPfd(int tag)
 	
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
-	newPfd.events = POLLIN;
+	newPfd.events = POLLIN | POLLOUT;// lmao u didn't register POLLOUT as an event to look out for, but down below u chk for pollout notification! it will never notify u bout it if u didn't register it here!!!! so I included it here! remove the comment now that u know!
+	// newPfd.events = POLLIN; old
 	newClient._pfd = newPfd;
 
 	_pfdsMap[newClient._sockfd] = newClient;
@@ -161,34 +162,47 @@ void	Server::deletePfd(int fd)
 	_change = 1;
 }
 
+/* 
+	btw while I was trying to figure out how things were running here, I found few features of the command class
+	that I wouldn't use! first of all I changed the param from vector to string because commands work differently and
+	having params as a vector could cause more trouble than ease like take privmsg for example it takes the cmd, recipient, and text
+	so if storing in a vecotr it should be split into proper chunks and the other commands work differently too
+	so I created few tiny util funtions that will help us like remove cmd, get command, remove trailing new line, split
+	if u want me to write a small description above those funtions on how they work lemme know!
+
+	I didn't want to mess with Commands.cpp or destory it so for now I have created CommandsV2, if its good then jsut destroy Commands.*pp
+	and rename CommandsV2 to Commands.* and don't forget to modify the makefile too in that case!
+
+ */
 void	Server::readMsg(int fd)
 {
 	std::memset(_buf, 0, sizeof(_buf));
 	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
 	if (_readBytes <= 0)
 		deletePfd(fd);
-	else 
+	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
 	{
-	// 	//Message msg = parsemsg()
-	// 	//exectue msg -> push appropriate send messages to receivers containers
+		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
+		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
+			std::cout << "." << getCmd(*it) << "." << std::endl;
+			std::cout << "." << removeCmd(*it) << "." << std::endl;
+			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+		}
+		//exectue msg -> push appropriate send messages to receivers containers
 	}
 
 }
 
 void	Server::sendMsg(int fd)
 {
-	std::cout << "inside sendmsg\n";
 	Client &client = _pfdsMap[fd];
-	std::cout << "fd: " << fd << std::endl;
 	std::deque<std::string>::iterator it = client._messages.begin();
-	std::cout << "string: " << *it << std::endl;
 	for (; it != client._messages.end(); it++)
 	{
 		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
 			std::cerr << "Failed to send msg: " << *it << std::endl;
 	}
 	client._messages.clear();
-	std::cout << "end sendmsg\n";
 }
 
 /* 
@@ -213,16 +227,16 @@ void	Server::createServer()
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
-		std::cout << "polled\n";
+		// std::cout << "polled\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
-			std::cout << "inside for loop\n";
-			std::cout << "_pfdsCount: " << _pfdsCount << "\n";
+			// std::cout << "inside for loop\n";
+			// std::cout << "_pfdsCount: " << _pfdsCount << "\n";
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
 				{
-					std::cout << "adding a new client\n";
+					// std::cout << "adding a new client\n";
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 				}
 				catch(const std::exception& e)
@@ -232,14 +246,14 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLIN)
 			{
-				std::cout << "POLLIN\n";
+				// std::cout << "POLLIN\n";
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
 				//fd is ready for writing - use SEND HERE
-				std::cout << "go here?\n"; 
+				// std::cout << "go here?\n"; 
 				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)

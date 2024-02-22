@@ -6,7 +6,8 @@
 # include <poll.h>
 # include "Server.hpp"
 # include <deque>
-# include "Commands.hpp"
+// # include "Commands.hpp"
+# include "CommandsV2.hpp"
 
 class Server;
 class Commands;
@@ -29,6 +30,9 @@ private:
 	bool					_registered;
 	struct pollfd			_pfd;
 	std::deque<std::string>	_messages;
+	//hadi->    will add a container to include all the channels the user is apart of!
+	// and another container to keep track of channel invitations!
+
 	// char					_mode; //do we need this?
 	// Client const & operator=(Client const & src);
 public:

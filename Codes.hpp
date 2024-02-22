@@ -24,7 +24,9 @@
 #define ERR_ALREADYREGISTERED(servername, nick) \
 	":" + servername + " 462 " + nick + " :You are already registered\r\n"
 #define ERR_PASSWDMISMATCH(servername, nick) \
-	":" + servername + " 464 " + nick + " :You are already registered\r\n"
+	":" + servername + " 464 " + nick + " :Password incorrect\r\n"
+// #define ERR_PASSWDMISMATCH(servername, nick) \/💀
+// 	":" + servername + " 464 " + nick + " :You are already registered\r\n"
 
 //NICK
 #define ERR_NONICKNAMEGIVEN(servername, nick) \
@@ -34,3 +36,20 @@
 #define ERR_NICKNAMEINUSE(servername, nick) \
 	":" + servername + " 433 * " + nick + " :Nickname already in use\r\n"
 #define NICKNAME(identifier, nick) ":" + identifier + " NICK :" + nick + "\r\n"
+
+//🧢
+#define ERR_INVALIDCAPCMD(servername, nick, command) \
+":" + servername + " 410 " + nick + ' ' + command + " :Invalid CAP command\r\n"
+
+#define ERR_UNKNOWNCOMMAND(servername, nick, command) \
+":" + servername + " 421 " + nick + ' ' + command + " :Unknown command\r\n"
+
+//privmsg
+#define ERR_NORECIPIENT(servername, nick) \
+":" + servername + " 411 " + nick + " :No recipient given\r\n"
+
+#define ERR_NOTEXTTOSEND(servername, nick) \
+":" + servername + " 412 " + nick + " :No text to send\r\n"
+
+#define ERR_NOSUCHNICK(servername, nick, rcp_nick) \
+":" + servername + " 401 " + nick + ' ' + rcp_nick + " :No such nick\r\n"

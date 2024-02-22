@@ -41,6 +41,7 @@ public:
 	// ~Client();
 
 	void	printClient(); 
+	void	printPendingMsgs();
 };
 
 /* NOTES:

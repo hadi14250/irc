@@ -113,7 +113,7 @@ void	Server::addNewPfd(int tag)
 	
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
-	newPfd.events = POLLIN | POLLOUT;// lmao u didn't register POLLOUT as an event to look out for, but down below u chk for pollout notification! it will never notify u bout it if u didn't register it here!!!! so I included it here! remove the comment now that u know!
+	newPfd.events = POLLIN | POLLOUT;
 	// newPfd.events = POLLIN; old
 	newClient._pfd = newPfd;
 
@@ -164,7 +164,7 @@ void	Server::deletePfd(int fd)
 
 /* 
 	btw while I was trying to figure out how things were running here, I found few features of the command class
-	that I wouldn't use! first of all I changed the param from vector to string because commands work differently and
+	that I wouldn't use! first of all I changed the param from vector to string as a suggestion from abdulaziz because commands work differently and
 	having params as a vector could cause more trouble than ease like take privmsg for example it takes the cmd, recipient, and text
 	so if storing in a vecotr it should be split into proper chunks and the other commands work differently too
 	so I created few tiny util funtions that will help us like remove cmd, get command, remove trailing new line, split
@@ -220,7 +220,6 @@ In while loop
 void	Server::createServer()
 {
 	makeListenSockfd();
-	// printPfdsMap();
 	while (_run == 1)
 	{
 		_change = 0;

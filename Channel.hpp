@@ -28,8 +28,9 @@ public:
     bool chkIfOper(std::string nick); // Check if a user is an operator
 
 	// setters and getters
-	
+
 	void			incCurrentAmmount();
+	void			decCurrentAmmount();
 	unsigned int	getCurrentAmmount();
 
 	void			setMaxMemAmt(unsigned int maxLimit);

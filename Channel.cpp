@@ -15,6 +15,11 @@ void			Channel::incCurrentAmmount()
 	this->_curMemAmt++;
 }
 
+void			Channel::decCurrentAmmount()
+{
+	this->_curMemAmt--;
+}
+
 unsigned int	Channel::getCurrentAmmount()
 {
 	return (this->_curMemAmt);

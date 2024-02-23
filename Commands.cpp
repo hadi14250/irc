@@ -224,3 +224,4 @@ void	Commands::generateMessage(std::string src, int code, Client &_sender)
 	std::string msg = ":" + src + " " + code + " " + _sender._nick + " :" + ParamMsg + "\r\n";
 	_sender._messages.push_back(msg);
 }*/
+

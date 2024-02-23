@@ -17,7 +17,6 @@ Server::Server(std::string const & port, std::string const & pswd)
 {
 	_password = pswd;
 	checkPort();
-	checkPassword();
 }
 
 Server::~Server()
@@ -28,31 +27,6 @@ Server::~Server()
 	if (_pfds)
 		delete [] _pfds;
 	//close any fds here
-}
-
-/*
-we can change pswd policy later 
-*/
-void	Server::printPasswordPolicy()
-{
-	std::cout	<< "Password must be 8 - 12 characters in length and may only "
-				<< "contain uppercase letters, lowercase letters, numbers, and "
-				<< "the following symbols: !, @, $, *"
-				<< std::endl;
-}
-
-void	Server::checkPassword() const
-{
-	size_t	len = _password.length();
-
-	if (len < 8 || len > 12)
-		throw InvalidPasswordException();
-	for (std::string::const_iterator it = _password.begin(); it != _password.end(); it++)
-	{
-		if (!std::isalnum(*it) && 
-			(*it != '!' || *it != '@' || *it != '$' || *it != '*'))
-			throw InvalidPasswordException();
-	}
 }
 
 /* 
@@ -126,7 +100,6 @@ void	Server::addNewPfd(int tag)
 	else if (tag == CLIENTFD)
 	{
 		newClient._listenSock = false;
-		//taking this out of Client construction for better readability
 		socklen_t addrlen = sizeof(struct sockaddr_in);
 		struct sockaddr_in clientInfo;
 		newClient._sockfd = accept(_listenSockfd, (struct sockaddr *)&clientInfo, &addrlen);
@@ -138,7 +111,7 @@ void	Server::addNewPfd(int tag)
 	
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
-	newPfd.events = POLLIN;
+	newPfd.events = POLLIN | POLLOUT;
 	newClient._pfd = newPfd;
 
 	_pfdsMap[newClient._sockfd] = newClient;
@@ -186,24 +159,41 @@ void	Server::deletePfd(int fd)
 	_change = 1;
 }
 
+/* 
+	btw while I was trying to figure out how things were running here, I found few features of the command class
+	that I wouldn't use! first of all I changed the param from vector to string as a suggestion from abdulaziz because commands work differently and
+	having params as a vector could cause more trouble than ease like take privmsg for example it takes the cmd, recipient, and text
+	so if storing in a vecotr it should be split into proper chunks and the other commands work differently too
+	so I created few tiny util funtions that will help us like remove cmd, get command, remove trailing new line, split
+	if u want me to write a small description above those funtions on how they work lemme know!
+
+	I didn't want to mess with Commands.cpp or destory it so for now I have created CommandsV2, if its good then jsut destroy Commands.*pp
+	and rename CommandsV2 to Commands.* and don't forget to modify the makefile too in that case!
+
+ */
 void	Server::readMsg(int fd)
 {
 	std::memset(_buf, 0, sizeof(_buf));
 	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
 	if (_readBytes <= 0)
 		deletePfd(fd);
-	else 
+	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
 	{
-	// 	//Message msg = parsemsg()
-	// 	//exectue msg -> push appropriate send messages to receivers containers
+		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
+		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
+			std::cout << "." << getCmd(*it) << "." << std::endl;
+			std::cout << "." << removeCmd(*it) << "." << std::endl;
+			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+		}
+		//exectue msg -> push appropriate send messages to receivers containers
 	}
+
 }
 
 void	Server::sendMsg(int fd)
 {
-	Client client = _pfdsMap[fd];
+	Client &client = _pfdsMap[fd];
 	std::deque<std::string>::iterator it = client._messages.begin();
-
 	for (; it != client._messages.end(); it++)
 	{
 		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
@@ -265,6 +255,8 @@ void	Server::createServer()
 			copyPfdMapToArray();
 	}
 }
+
+
 
 void	Server::signalHandler(int signum)
 {
@@ -416,4 +408,26 @@ else
 	std::cout << "sent " << ret.c_str() << "\n"; 
 	// :localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
 }
+
+// void	Server::printPasswordPolicy()
+// {
+// 	std::cout	<< "Password must be 8 - 12 characters in length and may only "
+// 				<< "contain uppercase letters, lowercase letters, numbers, and "
+// 				<< "the following symbols: !, @, $, *"
+// 				<< std::endl;
+// }
+
+// void	Server::checkPassword() const
+// {
+// 	size_t	len = _password.length();
+
+// 	if (len < 8 || len > 12)
+// 		throw InvalidPasswordException();
+// 	for (std::string::const_iterator it = _password.begin(); it != _password.end(); it++)
+// 	{
+// 		if (!std::isalnum(*it) && 
+// 			(*it != '!' || *it != '@' || *it != '$' || *it != '*'))
+// 			throw InvalidPasswordException();
+// 	}
+// }
 */

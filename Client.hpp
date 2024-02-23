@@ -6,17 +6,16 @@
 # include <poll.h>
 # include "Server.hpp"
 # include <deque>
-# include "Message.hpp"
-# include "Commands.hpp"
+// # include "Commands.hpp"
+# include "CommandsV2.hpp"
 
 class Server;
-// class Message; 
+class Commands;
 
 class Client
 {
 private:
 	friend class Server; //Allows Server to access private members of Client
-	friend class Message;
 	friend class Commands;
 
 	int 					_sockfd;
@@ -32,14 +31,15 @@ private:
 	bool					_isOper;
 	struct pollfd			_pfd;
 	std::deque<std::string>	_messages;
-	// char					_mode; //do we need this?
-	// Client const & operator=(Client const & src);
+	//hadi->    will add a container to include all the channels the user is apart of! -> do we need this
+	// and another container to keep track of channel invitations!
+
+	Client & operator=(Client const & src);
 public:
 	Client();
-	// Client(Client const & src);;
-	// ~Client();
 
 	void	printClient(); 
+	void	printPendingMsgs();
 };
 
 /* NOTES:

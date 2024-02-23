@@ -1,0 +1,36 @@
+<< CAP LS
+<< PASS hello
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS :
+<< CAP END
+>> : 001 jebucoy :Welcome to the Internet Relay Network jebucoy!jebucoy@jebucoy
+<< MODE jebucoy +i
+>> : 002 jebucoy :Your host is 
+>> : 003 jebucoy :This server was created February 29, 2024
+>> : 004 jebucoy 
+>> : 005 jebucoy 
+>> : 375 jebucoy :-Message of the day
+>> : 372 jebucoy :-MOTD MAIN BODY
+>> : 376 jebucoy :End of /MOTD command
+<< PING 
+>>  PONG  :jebucoy
+<< CAP LS
+<< PASS hello
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS :
+<< CAP END
+>> : 001 jebucoy :Welcome to the Internet Relay Network jebucoy!jebucoy@jebucoy
+<< MODE jebucoy +i
+>> : 002 jebucoy :Your host is 
+>> : 003 jebucoy :This server was created February 29, 2024
+>> : 004 jebucoy 
+>> : 005 jebucoy 
+>> : 375 jebucoy :-Message of the day
+>> : 372 jebucoy :-MOTD MAIN BODY
+>> : 376 jebucoy :End of /MOTD command
+<< PING 
+>>  PONG  :jebucoy
+<< NICK j
+>> :jebucoy!jebucoy@jebucoy NICK :j

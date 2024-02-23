@@ -1,0 +1,17 @@
+<< CAP LS
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+<< CAP LS
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+<< CAP LS
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+<< CAP LS
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+<< CAP LS
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS :
+<< CAP END

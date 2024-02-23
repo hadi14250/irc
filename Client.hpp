@@ -28,6 +28,7 @@ private:
 	bool					_listenSock;
 	bool					_authenticated;
 	bool					_registered;
+	bool					_isOper;
 	struct pollfd			_pfd;
 	std::deque<std::string>	_messages;
 	//hadi->    will add a container to include all the channels the user is apart of!
@@ -42,6 +43,8 @@ public:
 
 	void	printClient(); 
 	void	printPendingMsgs();
+	bool	isOper();
+	void	setIsOper(bool flag);
 };
 
 /* NOTES:

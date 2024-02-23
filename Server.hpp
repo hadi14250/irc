@@ -15,12 +15,13 @@
 # include <csignal>
 # include "Client.hpp"
 // # include "Commands.hpp"
-# include "CommandsV2.hpp"
+# include "Commandsv.hpp"
 # include "sstream"
 
-# define vecStrIt std::vector<std::string>::iterator
+typedef std::vector<std::string>::iterator	vecStrIt;
 
 class Client;
+class Channel;
 
 enum Tags
 {
@@ -59,9 +60,10 @@ private:
 	void	printPfdsMap();
 
 public:
-	static volatile sig_atomic_t 		_run;
-	static std::map<int, Client>		_pfdsMap;
-	static std::map<std::string, int>	_nickMap;
+	static volatile sig_atomic_t 			_run;
+	static std::map<int, Client>			_pfdsMap;
+	static std::map<std::string, int>		_nickMap;
+	static std::map<std::string, Channel>	_chanMap;
 	
 	Server(std::string const & port, std::string const & pswd);
 	~Server();

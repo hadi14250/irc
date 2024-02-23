@@ -5,8 +5,7 @@ Client::Client()
 	:	_nick("*"),// when returning either an error or reply, if nick is empty u use '*' instead so it made sence to me to set it as default! feel free to remove this comment now that u know y I did this!
 		_listenSock(true),
 		_authenticated(false),
-		_registered(false),
-		_isOper(false)
+		_registered(false)
 {
 }
 
@@ -47,13 +46,5 @@ void Client::printClient()
 		std::cout << "revents: garbage value\n";
 }
 
-bool Client::isOper()
-{
-	return (this->_isOper);
-}
 
-void Client::setIsOper(bool flag)
-{
-	this->_isOper = flag;
-}
 

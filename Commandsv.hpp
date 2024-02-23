@@ -3,10 +3,12 @@
 # include "Server.hpp"
 # include "Codes.hpp"
 # include "Client.hpp"
+# include "Channel.hpp"
 # include <vector>
-# include <map>
+
 
 class Client;
+class Channel;
 
 class Commands {
 	int							_senderFd;
@@ -27,21 +29,21 @@ public:
 	void	PASS();
 	void	NICK();
 	void	USER();
+	void	UNKNOWN();
 	// void	ERROR();
 	// void	OPER();
 	// void	PONG();
-	void	UNKNOWN();
 	// void	QUIT();
 	// void	MODE();
 
-	// void	JOIN();
+	void	JOIN();
 	// void	PART();
 	// void	TOPIC();
 	// void	INVITE();
 	// void	KICK();
 
 	// void	MODE();
-	void	MsgChannel();
+	// void	MsgChannel();
 	void	MsgClient(std::string recipient, std::string text);
 	void	PRIVMSG();
 	// void	NOTICE();
@@ -50,3 +52,5 @@ public:
 
 	// void	KILL();
 };
+
+typedef void (Commands::*cmdPtr)(void);

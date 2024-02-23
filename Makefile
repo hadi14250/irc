@@ -1,7 +1,7 @@
 # NAME = irc <- commented this out becuz subject pdf wants prog name to be ircserv!
 NAME = ircserv
 
-SRCS = main.cpp Server.cpp Client.cpp CommandsV2.cpp Utils.cpp
+SRCS = main.cpp Server.cpp Client.cpp Commandsv.cpp Utils.cpp Channel.cpp
 
 CXXFLAGS = -Wall -Wextra -Werror 
 # -std=c++98

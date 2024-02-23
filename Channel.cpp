@@ -1,97 +1,68 @@
 #include "Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _topic(""), _topicCreation(""), _pass(""), _curMemAmt(0), _maxMemAmt(0), _inviteOnly(false), _userLimit(false) {}
+Channel::Channel() :
+						_name(""),
+						_topic(""),
+						_topiCreation(""),
+						_pass(""),
+						_curMemAmt(0),
+						_maxMemAmt(0),
+						_inviteOnly(false),
+						_userLimit(false)
+{}
 
-bool Channel::chkIfOper(std::string nick) {
-    std::map<std::string, bool>::iterator channelMemIt = _members.find(nick);
-    if (channelMemIt == _members.end()) {
-        return false;
-    }
-    return channelMemIt->second;
-}
-
-void			Channel::incCurrentAmmount()
+Channel::Channel(std::string name) :
+						_name(name),
+						_topic(""),
+						_topiCreation(""),
+						_pass(""),
+						_curMemAmt(0),
+						_maxMemAmt(0),
+						_inviteOnly(false),
+						_userLimit(false)
 {
-	this->_curMemAmt++;
+	Server::_chanMap[name] = *this;
 }
 
-void			Channel::decCurrentAmmount()
-{
-	this->_curMemAmt--;
+bool	Channel::chkIfmember(std::string user) {
+	channelMemIt	it;
+	for (it = _members.begin(); (it != _members.end()) && it->first->_nick.compare(user); it++);
+	return (it == _members.end() ? false : true);
 }
 
-unsigned int	Channel::getCurrentAmmount()
-{
-	return (this->_curMemAmt);
+bool	Channel::chkIfOper(std::string nick) {
+	channelMemIt	it;
+	for (it = _members.begin(); (it != _members.end()) && it->first->_nick.compare(nick); it++);
+	return (it == _members.end() ? false : it->second);
 }
 
-void			Channel::setMaxMemAmt(unsigned int maxLimit)
-{
-	this->_maxMemAmt = maxLimit;
+void	Channel::joinChannel(Client& newMember, std::string password) {
+	vecStrIt		it;
+
+	if (chkIfmember(newMember._nick))
+		std::cerr << "err";// ERR_USERONCHANNEL
+	else if (_userLimit && (_curMemAmt >= _maxMemAmt))
+		std::cerr << "err";// ERR_CHANNELISFULL
+	else if (_inviteOnly && ((it = find(newMember._invitations.begin(), newMember._invitations.end(), _name)) == newMember._invitations.end()))
+		std::cerr << "err";// ERR_INVITEONLYCHAN
+	else if (_pass.size() && _pass.compare(password))
+		std::cerr << "err";// ERR_BADCHANNELKEY
+	else {
+		if (_inviteOnly)
+			newMember._invitations.erase(it);  
+		newMember._channels.push_back(_name);
+		_members[&newMember] = false;
+	}// should send a message to the client showing him that he joined the channel!
 }
 
+void	Channel::msgChannel(std::string message) {
+	channelMemIt	it = _members.begin();
 
-unsigned int Channel::getMaxMemAmt()
-{
-	return (this->_maxMemAmt);
+	for (; it != _members.end(); it++) 
+		Server::_pfdsMap[it->first->_sockfd]._messages.push_back(message + "\r\n");
 }
 
-void 			Channel::setChanName(std::string name)
-{
-	this->_name = name;
-}
-
-std::string 	Channel::getChanName()
-{
-	return (this->_name);
-}
-
-void Channel::setChanTopic(std::string topic)
-{
-	this->_topic = topic;
-}
-
-std::string 	Channel::getChanTopic()
-{
-	return (this->_topic);
-}
-
-void	Channel::setTopicCreation(std::string date)
-{
-	this->_topicCreation = date;
-}
-
-std::string 	Channel::getTopicCreation()
-{
-	return (this->_topicCreation);
-}
-
-void	Channel::setChanPass(std::string pass)
-{
-	this->_pass = pass;
-}
-
-std::string		Channel::getChanPass()
-{
-	return (this->_pass);
-}
-
-void	Channel::setInviteOnly(bool flag)
-{
-	this->_inviteOnly = flag;
-}
-
-bool	Channel::getInviteOnly()
-{
-	return (this->_inviteOnly);
-}
-
-void	Channel::setUserLimit(bool flag)
-{
-	this->_userLimit = flag;
-}
-
-bool	Channel::getUserLimit()
-{
-	return (this->_userLimit);
-}
+/* 
+	msg -> send messages to anything
+	msg -> 
+ */

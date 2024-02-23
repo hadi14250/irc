@@ -1,10 +1,11 @@
 #include "Server.hpp"
 
-volatile sig_atomic_t 		Server::_run = 1;
-std::map<int, Client>		Server::_pfdsMap;
-std::map<std::string, int>	Server::_nickMap;
-std::string					Server::_password;
-std::string					Server::_servername;
+volatile sig_atomic_t 			Server::_run = 1;
+std::map<int, Client>			Server::_pfdsMap;
+std::map<std::string, int>		Server::_nickMap;
+std::map<std::string, Channel>	Server::_chanMap;
+std::string						Server::_password;
+std::string						Server::_servername;
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
@@ -127,7 +128,7 @@ void	Server::addNewPfd(int tag)
 */
 void	Server::copyPfdMapToArray()
 {
-	_pfdsCount = _pfdsMap.size();	
+	_pfdsCount = _pfdsMap.size();
 
 	if (_pfds)
 		delete [] _pfds;
@@ -183,14 +184,10 @@ void	Server::readMsg(int fd)
 	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
 	{
 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
-		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
-			std::cout << "." << getCmd(*it) << "." << std::endl;
-			std::cout << "." << removeCmd(*it) << "." << std::endl;
+		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
 			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-		}
 		//exectue msg -> push appropriate send messages to receivers containers
 	}
-
 }
 
 void	Server::sendMsg(int fd)

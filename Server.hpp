@@ -14,11 +14,8 @@
 # include <cstring>
 # include <csignal>
 # include "Client.hpp"
-// # include "Commands.hpp"
-# include "CommandsV2.hpp"
+# include "Commands.hpp"
 # include "sstream"
-
-# define vecStrIt std::vector<std::string>::iterator
 
 class Client;
 
@@ -28,7 +25,7 @@ enum Tags
 	CLIENTFD,
 };
 
-class Server {
+class Server{
 private:
 	std::string				_port;
 	int						_listenSockfd;
@@ -36,6 +33,7 @@ private:
 	int						_readBytes;
 	int						_change;
 	char					_buf[512];
+	std::string				_fullMsg;
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
 	
@@ -62,7 +60,7 @@ public:
 	static volatile sig_atomic_t 		_run;
 	static std::map<int, Client>		_pfdsMap;
 	static std::map<std::string, int>	_nickMap;
-	static std::map<Client*, Channel*> _chanMap;
+	
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 
@@ -112,12 +110,6 @@ public:
 		const char *what() const throw(){return "generic error msg";}
 	};
 };
-
-// Utils.cpp
-std::string					removeNl(std::string str);
-std::string					removeCmd(std::string msg);
-std::string					getCmd(std::string msg);
-std::vector<std::string>	splitPlusPlus(std::string str, std::string del);
 
 /*
 Structure:

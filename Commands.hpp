@@ -8,20 +8,22 @@
 
 class Client;
 
-class Commands {
-	int							_senderFd;
-	std::string					_command;
-	std::string					_param;
-	Client&						_sender;
-	// std::vector<std::string>	_receiver;
-	// handle eggor!
-
+class Commands
+{
 public:
-	Commands(int fd, std::string command, std::string param, Client& sender);
+	int							_senderFd;
+	std::string 				_command;
+	std::vector<std::string>	_param;
+	Client&						_sender;
+	std::vector<Client *>		_receiver;
+	
+	Commands(int fd, Client & sender);
+	void	printMsg();
 
 	void	WelcomeMsg();
 	void	MOTD();
-	void	completeRegistration(std::string nick);
+	bool	invalidNick();
+	void	completeRegistration();
 
 	void	CAP();
 	void	PASS();
@@ -29,8 +31,7 @@ public:
 	void	USER();
 	// void	ERROR();
 	// void	OPER();
-	// void	PONG();
-	void	UNKNOWN();
+	void	PONG();
 	// void	QUIT();
 	// void	MODE();
 
@@ -41,9 +42,7 @@ public:
 	// void	KICK();
 
 	// void	MODE();
-	void	MsgChannel();
-	void	MsgClient(std::string recipient, std::string text);
-	void	PRIVMSG();
+	// void	PRIVMSG();
 	// void	NOTICE();
 
 	// void	WHOIS();

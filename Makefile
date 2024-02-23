@@ -1,8 +1,9 @@
-NAME = ircserv
+NAME = irc
 
-SRCS = main.cpp Server.cpp Client.cpp CommandsV2.cpp Utils.cpp
+SRCS = main.cpp Server.cpp Client.cpp Commands.cpp
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror 
+# -std=c++98
 
 CXX = c++
 
@@ -14,7 +15,7 @@ $(NAME): $(OBJS)
 all: $(NAME)
 
 clean:
-	$(RM) $(OBJS)
+	rm -rf *.o
 
 fclean: clean
 	rm -rf $(NAME)

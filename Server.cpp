@@ -5,7 +5,7 @@ std::map<int, Client>			Server::_pfdsMap;
 std::map<std::string, int>		Server::_nickMap;
 std::map<std::string, Channel>	Server::_chanMap;
 std::string						Server::_password;
-std::string						Server::_servername;
+std::string						Server::_servername = FT_IRC;
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
@@ -202,10 +202,6 @@ void	Server::readMsg(int fd)
 	{
 		std::memset(_buf, 0, sizeof(_buf));
 		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
-		// if (_buf[0] == '\n')
-		// 	std::cout << "_buf is newline\n";
-		// else
-		// 	std::cout << "_buf is: " << _buf << "\n";
 		client._fullMsg.append(_buf);
 		if (_readBytes <= 0)
 		{
@@ -217,8 +213,8 @@ void	Server::readMsg(int fd)
 	}
 	if (client._fullMsg.back() == '\n')
 	{
-		// std::cout << "client message to read: " << client._fullMsg << "\n";
 		//parse
+		//DONT FORGET TO READ FROM client._fullMsg 
 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
 			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);

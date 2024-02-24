@@ -1,0 +1,4 @@
+<< CAP LS
+<< PASS helloworld
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu

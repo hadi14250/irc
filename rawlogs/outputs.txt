@@ -1,0 +1,54 @@
+Input is CAP LS 302
+
+pushSendBuff: CAP * LS :multi-prefix userhost-in-names
+
+Input is JOIN :
+
+pushSendBuff: : 451   :need to register first
+
+Input is CAP REQ :multi-prefix
+
+pushSendBuff: CAP * ACK multi-prefix
+
+Input is CAP END
+
+Input is PASS helloworld
+NICK user
+USER user user host.docker.internal :Unknown
+
+pushSendBuff: :!@127.0.0.1 NICK  user :user
+
+pushSendBuff: :host.docker.internal 001 user  :Welcome You are now known as user!~user@127.0.0.1
+
+pushSendBuff: :host.docker.internal 002 user  :Your host is 127.0.0.1
+
+pushSendBuff: :host.docker.internal 003 user  :This server was created some time recently
+
+pushSendBuff: :host.docker.internal 004 user 127.0.0.1
+
+pushSendBuff: :host.docker.internal 005 user CHANMODES=,k,l,it MODES=2 MAXNICKLEN=16 NICKLEN=16 CHANNELLEN=50 CHANTYPES=# :are supported by this server
+
+pushSendBuff: :host.docker.internal 375 user :Message of the Day
+
+pushSendBuff: :host.docker.internal 372 user 
+
+pushSendBuff: :host.docker.internal 372 user 
+
+input is in takeInput: NICK huong
+
+pushSendBuff: :user!~user@127.0.0.1 NICK  huong :huong
+
+POLLIN: i: 1
+input is: userhost huong
+
+input is in takeInput: userhost huong
+
+pushSendBuff: :host.docker.internal 421 huong  :command not found
+
+POLLIN: i: 1
+input is: QUIT :leaving
+
+input is in takeInput: QUIT :leaving
+
+Client has quit
+Client 4 deleted

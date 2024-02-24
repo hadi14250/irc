@@ -175,6 +175,8 @@ void	Server::deletePfd(int fd)
 	and rename Commands2 to Commands.* and don't forget to modify the makefile too in that case!
 
  */
+
+
 void	Server::readMsg(int fd)
 {
 	std::memset(_buf, 0, sizeof(_buf));
@@ -189,6 +191,30 @@ void	Server::readMsg(int fd)
 		//exectue msg -> push appropriate send messages to receivers containers
 	}
 }
+
+// void	Server::readMsg(int fd)
+// {
+// 	while (true)
+// 	{
+// 		std::memset(_buf, 0, sizeof(_buf));
+// 		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
+// 		if (_readBytes <= 0)
+// 		{
+// 			deletePfd(fd);
+// 			return ;
+// 		}
+// 		_fullMsg.append(_buf);
+// 		if (_buf[strlen(_buf) - 1] == '\n')
+// 			break;
+// 	}
+// 	//PARSE AND EXECUTE ALL MESSAGES; reset _fullMsg; 
+// 	Commands msg(fd, Server::_pfdsMap[fd]);
+// 	testParse(msg);
+// 	_fullMsg = ""; // new addition
+// 	Server::_pfdsMap[fd].printPendingMsgs();
+
+// }
+
 
 void	Server::sendMsg(int fd)
 {
@@ -261,6 +287,7 @@ void	Server::createServer()
 			copyPfdMapToArray();
 	}
 }
+
 
 
 

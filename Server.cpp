@@ -177,43 +177,53 @@ void	Server::deletePfd(int fd)
  */
 
 
+// old readMsg
+
+// void	Server::readMsg(int fd)
+// {
+// 	std::memset(_buf, 0, sizeof(_buf));
+// 	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
+// 	if (_readBytes <= 0)
+// 		deletePfd(fd);
+// 	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
+// 	{
+// 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
+// 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
+// 			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+// 		//exectue msg -> push appropriate send messages to receivers containers
+// 	}
+// }
+
+// new readMsg
+
 void	Server::readMsg(int fd)
 {
-	std::memset(_buf, 0, sizeof(_buf));
-	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
-	if (_readBytes <= 0)
-		deletePfd(fd);
-	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
+	while (true)
 	{
+		std::memset(_buf, 0, sizeof(_buf));
+		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
+		if (_readBytes <= 0)
+		{
+			deletePfd(fd);
+			return ;
+		}
+		_fullMsg.append(_buf);
+		if (_buf[strlen(_buf) - 1] == '\n')
+			break;
+	}
+
 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
 			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
 		//exectue msg -> push appropriate send messages to receivers containers
-	}
+
+	// //PARSE AND EXECUTE ALL MESSAGES; reset _fullMsg; 
+	// Commands msg(fd, Server::_pfdsMap[fd]);
+	// testParse(msg);
+	// _fullMsg = ""; // new addition
+	// Server::_pfdsMap[fd].printPendingMsgs();
+
 }
-
-// void	Server::readMsg(int fd)
-// {
-// 	while (true)
-// 	{
-// 		std::memset(_buf, 0, sizeof(_buf));
-// 		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
-// 		if (_readBytes <= 0)
-// 		{
-// 			deletePfd(fd);
-// 			return ;
-// 		}
-// 		_fullMsg.append(_buf);
-// 		if (_buf[strlen(_buf) - 1] == '\n')
-// 			break;
-// 	}
-// 	//PARSE AND EXECUTE ALL MESSAGES; reset _fullMsg; 
-// 	Commands msg(fd, Server::_pfdsMap[fd]);
-// 	testParse(msg);
-// 	_fullMsg = ""; // new addition
-// 	Server::_pfdsMap[fd].printPendingMsgs();
-
-// }
 
 
 void	Server::sendMsg(int fd)

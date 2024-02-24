@@ -30,7 +30,7 @@ class Channel {
 	Channel();
 	Channel(std::string name);
 
-	void	msgChannel(std::string message);
+	void	msgChannel(Client& sender, std::string message);
 	bool	chkIfmember(std::string user);
 	void	joinChannel(Client& newMember, std::string password);
 	bool	chkIfOper(std::string nick);

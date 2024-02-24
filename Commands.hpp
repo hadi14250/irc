@@ -42,7 +42,7 @@ public:
 	// void	INVITE();
 	// void	KICK();
 
-	// void	MODE();
+	void	MODE();
 	// void	MsgChannel();
 	void	MsgClient(std::string recipient, std::string text);
 	void	PRIVMSG();

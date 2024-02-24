@@ -165,7 +165,7 @@ void	Commands::PRIVMSG() {
 			if (!it->size())
 				_sender._messages.push_back(ERR_NORECIPIENT(Server::getServername(), _sender._nick));
 			else if (it->at(0) == '#' && Server::_chanMap.find(*it) != Server::_chanMap.end())
-				Server::_chanMap[*it].msgChannel(text);
+				Server::_chanMap[*it].msgChannel(_sender, text);
 			else if (it->at(0) == '#')
 				cout << "err";
 			else
@@ -175,8 +175,11 @@ void	Commands::PRIVMSG() {
 }
 
 // void	Commands::PART() {
-
 // }
+
+void	Commands::MODE() {
+	
+}
 
 void	Commands::JOIN() {
 	std::vector<std::string>	channels;

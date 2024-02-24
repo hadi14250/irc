@@ -55,11 +55,12 @@ void	Channel::joinChannel(Client& newMember, std::string password) {
 	}// should send a message to the client showing him that he joined the channel!
 }
 
-void	Channel::msgChannel(std::string message) {
+void	Channel::msgChannel(Client& sender, std::string message) {
 	channelMemIt	it = _members.begin();
 
-	for (; it != _members.end() && ; it++) 
-		Server::_pfdsMap[it->first->_sockfd]._messages.push_back(message + "\r\n");
+	for (; it != _members.end(); it++)
+		if ((it->first->_sockfd != sender._sockfd))
+			Server::_pfdsMap[it->first->_sockfd]._messages.push_back(message + "\r\n");
 }
 
 

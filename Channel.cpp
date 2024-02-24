@@ -63,10 +63,3 @@ void	Channel::msgChannel(Client& sender, std::string message) {
 			Server::_pfdsMap[it->first->_sockfd]._messages.push_back(message + "\r\n");
 }
 
-
-
-/* 
-	msg -> send messages to anything
-	msg -> 
-	aa
- */

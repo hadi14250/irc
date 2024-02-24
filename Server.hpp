@@ -14,7 +14,6 @@
 # include <cstring>
 # include <csignal>
 # include "Client.hpp"
-// # include "Commands.hpp"
 # include "Commands.hpp"
 # include "sstream"
 
@@ -37,7 +36,6 @@ private:
 	int						_readBytes;
 	int						_change;
 	char					_buf[512];
-	std::string				_fullMsg;
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
 	

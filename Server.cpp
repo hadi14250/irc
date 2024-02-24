@@ -5,7 +5,7 @@ std::map<int, Client>			Server::_pfdsMap;
 std::map<std::string, int>		Server::_nickMap;
 std::map<std::string, Channel>	Server::_chanMap;
 std::string						Server::_password;
-std::string						Server::_servername;
+std::string						Server::_servername = FT_IRC;
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
@@ -115,9 +115,7 @@ void	Server::addNewPfd(int tag)
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
 	newPfd.events = POLLIN | POLLOUT;
-	// newPfd.events = POLLIN; old
 	newClient._pfd = newPfd;
-
 	_pfdsMap[newClient._sockfd] = newClient;
 	_change = 1;
 }
@@ -198,31 +196,31 @@ void	Server::deletePfd(int fd)
 
 void	Server::readMsg(int fd)
 {
+	Client & client = _pfdsMap[fd];
+
 	while (true)
 	{
 		std::memset(_buf, 0, sizeof(_buf));
 		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
+		client._fullMsg.append(_buf);
 		if (_readBytes <= 0)
 		{
-			deletePfd(fd);
-			return ;
+			// deletePfd(fd);
+			break;
 		}
-		_fullMsg.append(_buf);
 		if (_buf[strlen(_buf) - 1] == '\n')
 			break;
 	}
-
+	if (client._fullMsg.back() == '\n')
+	{
+		//parse
+		//DONT FORGET TO READ FROM client._fullMsg 
 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
 			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-		//exectue msg -> push appropriate send messages to receivers containers
-
-	// //PARSE AND EXECUTE ALL MESSAGES; reset _fullMsg; 
-	// Commands msg(fd, Server::_pfdsMap[fd]);
-	// testParse(msg);
-	// _fullMsg = ""; // new addition
-	// Server::_pfdsMap[fd].printPendingMsgs();
-
+		//reset _fullMsg if parsed;
+		client._fullMsg = "";
+	}
 }
 
 
@@ -252,6 +250,7 @@ In while loop
  */
 void	Server::createServer()
 {
+	std::cout << "creating server\n";
 	makeListenSockfd();
 	while (_run == 1)
 	{
@@ -259,7 +258,6 @@ void	Server::createServer()
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
-		// std::cout << "polled\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
 			// std::cout << "inside for loop\n";

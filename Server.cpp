@@ -1,10 +1,11 @@
 #include "Server.hpp"
 
-volatile sig_atomic_t 		Server::_run = 1;
-std::map<int, Client>		Server::_pfdsMap;
-std::map<std::string, int>	Server::_nickMap;
-std::string					Server::_password;
-std::string					Server::_servername = "FT_IRC";
+volatile sig_atomic_t 			Server::_run = 1;
+std::map<int, Client>			Server::_pfdsMap;
+std::map<std::string, int>		Server::_nickMap;
+std::map<std::string, Channel>	Server::_chanMap;
+std::string						Server::_password;
+std::string						Server::_servername;
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
@@ -114,6 +115,7 @@ void	Server::addNewPfd(int tag)
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
 	newPfd.events = POLLIN | POLLOUT;
+	// newPfd.events = POLLIN; old
 	newClient._pfd = newPfd;
 
 	_pfdsMap[newClient._sockfd] = newClient;
@@ -126,7 +128,7 @@ void	Server::addNewPfd(int tag)
 */
 void	Server::copyPfdMapToArray()
 {
-	_pfdsCount = _pfdsMap.size();	
+	_pfdsCount = _pfdsMap.size();
 
 	if (_pfds)
 		delete [] _pfds;
@@ -161,56 +163,38 @@ void	Server::deletePfd(int fd)
 	_change = 1;
 }
 
-void Server::trimTrailingWhitespace(std::string& str) {
-    size_t endpos = str.find_last_not_of(" \t\r\n");
-    if (endpos != std::string::npos) {
-        str = str.substr(0, endpos + 1);
-    } else {
-        str.clear();
-    }
-}
-void	Server::testParse(Commands &msg)
-{
-	std::vector<std::string>	param;
-	std::vector<Client *>		receiver;
+/* 
+	btw while I was trying to figure out how things were running here, I found few features of the command class
+	that I wouldn't use! first of all I changed the param from vector to string as a suggestion from abdulaziz because commands work differently and
+	having params as a vector could cause more trouble than ease like take privmsg for example it takes the cmd, recipient, and text
+	so if storing in a vecotr it should be split into proper chunks and the other commands work differently too
+	so I created few tiny util funtions that will help us like remove cmd, get command, remove trailing new line, split
+	if u want me to write a small description above those funtions on how they work lemme know!
 
-	std::string token;
-	std::vector<std::string> tokens;
+	I didn't want to mess with Commands.cpp or destory it so for now I have created Commands2, if its good then jsut destroy Commands.*pp
+	and rename Commands2 to Commands.* and don't forget to modify the makefile too in that case!
 
-	std::istringstream stream(_fullMsg);
-	while (std::getline(stream, token))
-	{
-		std::istringstream stream2(token);
-		std::string token2;
-		while (std::getline(stream2, token2, ' '))
-		{
-			trimTrailingWhitespace(token2);
-			if (!token2.empty())
-				tokens.push_back(token2);
-		}
-		std::vector<std::string>::iterator it = tokens.begin();
-		it++;
-		for (; it != tokens.end(); it++)
-			param.push_back(*it);
-		msg._command = tokens.front();
-		msg._param = param;
-		msg._receiver = receiver;
-		// msg.printMsg();
-		if (msg._command == "CAP")
-			msg.CAP();
-		else if (msg._command == "PASS")
-			msg.PASS();
-		else if (msg._command == "NICK")
-			msg.NICK();
-		else if (msg._command == "USER")
-			msg.USER();
-		else if (msg._command == "PING")
-			msg.PONG();
-		tokens.clear();
-		param.clear();
-	}
-	
-}
+ */
+
+
+// old readMsg
+
+// void	Server::readMsg(int fd)
+// {
+// 	std::memset(_buf, 0, sizeof(_buf));
+// 	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
+// 	if (_readBytes <= 0)
+// 		deletePfd(fd);
+// 	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
+// 	{
+// 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
+// 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
+// 			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+// 		//exectue msg -> push appropriate send messages to receivers containers
+// 	}
+// }
+
+// new readMsg
 
 void	Server::readMsg(int fd)
 {
@@ -218,10 +202,8 @@ void	Server::readMsg(int fd)
 	{
 		std::memset(_buf, 0, sizeof(_buf));
 		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
-		std::cout << "_buf: " << _buf << "\n";
 		if (_readBytes <= 0)
 		{
-			std::cout << "_readbytes is \n" << _readBytes << "\n";
 			deletePfd(fd);
 			return ;
 		}
@@ -229,13 +211,20 @@ void	Server::readMsg(int fd)
 		if (_buf[strlen(_buf) - 1] == '\n')
 			break;
 	}
-	//PARSE AND EXECUTE ALL MESSAGES; reset _fullMsg; 
-	Commands msg(fd, Server::_pfdsMap[fd]);
-	testParse(msg);
-	_fullMsg = "";
-	Server::_pfdsMap[fd].printPendingMsgs();
+
+		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
+		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
+			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+		//exectue msg -> push appropriate send messages to receivers containers
+
+	// //PARSE AND EXECUTE ALL MESSAGES; reset _fullMsg; 
+	// Commands msg(fd, Server::_pfdsMap[fd]);
+	// testParse(msg);
+	// _fullMsg = ""; // new addition
+	// Server::_pfdsMap[fd].printPendingMsgs();
 
 }
+
 
 void	Server::sendMsg(int fd)
 {
@@ -270,13 +259,16 @@ void	Server::createServer()
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
+		// std::cout << "polled\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
+			// std::cout << "inside for loop\n";
+			// std::cout << "_pfdsCount: " << _pfdsCount << "\n";
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
 				{
-					std::cout << "adding a new client\n";
+					// std::cout << "adding a new client\n";
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 				}
 				catch(const std::exception& e)
@@ -286,12 +278,14 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLIN)
 			{
+				// std::cout << "POLLIN\n";
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
 				//fd is ready for writing - use SEND HERE
+				// std::cout << "go here?\n"; 
 				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)
@@ -303,6 +297,7 @@ void	Server::createServer()
 			copyPfdMapToArray();
 	}
 }
+
 
 
 

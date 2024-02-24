@@ -171,8 +171,8 @@ void	Server::deletePfd(int fd)
 	so I created few tiny util funtions that will help us like remove cmd, get command, remove trailing new line, split
 	if u want me to write a small description above those funtions on how they work lemme know!
 
-	I didn't want to mess with Commands.cpp or destory it so for now I have created CommandsV2, if its good then jsut destroy Commands.*pp
-	and rename CommandsV2 to Commands.* and don't forget to modify the makefile too in that case!
+	I didn't want to mess with Commands.cpp or destory it so for now I have created Commands2, if its good then jsut destroy Commands.*pp
+	and rename Commands2 to Commands.* and don't forget to modify the makefile too in that case!
 
  */
 void	Server::readMsg(int fd)

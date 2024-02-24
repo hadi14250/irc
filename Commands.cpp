@@ -1,58 +1,33 @@
 #include "Commands.hpp"
 
-// Commands::Commands(int fd, std::string command, std::vector<std::string> param, Client& sender, std::vector<std::string> receiver)
-// 	:	_senderFd(fd),
-// 		_command(command),
-// 		_param(param),
-// 		_sender(sender),
-// 		_receiver(receiver)
-// {
-// }
+/* 
+ thers just a small issue iwht irssi where it prints unknown command even after it processes the messge
+ its not a big issue, and im just too tired and sleepy rn, I'll look into it later!
+ */
 
-Commands::Commands(int fd, Client & sender)
+using namespace	std;// temporary
+
+Commands::Commands(int fd, std::string command, std::string param, Client& sender)
 	:	_senderFd(fd),
+		_command(command),
+		_param(param),
 		_sender(sender)
+		// _receiver(0)
 {
-}
-
-void	Commands::printMsg()
-{
-	std::cout 	<< "MESSSAGE:\n"
-				<< "_senderFd: " << _senderFd << "\n"
-				<< "_command: " << _command << "\n"
-				<< "param: " << std::flush;
-	for (std::vector<std::string>::iterator it = _param.begin(); it != _param.end(); it++)
-		std::cout << *it << ", ";
-	std::cout	<< "\n"
-				<< "_sender: " << _sender._nick << "\n"
-				<< "_receiver: " << std::flush;
-	for (std::vector<Client *>::iterator it = _receiver.begin(); it != _receiver.end(); it++)
-		std::cout << (*it)->_nick << ", ";
-	std::cout << std::endl;
-}
-
-//for now we will not give any capabilities to our server
-void	Commands::CAP()
-{
-	if 	(_param[0].find("LS") != std::string::npos){
-		_sender._messages.push_back("CAP * LS :\r\n");
+	cmdPtr	ptr;
+	std::string	cmds[] = {"CAP", "PASS", "NICK", "USER", "JOIN", "PRIVMSG"};
+	size_t	cmd = 0, amtCmds = sizeof(cmds) / sizeof(std::string);
+	for (; cmd < amtCmds && cmds[cmd].compare(_command); cmd++);
+	switch (cmd) {
+		case 0: ptr = &Commands::CAP; break;
+		case 1: ptr = &Commands::PASS; break;
+		case 2: ptr = &Commands::NICK; break;
+		case 3: ptr = &Commands::USER; break;
+		case 4: ptr = &Commands::JOIN; break;
+		case 5: ptr = &Commands::PRIVMSG; break;
+		default : ptr = &Commands::UNKNOWN;
 	}
-	// else if (_param[0] == "REQ")
-	// 	//send CAP * ACK :param[1]
-
-}
-
-void	Commands::PASS()
-{
-	if (_param.empty())
-		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
-	else if (_sender._authenticated == true)
-		_sender._messages.push_back(ERR_ALREADYREGISTERED(Server::getServername(), _sender._nick));
-	else if (_param.front() != Server::getPassword())
-		_sender._messages.push_back(ERR_PASSWDMISMATCH(Server::getServername(), _sender._nick));
-	else
-		_sender._authenticated = true;
-	//should we terminate the connction if there is passowrd error? if we do, we have to send ERROR command	
+	(this->*ptr)();
 }
 
 //adjust welcome message
@@ -73,154 +48,179 @@ void	Commands::MOTD()
 	_sender._messages.push_back(RPL_ENDOFMOTD(Server::getServername(), _sender._nick));
 }
 
-void	Commands::completeRegistration()
+void	Commands::completeRegistration(std::string nick)
 {
 	_sender._registered = true;
-	_sender._identifier = _sender._nick + "!" + _sender._username + "@" + _sender._hostname;
+	_sender._identifier = nick + "!" + _sender._username + "@" + _sender._hostname;
 	WelcomeMsg();
 	MOTD();
-	Server::_nickMap[_sender._nick] = _sender._pfd.fd;
 }
 
-bool	Commands::invalidNick()
-{
-	char c = _param[0][0];
-	if (c == '#' || c == '&' || c == ':' || _param[0].find_first_of(" ") != std::string::npos)
-		return true;
-	return false;
-}
-
-
-void	Commands::NICK()
-{
-	std::cout << "inside Nick function\n";
-	if (_sender._authenticated == false)
-		return ;
+void	Commands::PASS() {//complete!
 	if (_param.empty())
-		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(Server::getServername(), _sender._nick));
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
+	else if (_sender._authenticated)
+		_sender._messages.push_back(ERR_ALREADYREGISTERED(Server::getServername(), _sender._nick));
+	else if (_param.compare(Server::getPassword()))
+		_sender._messages.push_back(ERR_PASSWDMISMATCH(Server::getServername(), _sender._nick));
 	else
-	{
-		std::map<std::string, int>::iterator it = Server::_nickMap.find(_param[0]);
-		if (it != Server::_nickMap.end())
-			_sender._messages.push_back(ERR_NICKNAMEINUSE(Server::getServername(), _sender._nick));
-		else if (invalidNick())
-			_sender._messages.push_back(ERR_ERRONEUSNICKNAME(Server::getServername(), _sender._nick));
-		else
-		{
-			_sender._nick = _param[0];
-			if (_sender._registered == true)
-			{
-				_sender._messages.push_back(NICKNAME(_sender._identifier, _sender._nick));
-				_sender._identifier = _sender._nick + "!" + _sender._username + "@" + _sender._hostname;
-			}
-			else if (!_sender._username.empty())
-				completeRegistration();
+		_sender._authenticated = true;
+}
+
+void	Commands::NICK() {
+	std::string	invLead = ":#$&0123456789";
+
+	if (!_sender._authenticated)
+		return ;//can add ERR_NOTREGISTERED and have a custum msg each time this is used! depending on the scenario
+		// _sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));//pass not sup!
+	else if (_param.empty())
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));//ERR_NONICKNAMEGIVEN
+	// else if (targ_max nicklen!) //will add after we decide on nick len
+	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
+		_sender._messages.push_back(ERR_NICKNAMEINUSE(Server::getServername(), _sender._nick));
+	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(" !@*?,.") != std::string::npos)
+		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(Server::getServername(), _sender._nick));
+	else {
+		if (_sender._registered == true) {
+			Server::_nickMap.erase(_sender._nick);
+			_sender._messages.push_back(NICKNAME(_sender._identifier, _param));
+			_sender._identifier = _param + "!" + _sender._username + "@" + _sender._hostname;
+		} else if (!_sender._username.empty()) {
+			completeRegistration(_param);
 		}
+		_sender._nick = _param;
+		Server::_nickMap[_param] = _senderFd;
 	}
 }
 
-/* USER username hostname servername(of user) :<realname(can contain spaces)*/
 void	Commands::USER()
 {
 	Client& _sender = Server::_pfdsMap[_senderFd];
 
-	if (_sender._authenticated == false)
-		return ;
-	if (_sender._registered == true || !_sender._username.empty()) //but what happens if no nick
+	if (!_sender._authenticated)
+		return ;// same idea as the one for NICK// add need more params! -> !_sender._username.empty()
+	if (_sender._registered == true) //but what happens if no nick
 		_sender._messages.push_back(ERR_ALREADYREGISTERED(Server::getServername(), _sender._nick));
-	else if (_param.size() < 4)
+	else if (_param.size() < 4)// check this
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
 	else
-	{
-		_sender._username = _param[0];
-		_sender._hostname = _param[1];
-		_sender._server = _param[2];
-		_sender._realname = _param[3];
+	{// the extraction below looks awful, but don't worry this is temporary I'll fix it later, for now it does the job!
+		_sender._username = getCmd(_param);
+		_sender._hostname = getCmd(removeCmd(_param));
+		_sender._server = getCmd(removeCmd(removeCmd(_param)));
+		_sender._realname = getCmd(removeCmd(removeCmd(removeCmd(_param))));
 		if (_sender._nick != "")
-			completeRegistration();
+			completeRegistration(_sender._nick);
 	}
 }
 
-void	Commands::PONG(){
-	_sender._messages.push_back(Server::getServername()
-        + " PONG " + Server::getServername() + " :" + _sender._nick + "\r\n");
+void	Commands::CAP() {//complete, gotta test this later!
+	if (_param.empty())
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_command));
+	else if (!_param.compare("LS") || !_param.compare("LS 302"))
+		_sender._messages.push_back("CAP * LS :");
+	else if (!_param.compare("LIST"))
+		_sender._messages.push_back("CAP * LIST :");
+	else if (!_param.compare("REQ") || !_param.compare(0, 4, "REQ "))
+		_sender._messages.push_back("CAP * NAK : " + _param);
+	else if (!_param.compare("END"))
+		return ;
+	else
+		_sender._messages.push_back(ERR_INVALIDCAPCMD(Server::getServername(), _sender._nick, _command));
 }
 
-// void	Commands::QUIT()
+void	Commands::UNKNOWN() {
+	_sender._messages.push_back(ERR_UNKNOWNCOMMAND(Server::getServername(), _sender._nick, _command));
+}
 
-// void	Commands::EXIT()
 
-/*
-<type> <command> <code> [<context>...] <description>
-type: FAIL, WARN, or NOTE, 
-command: Indicates the user command which this reply is related to, or is * for messages initiated outside _sender commands (for example, an on-connect message).
-code: Machine-readable reply code representing the meaning of the message to _sender software.
-context: Optional parameters that give humans extra context as to where and why the reply was spawned (for example, a particular subcommand or sub-process).
-description:  required plain-text description of the reply which is shown to users.
-*/
-// std::string generateFailMessage(std::string type, std::string command, std::string code)
-// {
-// 	std::string msg;
-// 	if (type == "FAIL")
-// 	{
-// 		msg = type + " " + command + " " + code;
-// 		if (code == "NEED_REGISTRATION")
-// 			msg += " :You are not yet registered\r\n";
-// 	}
-// 	return (msg);
+void	Commands::MsgClient(std::string recipient, std::string text) {
+	std::map<std::string, int>::iterator it = Server::_nickMap.find(recipient);
+	if (it == Server::_nickMap.end())
+		_sender._messages.push_back(ERR_NOSUCHNICK(Server::getServername(), _sender._nick, recipient));
+	else 
+		Server::_pfdsMap[it->second]._messages.push_back(text + "\r\n");
+}
+
+/* 
+	first we look for either empty recipients or text, recipients are seperated by commas and
+	then theres the text which is seperated by a space from the recipients!
+	for now we don't have the channel class and its implementation, I am working on it and by tommorow I will
+	push a base channel implementation!
+	for now it just handles client to client communication!
+ */
+void	Commands::PRIVMSG() {
+	std::vector<std::string>	recipients;
+	std::string					text;
+
+	if (_param.empty())
+		_sender._messages.push_back(ERR_NORECIPIENT(Server::getServername(), _sender._nick));
+	else if (removeCmd(_param).empty())
+		_sender._messages.push_back(ERR_NOTEXTTOSEND(Server::getServername(), _sender._nick));
+	else {
+		text = removeCmd(_param);
+		recipients = splitPlusPlus(getCmd(_param), ",");
+		for (std::vector<std::string>::iterator	it = recipients.begin(); it != recipients.end(); it++) {
+			//TARGMAX privmsg, once u guys decide how many recipients I should relay the message to I'll add it here!
+			if (!it->size())
+				_sender._messages.push_back(ERR_NORECIPIENT(Server::getServername(), _sender._nick));
+			else if (it->at(0) == '#' && Server::_chanMap.find(*it) != Server::_chanMap.end())
+				Server::_chanMap[*it].msgChannel(text);
+			else if (it->at(0) == '#')
+				cout << "err";
+			else
+				MsgClient(*it, text);
+		}
+	}
+}
+
+// void	Commands::PART() {
+
 // }
 
-/* NOTES:
-CAP = _sender capability negotiation
-allows IRC clients and servers to negotiate new features in a backwards-compatible way
--basically allows _sender and server to operate with the same version of capabilities (protocol extensions)
-1. upon connection, _sender will send server a CAP message to start negotiation
-	-CAP LS [version] - to discover available capabilities on server
-	or 
-	-CAP REQ - to blindly request a set of capabilities
+void	Commands::JOIN() {
+	std::vector<std::string>	channels;
+	std::vector<std::string>	keys;
+	size_t						i = 0;
 
-Common capabilities:
-1. multi-prefix: 
-This capability allows clients to receive more detailed user mode information for each user in channel membership 
-lists (such as NAMES responses). Without multi-prefix, clients receive only the highest user mode for each user, 
-which is typically a single-character mode like @ (for operator) or + (for voice). With multi-prefix, clients 
-can receive a list of all modes for each user, allowing for more granular control and display of user permissions.
-
-2. userhost-in-names: 
-This capability allows clients to include the full userhost information (nickname!username@hostname) in NAMES list 
-responses. Without this capability, clients only receive nicknames in NAMES responses, and they would need to send 
-additional WHO commands to retrieve userhost information for each nickname. Enabling userhost-in-names reduces the 
-number of required WHO commands and can improve _sender performance.
-
-3. sasl: 
-SASL (Simple Authentication and Security Layer) is a method for authentication between clients and servers. The sasl 
-capability enables clients to authenticate using SASL mechanisms, such as PLAIN or EXTERNAL, which provide a more 
-secure authentication method than the traditional IRC PASS command. Enabling the sasl capability allows clients to 
-authenticate securely before joining channels or sending messages.
-
-2. Client then must send standard nick and user to complete registration
-3. Server use 
-*/
-
-/* DRAFTS:
-
-void	Commands::generateMessage(std::string src, int code, Client &_sender)
-{
-	std::string paramMsg;
-	switch(code) //can't use switch with strings...maybe make code a number and then convert to string
-	{
-		case RPL_WELCOME: 
-			paramMsg = "Welcome to ft-irc " + _sender._identifier + "!"; break;
-		case ERR_NEEDMOREPARAMS:
-			paramMsg = "More parameters needed"; break; //we may need to add comand to this too
-			//"<_sender> <command> :Not enough parameters"
-		case ERR_ALREADYREGISTERED:
-			paramMsg = "You are already registered"; break;
-		case ERR_PASSWDMISMATCH
-			paramMsg = "Invalid password"; break;
-		
+	if (_param.empty())
+		cout << "err";//ERR_NEEDMOREPARAMS
+	else if (!_param.compare("JOIN 0"))
+		cout << "no more chann!";// need to redirect this to part! or just use the funtion part is using and delete!
+	else {
+		if ((channels = splitPlusPlus(getCmd(_param), ",")).empty())
+			cout << "no chn";// 
+		keys = splitPlusPlus(getCmd(removeCmd(_param)), ",");
+		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
+			std::string	key = i > keys.size() ? "" : keys.at(i);
+			if (Server::_chanMap.find(*it) == Server::_chanMap.end()) {
+				if (it->size() && it->at(0) == '#' && (it->find_first_of(" ^") == std::string::npos)/* && *it.size() > MAX_CHANNEL_NAME_LEN */)
+					Channel	newChan(*it);
+				else {
+					cerr << "err"; // _sender.blah blah ERR_BADCHANMASK
+					continue ;
+				}
+			}
+			Server::_chanMap[*it].joinChannel(_sender, key);
+		}
 	}
-	std::string codeStr = //convert code to string
-	std::string msg = ":" + src + " " + code + " " + _sender._nick + " :" + ParamMsg + "\r\n";
-	_sender._messages.push_back(msg);
-}*/
+}
+
+// void	Commands::channelMode() {
+// 	if ()
+// 	//chk if oper, ERR_CHANOPRIVSNEEDED					-> (!this->channels[channelName].getOper(clientNum))
+// 	//chk if channel exists, ERR_NOSUCHCHANNEL			-> ((this->channels.find(channelName)) == this->channels.end())
+// 	//chk modes RPL_CHANNELMODEIS						-> (!(chkIfArgs(removeCmd(buffer), 0)))
+// 	//chk if user is on channel							-> (!this->channels[channelName].getUser(clientNum))
+// }
+
+
+// void	Commands::MODE() {
+// 	if (_param.empty())
+// 		return ;// return error
+// 	else if (_param.at(0) == '#')
+// 		ChannelMode();
+// 	else {
+// 		cout << "user mode" << endl;
+// 	}
+// }

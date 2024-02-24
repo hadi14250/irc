@@ -58,11 +58,14 @@ void	Channel::joinChannel(Client& newMember, std::string password) {
 void	Channel::msgChannel(std::string message) {
 	channelMemIt	it = _members.begin();
 
-	for (; it != _members.end(); it++) 
+	for (; it != _members.end() && ; it++) 
 		Server::_pfdsMap[it->first->_sockfd]._messages.push_back(message + "\r\n");
 }
+
+
 
 /* 
 	msg -> send messages to anything
 	msg -> 
+	aa
  */

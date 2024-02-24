@@ -218,8 +218,10 @@ void	Server::readMsg(int fd)
 	{
 		std::memset(_buf, 0, sizeof(_buf));
 		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
+		std::cout << "_buf: " << _buf << "\n";
 		if (_readBytes <= 0)
 		{
+			std::cout << "_readbytes is \n" << _readBytes << "\n";
 			deletePfd(fd);
 			return ;
 		}

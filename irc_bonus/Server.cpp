@@ -217,7 +217,10 @@ void	Server::readMsg(int fd)
 		//DONT FORGET TO READ FROM client._fullMsg 
 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
-			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+		{
+			if (*it != "")
+				Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+		}
 		//reset _fullMsg if parsed;
 		client._fullMsg = "";
 	}

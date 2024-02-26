@@ -1,0 +1,49 @@
+<< CAP LS
+<< PASS hello
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS ::FT_IRC 001 jebucoy :Welcome to the Internet Relay Network jebucoy!jebucoy@jebucoy
+<< CAP END
+>> :FT_IRC 002 jebucoy :Your host is FT_IRC
+>> :FT_IRC 003 jebucoy :This server was created February 29, 2024
+>> :FT_IRC 004 jebucoy 
+>> :FT_IRC 005 jebucoy 
+>> :FT_IRC 375 jebucoy :-Message of the day
+<< MODE jebucoy +i
+>> :FT_IRC 372 jebucoy :-MOTD MAIN BODY
+>> :FT_IRC 376 jebucoy :End of /MOTD command
+>> :FT_IRC 421 jebucoy MODE :Unknown command
+<< PRIVMSG j :BOT
+>> :FT_IRC 401 jebucoy j :No such nick
+<< PRIVMSG j :BOT
+>> :FT_IRC 401 jebucoy j :No such nick
+<< CAP LS
+<< PASS hello
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS ::FT_IRC 001 jebucoy :Welcome to the Internet Relay Network jebucoy!jebucoy@jebucoy
+<< CAP END
+>> :FT_IRC 002 jebucoy :Your host is FT_IRC
+>> :FT_IRC 003 jebucoy :This server was created February 29, 2024
+>> :FT_IRC 004 jebucoy 
+>> :FT_IRC 005 jebucoy 
+>> :FT_IRC 375 jebucoy :-Message of the day
+<< MODE jebucoy +i
+>> :FT_IRC 372 jebucoy :-MOTD MAIN BODY
+>> :FT_IRC 376 jebucoy :End of /MOTD command
+>> :FT_IRC 421 jebucoy MODE :Unknown command
+<< PRIVMSG j :BOT
+>> :FT_IRC 401 jebucoy j :No such nick
+<< PRIVMSG j :BOT
+>> :FT_IRC 401 jebucoy j :No such nick
+<< PRIVMSG j :BOT
+>> :FT_IRC 401 jebucoy j :No such nick
+<< PRIVMSG jebucoy :BOT
+>> SassyBot: Find someone else to bother. Beep.
+>> 
+<< PRIVMSG jebucoy :BOT
+>> SassyBot: Ugh, get a life!
+>> 
+<< PRIVMSG jebucoy :BOT
+>> SassyBot: I'm not programmed to help you
+>> 

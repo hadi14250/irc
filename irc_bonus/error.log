@@ -1,0 +1,81 @@
+<< CAP LS
+<< PASS hello
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS ::FT_IRC 421 *  :Unknown command
+<< CAP END
+>> :FT_IRC 421 *  :Unknown command
+>> :FT_IRC 421 jebucoy  :Unknown command
+>> :FT_IRC 001 jebucoy :Welcome to the Internet Relay Network jebucoy!jebucoy@jebucoy
+<< MODE jebucoy +i
+>> :FT_IRC 002 jebucoy :Your host is FT_IRC
+>> :FT_IRC 003 jebucoy :This server was created February 29, 2024
+>> :FT_IRC 004 jebucoy 
+>> :FT_IRC 005 jebucoy 
+>> :FT_IRC 375 jebucoy :-Message of the day
+>> :FT_IRC 372 jebucoy :-MOTD MAIN BODY
+>> :FT_IRC 376 jebucoy :End of /MOTD command
+>> :FT_IRC 421 jebucoy  :Unknown command
+>> :FT_IRC 421 jebucoy  :Unknown command
+>> :FT_IRC 421 jebucoy MODE :Unknown command
+>> :FT_IRC 421 jebucoy  :Unknown command
+<< PING FT_IRC
+>> :FT_IRC 421 jebucoy PING :Unknown command
+>> :FT_IRC 421 jebucoy  :Unknown command
+<< PRIVMSG jebucoy :hello
+>> :hello
+>> :FT_IRC 421 jebucoy  :Unknown command
+<< CAP LS
+<< PASS hello
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS ::FT_IRC 421 *  :Unknown command
+<< CAP END
+>> :FT_IRC 421 *  :Unknown command
+>> :FT_IRC 421 jebucoy  :Unknown command
+>> :FT_IRC 001 jebucoy :Welcome to the Internet Relay Network jebucoy!jebucoy@jebucoy
+<< MODE jebucoy +i
+>> :FT_IRC 002 jebucoy :Your host is FT_IRC
+>> :FT_IRC 003 jebucoy :This server was created February 29, 2024
+>> :FT_IRC 004 jebucoy 
+>> :FT_IRC 005 jebucoy 
+>> :FT_IRC 375 jebucoy :-Message of the day
+>> :FT_IRC 372 jebucoy :-MOTD MAIN BODY
+>> :FT_IRC 376 jebucoy :End of /MOTD command
+>> :FT_IRC 421 jebucoy  :Unknown command
+>> :FT_IRC 421 jebucoy  :Unknown command
+>> :FT_IRC 421 jebucoy MODE :Unknown command
+>> :FT_IRC 421 jebucoy  :Unknown command
+<< PING FT_IRC
+>> :FT_IRC 421 jebucoy PING :Unknown command
+>> :FT_IRC 421 jebucoy  :Unknown command
+<< PRIVMSG jebucoy :hello
+>> :hello
+>> :FT_IRC 421 jebucoy  :Unknown command
+<< PRIVMSG jebucoy :hello world
+>> :hello world
+>> :FT_IRC 421 jebucoy  :Unknown command
+<< PRIVMSG jebucoy :hiiii
+>> :hiiii
+>> :FT_IRC 421 jebucoy  :Unknown command
+/<< CAP LS
+<< PASS hello
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS ::FT_IRC 433 * * :Nickname already in use
+<< CAP END
+>> :FT_IRC 001 * :Welcome to the Internet Relay Network *!jebucoy@jebucoy
+<< MODE * +i
+<< WHOIS jebucoy
+>> :FT_IRC 002 * :Your host is FT_IRC
+>> :FT_IRC 003 * :This server was created February 29, 2024
+>> :FT_IRC 004 * 
+>> :FT_IRC 005 * 
+>> :FT_IRC 375 * :-Message of the day
+>> :FT_IRC 372 * :-MOTD MAIN BODY
+>> :FT_IRC 376 * :End of /MOTD command
+>> :FT_IRC 421 * MODE :Unknown command
+>> :FT_IRC 421 * WHOIS :Unknown command
+<< PING FT_IRC
+>> :FT_IRC 421 * PING :Unknown command
+<< PRIVMSG jebucoy :hey

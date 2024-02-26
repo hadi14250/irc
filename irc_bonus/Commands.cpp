@@ -1,4 +1,7 @@
 #include "Commands.hpp"
+#include "Bot.hpp"
+#include <cstdlib>
+#include <ctime>
 
 /* 
  thers just a small issue iwht irssi where it prints unknown command even after it processes the messge
@@ -136,6 +139,9 @@ void	Commands::UNKNOWN() {
 
 void	Commands::MsgClient(std::string recipient, std::string text) {
 	std::map<std::string, int>::iterator it = Server::_nickMap.find(recipient);
+	if (text.find("BOT") != std::string::npos){
+		text = BOT();
+	} 
 	if (it == Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NOSUCHNICK(Server::getServername(), _sender._nick, recipient));
 	else 
@@ -174,6 +180,36 @@ void	Commands::PRIVMSG() {
 	}
 }
 
+//bot as a function
+// void	Commands::BOT() {
+// 	if (_sender._isBotFirstCall == true) {
+// 		_sender._messages.push_back(Bot::botName + ": " +  Bot::popUpResponse + "\r\n");
+// 		_sender._isBotFirstCall = false;
+// 	}
+// 	else if (_sender._isBotFirstCall == false) {
+// 		std::srand(static_cast<unsigned int>(std::time(nullptr)));
+// 	    int strSize = sizeof(Bot::helpResponse) / sizeof(Bot::helpResponse[0]);
+// 		int randIdx = std::rand() % strSize;
+// 	    const std::string& response = Bot::helpResponse[randIdx];
+// 		_sender._messages.push_back(Bot::botName + ": " + response + "\r\n");
+// 	}
+// }
+
+std::string	Commands::BOT() {
+	std::string reply;
+	if (_sender._isBotFirstCall == true) {
+		reply = Bot::botName + ": " +  Bot::popUpResponse + "\r\n";
+		_sender._isBotFirstCall = false;
+	}
+	else if (_sender._isBotFirstCall == false) {
+		std::srand(static_cast<unsigned int>(std::time(nullptr)));
+	    int strSize = sizeof(Bot::helpResponse) / sizeof(Bot::helpResponse[0]);
+		int randIdx = std::rand() % strSize;
+	    const std::string& response = Bot::helpResponse[randIdx];
+		reply = Bot::botName + ": " + response + "\r\n";
+	}
+	return reply;
+}
 // void	Commands::PART() {
 // }
 

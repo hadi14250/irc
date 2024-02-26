@@ -48,6 +48,7 @@ public:
 	void	PRIVMSG();
 	// void	NOTICE();
 
+	std::string	BOT(); //bonus command
 	// void	WHOIS();
 
 	// void	KILL();

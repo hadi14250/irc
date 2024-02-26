@@ -28,6 +28,7 @@ private:
 	std::string					_realname;
 	std::string					_identifier; //<nick>!<user>@<host>
 	std::string					_fullMsg;
+	bool						_isBotFirstCall;
 	bool						_listenSock;
 	bool						_authenticated;
 	bool						_registered;

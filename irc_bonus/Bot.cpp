@@ -1,18 +1,5 @@
-#pragma once
-#include <iostream>
-#include "Client.hpp"
-/* Create a sassy bot 
-- if client calls out the bot, Bot will appear saying "What do you want?"
+#include "Bot.hpp"
 
-- if client calls it a second time: "Again? What is it this time?"
-
-- anytime the client asks for help, the bot will just say "I don't want to help you"
-
-** could have an array of strings like, "I dont want to help you", "leave me alone", "get a life", etc...*/
-
-class Bot{
-    std::string     _botName;
-    std::string*    _popUpResponse;
-    std::string*    _helpResponse;
-    std::map<Client *, bool> _clientList; //will we need to keep track of clients? bool for _isFirstResponse
-};
+const std::string Bot::botName = "SassyBot";
+const std::string Bot::popUpResponse = "What do you want?";
+const std::string Bot::helpResponse[8] = {"I don't want to help you. Bye.", "Leave me alone.", "Ugh, get a life!", "I'm not programmed to help you", "Find someone else to bother. Beep.", "My purpose in life: to say no to your requests.", "I'd help, but that goes against my programming", "If I could help you, I still wouldn't. So, no."};

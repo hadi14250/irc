@@ -50,4 +50,12 @@ struct sockaddr_in {
     struct in_addr     sin_addr;    // Internet address
     unsigned char      sin_zero[8]; // Same size as struct sockaddr
 };
+
+struct in_addr {
+    uint32_t s_addr; // that's a 32-bit int (4 bytes)
+};
+
+I THINK you need to use ntohs function to convert port and ntohl function to conver the address
+since they would currently be in network byte order
+
 */

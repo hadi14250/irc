@@ -21,6 +21,8 @@ class Commands {
 public:
 	Commands(int fd, std::string command, std::string param, Client& sender);
 
+	void	postRegistrationCmds();
+	bool	registrationCmds();
 	void	WelcomeMsg();
 	void	MOTD();
 	void	completeRegistration(std::string nick);
@@ -29,18 +31,19 @@ public:
 	void	PASS();
 	void	NICK();
 	void	USER();
+	void	PING();
+	void	printChan();
 	void	UNKNOWN();
 	// void	ERROR();
 	// void	OPER();
-	// void	PONG();
 	// void	QUIT();
-	// void	MODE();
 
 	void	JOIN();
+	void	NAMES();
 	// void	PART();
-	// void	TOPIC();
-	// void	INVITE();
-	// void	KICK();
+	void	TOPIC();
+	void	INVITE();
+	void	KICK();
 
 	void	MODE();
 	// void	MsgChannel();

@@ -105,10 +105,13 @@ void	Server::addNewPfd(int tag)
 		//taking this out of Client construction for better readability
 		socklen_t addrlen = sizeof(struct sockaddr_in);
 		struct sockaddr_in clientInfo;
+		std::memset(&clientInfo, 0, addrlen);
 		newClient._sockfd = accept(_listenSockfd, (struct sockaddr *)&clientInfo, &addrlen);
 		if (newClient._sockfd == -1)
 			throw AcceptException();
 		newClient._clientInfo = clientInfo;
+		// std::cout	<< "sin_port: " << ntohs(clientInfo.sin_port) << " " << clientInfo.sin_port << "\n"
+					// << "sin_addr: " << ntohl(clientInfo.sin_addr.s_addr) << " " << clientInfo.sin_addr.s_addr << "\n";
 	}
 	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
 		throw FcntlException();

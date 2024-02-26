@@ -39,3 +39,15 @@ Commands::QUIT()
 
 #define QUIT(identifier, nick) \
 	":" + identifier + " QUIT :" + nick + " has quit\r\n"
+
+/* FOR FILE TRANSFER BONUS
+
+use Client._clientInfo to access port num and ip
+
+struct sockaddr_in {
+    short int          sin_family;  // Address family, AF_INET
+    unsigned short int sin_port;    // Port number
+    struct in_addr     sin_addr;    // Internet address
+    unsigned char      sin_zero[8]; // Same size as struct sockaddr
+};
+*/

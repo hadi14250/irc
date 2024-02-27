@@ -103,4 +103,5 @@
 	":" + identifier + " INVITE " + recipient + ' ' + channelName + "\r\n"
 #define JOIN_MSG(identifier, channelName) \
 	": " + identifier + " JOIN " + channelName + "\r\n"
-
+#define PRIV_MSG(identifier, recipient, msg) \
+	": " + identifier + " PRIVMSG " + recipient + " :" + msg + "\r\n"

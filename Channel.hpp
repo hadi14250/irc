@@ -36,7 +36,7 @@ class Channel {
 	Channel(std::string name);
 
 	std::vector<std::string>	getChannelMembers();
-	void						msgChannel(Client& sender, std::string message);
+	void						msgChannel(Client& sender, std::string msg);
 	bool						chkIfMember(std::string user);
 	bool						joinChannel(Client& newMember, std::string password);
 	void						manipOper(std::string nick, bool promote);

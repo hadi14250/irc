@@ -167,7 +167,7 @@ void	Commands::MsgClient(std::string recipient, std::string text) {
 	if (it == Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));
 	else 
-		Server::_pfdsMap[it->second]._messages.push_back(text + "\r\n");
+		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? text : getCmd(text))));
 }
 
 /* 
@@ -304,9 +304,9 @@ void	Commands::KICK() {
 	cerr << "wip" << endl;
 }
 
-void	Commands::KICK() {// part!
-	cerr << "wip" << endl;
-}
+// void	Commands::KICK() {// part!
+// 	cerr << "wip" << endl;
+// }
 
 
 //! tmp
@@ -317,3 +317,15 @@ chnMapIt it;
 		return ;
 	it->second.printChan();
 }
+
+
+/* 
+privmsg
+:testrer!~r@5.195.225.158 PRIVMSG testre :hello
+
+doesn't catch all words if not preceeded by a colon
+:testrer!~r@5.195.225.158 PRIVMSG #awefwaa :wassup
+
+#define PRIVMSG(identifier, recipient, msg)
+
+ */

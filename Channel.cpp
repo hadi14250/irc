@@ -68,6 +68,9 @@ bool	Channel::joinChannel(Client& newMember, std::string password) {
 		if (!_curMemAmt)
 			_members[&newMember] = true;
 		_curMemAmt++;
+		for (chnMemIt it = _members.begin(); it != _members.end(); it++) {
+			it->first->_messages.push_back(JOIN_MSG(newMember._identifier, _name));
+		}
 		return true;
 	}
 	return false;
@@ -240,10 +243,11 @@ void	Channel::chanMode(Client& sender, std::string modes, std::string value) {
 			std::cerr << "value = " << value << std::endl;
 			std::cerr << "get cmd value = " << getCmd(value) << std::endl;
 			if (_modes.substr(0, 3).find_first_of(modes.at(i)) != std::string::npos) {
-				printValue += (printValue.empty() ? "" : ",") + (modes.substr(i, 1).compare("k") ? "-\\(\",)/-" : getCmd(value));
+				printValue += (printValue.empty() ? "" : ",") + (!modes.substr(i, 1).compare("k") ? "-\\(\",)/-" : getCmd(value));
 				value = removeCmd(value);
 			}
-			sender._messages.push_back(":" + sender._identifier + " MODE " + _name + " " + printMode + " " + printValue);
+			for (chnMemIt it = _members.begin(); it != _members.end(); it++)
+				it->first->_messages.push_back(":" + sender._identifier + " MODE " + _name + " " + printMode + " " + printValue + "\r\n");
 		}
 	}
 }
@@ -254,16 +258,24 @@ void	Channel::seTopic(std::string author, std::string topic) {
 	_topiCreation = (std::string)std::ctime(&currentTime);
 	_topiCreation = _topiCreation.substr(0, _topiCreation.size() - 1);
 	_topicAuthor = author;
-	_topic = topic;
+	_topic = topic.empty() ? topic : topic.at(0) == ':' ? removeColon(topic) : getCmd(topic);
+	for (chnMemIt it = _members.begin(); it != _members.end(); it++) {
+		it->first->_messages.push_back(RPL_TOPIC(it->first->_nick, _name, _topic));
+		it->first->_messages.push_back(RPL_TOPICWHOTIME(it->first->_nick, _name, _topicAuthor, _topiCreation));
+	}
 }
 
-std::vector<std::string>	Channel::geTopicAndTopiCreation(void) {
-	std::vector<std::string>	vec;
+void	Channel::geTopic(Client& user) {
+	if (_topic.empty())
+		user._messages.push_back(RPL_NOTOPIC(user._nick, _name));
+	else {
+		user._messages.push_back(RPL_TOPIC(user._nick, _name, _topic));
+		user._messages.push_back(RPL_TOPICWHOTIME(user._nick, _name, _topicAuthor, _topiCreation));
+	}
+}
 
-	vec.push_back(_topic);
-	vec.push_back(_topicAuthor);
-	vec.push_back(_topiCreation);
-	return vec;
+bool	Channel::chkTopic() {
+	return (_topic.empty() ? false : true);
 }
 
 //! tmp //////////////////////////////////////////////////////////////////////////////
@@ -274,3 +286,25 @@ void	Channel::printChan() {
 	for (; it != _members.end(); it++)
 		std::cerr << it->first->_nick << "oper -> " << (it->second ? "yes" : "no") << std::endl;
 }
+
+/* 
+:testre!~r@5.195.225.158 JOIN #awefawee
+:zirconium.libera.chat MODE #awefawee +Cnst
+:zirconium.libera.chat 353 testre @ #awefawee :@testre
+:zirconium.libera.chat 366 testre #awefawee :End of /NAMES list.
+
+:testrer!~erf@5.195.225.158 JOIN #awefawee
+:tungsten.libera.chat 353 testrer @ #awefawee :testrer @testre
+:tungsten.libera.chat 366 testrer #awefawee :End of /NAMES list.
+
+
+notify others like
+:testrer!~erf@5.195.225.158 JOIN #awefawee
+
+join after topic set
+:testerer!~r@5.195.225.158 JOIN #awefawee
+:osmium.libera.chat 332 testerer #awefawee :ae
+:osmium.libera.chat 333 testerer #awefawee testre!~r@5.195.225.158 1708969438
+:osmium.libera.chat 353 testerer @ #awefawee :testerer @testre
+:osmium.libera.chat 366 testerer #awefawee :End of /NAMES list.
+ */

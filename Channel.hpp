@@ -53,8 +53,9 @@ class Channel {
 
 	void						chanMode(Client& sender, std::string modes, std::string value);
 
+	bool						chkTopic();
+	void						geTopic(Client& user);
 	void						seTopic(std::string author, std::string topic);
-	std::vector<std::string>	geTopicAndTopiCreation(void);
 //! tmp
 	void	printChan();
 };

@@ -217,14 +217,15 @@ void	Commands::NAMES() {
 	}
 }
 
-void	Commands::JOIN() {
+//gotta notify others bout user joining!
+void	Commands::JOIN() {// done! only JOIN 0 remains!
 	std::vector<std::string>	channels;
 	std::vector<std::string>	keys;
 	size_t						i = 0;
 
 	if (!chkArgs(_param, 0))
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
-	else if (!_param.compare("0"))// should remove user from all channels user is a part of!
+	else if (!_param.compare("0"))
 		cout << "no more chann!";
 	else {
 		if ((channels = splitPlusPlus(_param, ",")).empty())
@@ -241,7 +242,10 @@ void	Commands::JOIN() {
 				}
 			}
 			if (Server::_chanMap[*it].joinChannel(_sender, key)) {
-				_param = *it;	NAMES();
+				_param = *it;
+				if (Server::_chanMap[*it].chkTopic())
+					Server::_chanMap[*it].geTopic(_sender);
+				NAMES();
 			}
 		}
 	}
@@ -262,7 +266,7 @@ void	Commands::MODE() {
 	}
 }
 
-void	Commands::TOPIC() {
+void	Commands::TOPIC() {// done!
 	chnMapIt	it;
 	if (_param.empty())
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
@@ -272,24 +276,11 @@ void	Commands::TOPIC() {
 		_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, getCmd(_param)));
 	else if (!it->second.chkIfOper(_sender._nick))
 		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
-	else {
-		std::vector<std::string>	topic = it->second.geTopicAndTopiCreation();
-		if (!chkArgs(removeCmd(_param), 1)) {
-			if (topic.at(0).empty())
-				_sender._messages.push_back(RPL_NOTOPIC(_sender._nick, getCmd(_param)));
-			else {
-				_sender._messages.push_back(RPL_TOPIC(_sender._nick, getCmd(_param), topic.at(0) ));
-				_sender._messages.push_back(RPL_TOPICWHOTIME(_sender._nick, getCmd(_param), topic.at(1), topic.at(2) ));
-			}
-		} else {
-			it->second.seTopic(removeColon(removeCmd(_param)), _sender._nick);
-			_sender._messages.push_back(RPL_TOPIC(_sender._nick, getCmd(_param), topic.at(0)));
-			_sender._messages.push_back(RPL_TOPICWHOTIME(_sender._nick, getCmd(_param), topic.at(1), topic.at(2) ));
-		}
-	}
+	else
+		(!chkArgs(removeCmd(_param), 1)) ? it->second.geTopic(_sender) : it->second.seTopic(_sender._nick, removeCmd(_param));
 }
 
-void	Commands::INVITE() {
+void	Commands::INVITE() {// seggs! beware
 	chnMapIt	it;
 	if (_param.empty() || (chkArgs(_param, 2) < 2))
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
@@ -312,6 +303,11 @@ void	Commands::INVITE() {
 void	Commands::KICK() {
 	cerr << "wip" << endl;
 }
+
+void	Commands::KICK() {// part!
+	cerr << "wip" << endl;
+}
+
 
 //! tmp
 

@@ -87,8 +87,6 @@
 
 #define RPL_INVITING(nick, recipient, channelName) \
 	": FT_IRC 341 " + nick + ' ' + recipient + ' ' + channelName + "\r\n"
-#define INVITE_MSG(identifier, recipient, channelName) \
-	":" + identifier + " INVITE " + recipient + ' ' + channelName + "\r\n"
 
 #define ERR_KEYSET(nick, channelName) \
 	": FT_IRC 467 " + nick + ' ' + channelName + " :Channel key already set\r\n"
@@ -100,3 +98,9 @@
 	": FT_IRC 696 " + nick + ' ' + recip + ' ' + mode_char + ' ' + param + " :" + description + "\r\n"
 #define RPL_CHANNELMODEIS(nick, channelName, modeStr, modeArgs) \
 	": FT_IRC 324 " + nick + ' ' + channelName + ' ' + modeStr + ' ' + modeArgs + "\r\n"
+
+#define INVITE_MSG(identifier, recipient, channelName) \
+	":" + identifier + " INVITE " + recipient + ' ' + channelName + "\r\n"
+#define JOIN_MSG(identifier, channelName) \
+	": " + identifier + " JOIN " + channelName + "\r\n"
+

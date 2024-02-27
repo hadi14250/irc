@@ -34,7 +34,6 @@ private:
 	int						_listenSockfd;
 	int						_pfdsCount;
 	int						_readBytes;
-	int						_change;
 	char					_buf[512];
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
@@ -63,6 +62,7 @@ public:
 	static std::map<int, Client>			_pfdsMap;
 	static std::map<std::string, int>		_nickMap;
 	static std::map<std::string, Channel>	_chanMap;
+	static int								_change;
 	
 	Server(std::string const & port, std::string const & pswd);
 	~Server();

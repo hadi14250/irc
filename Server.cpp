@@ -5,14 +5,14 @@ std::map<int, Client>			Server::_pfdsMap;
 std::map<std::string, int>		Server::_nickMap;
 std::map<std::string, Channel>	Server::_chanMap;
 std::string						Server::_password;
-std::string						Server::_servername = FT_IRC;
+std::string						Server::_servername = "FT_IRC";
+int								Server::_change = 0;
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
 		_listenSockfd(-1),
 		_pfdsCount(0),
 		_readBytes(0),
-		_change(0),
 		_serv(NULL),
 		_pfds(NULL)
 {
@@ -108,6 +108,7 @@ void	Server::addNewPfd(int tag)
 		newClient._sockfd = accept(_listenSockfd, (struct sockaddr *)&clientInfo, &addrlen);
 		if (newClient._sockfd == -1)
 			throw AcceptException();
+		newClient._clientInfo = clientInfo;
 	}
 	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
 		throw FcntlException();

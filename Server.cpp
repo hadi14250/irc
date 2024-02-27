@@ -146,6 +146,7 @@ void	Server::copyPfdMapToArray()
 */
 void	Server::deletePfd(int fd)
 {
+	//we must also erase the client from any channels they belong to
 	Client client = _pfdsMap[fd];
 	std::string nick = client._nick;
 

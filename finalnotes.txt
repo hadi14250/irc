@@ -20,6 +20,8 @@ make
 
 Irssi in Docker
 docker run -it --rm --name irssi --network host irssi
+/connect host.docker.internal <port> <password>
+note: on a computer that doesn't require docker to connect to irssi we can use localhost instead of host.docker.internal
 
 Rawlogs 
 run this in irssi

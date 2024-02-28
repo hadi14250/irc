@@ -40,6 +40,15 @@ Commands::QUIT()
 #define QUIT(identifier, nick) \
 	":" + identifier + " QUIT :" + nick + " has quit\r\n"
 
+void	Commands::MOTD()
+{
+	//open file
+	//append each prefix to the proper message and push back
+	_sender._messages.push_back(RPL_MOTDSTART(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_MOTD(Server::getServername(), _sender._nick));
+	_sender._messages.push_back(RPL_ENDOFMOTD(Server::getServername(), _sender._nick));
+}
+
 /* FOR FILE TRANSFER BONUS
 
 use Client._clientInfo to access port num and ip

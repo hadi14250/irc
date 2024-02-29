@@ -6,6 +6,7 @@ std::map<std::string, int>		Server::_nickMap;
 std::map<std::string, Channel>	Server::_chanMap;
 std::string						Server::_password;
 std::string						Server::_servername = "FT_IRC";
+int								Server::_change = 0;
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),

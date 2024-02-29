@@ -108,7 +108,7 @@ void	Channel::msgChannel(Client& sender, std::string msg) {
 
 	for (; it != _members.end(); it++)
 		if ((it->first->_sockfd != sender._sockfd))
-			Server::_pfdsMap[it->first->_sockfd]._messages.push_back(PRIV_MSG(it->first->_identifier, _name, ((msg.size() && msg.at(0) == ':') ? msg : getCmd(msg) )) );
+			Server::_pfdsMap[it->first->_sockfd]._messages.push_back(PRIV_MSG(it->first->_identifier, _name, ((msg.size() && msg.at(0) == ':') ? removeColon(msg) : getCmd(msg) )) );
 }
 
 void	Channel::handleModeO(Client& sender, char mode, bool addflag, std::string param) {

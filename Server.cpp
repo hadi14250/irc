@@ -174,55 +174,31 @@ void	Server::deletePfd(int fd)
 
  */
 
-
-// old readMsg
-
-// void	Server::readMsg(int fd)
-// {
-// 	std::memset(_buf, 0, sizeof(_buf));
-// 	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
-// 	if (_readBytes <= 0)
-// 		deletePfd(fd);
-// 	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
-// 	{
-// 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
-// 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
-// 			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-// 		//exectue msg -> push appropriate send messages to receivers containers
-// 	}
-// }
-
-// new readMsg
-
-void	Server::readMsg(int fd)
+void	Server::readMsg(int fd)// done! handles ^D now
 {
 	Client & client = _pfdsMap[fd];
 
-	while (true)
-	{
-		std::memset(_buf, 0, sizeof(_buf));
-		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
-		client._fullMsg.append(_buf);
-		if (_readBytes <= 0)
-		{
-			// deletePfd(fd);
-			break;
+	std::memset(_buf, 0, sizeof(_buf));
+	_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
+	if (_readBytes == 0) {
+		deletePfd(fd);
+		return ;
+	} else if (*_buf) {
+		std::cerr << " reading > " << _buf << std::endl;
+		if (client.appendBuffer(_buf) || client.chkOverflow()) {
+			if (client.chkOverflow())
+				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
+			else {
+				std::vector<std::string>	cmds = splitPlusPlus(client.getBuffer(), "\r\n");
+				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
+					std::cerr << " processing > " << *it << std::endl;
+					Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+				}
+				client._fullMsg.clear();
+			}
 		}
-		if (_buf[strlen(_buf) - 1] == '\n')
-			break;
-	}
-	if (client._fullMsg.back() == '\n')
-	{
-		//parse
-		//DONT FORGET TO READ FROM client._fullMsg 
-		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
-		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
-			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-		//reset _fullMsg if parsed;
-		client._fullMsg = "";
 	}
 }
-
 
 void	Server::sendMsg(int fd)
 {
@@ -230,6 +206,7 @@ void	Server::sendMsg(int fd)
 	std::deque<std::string>::iterator it = client._messages.begin();
 	for (; it != client._messages.end(); it++)
 	{
+		std::cerr << " sending > " + *it << std::endl;
 		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
 			std::cerr << "Failed to send msg: " << *it << std::endl;
 	}
@@ -331,7 +308,7 @@ std::string	Server::getPassword()
 	return _password;
 }
 
-std::string	Server::getServername()
+std::string	Server::getServername()// not used by commands since the server name must be constant!
 {
 	return _servername;
 }

@@ -1,8 +1,4 @@
 #include "Commands.hpp"
-/* 
- thers just a small issue iwht irssi where it prints unknown command even after it processes the messge
- its not a big issue, and im just too tired and sleepy rn, I'll look into it later!
- */
 
 using namespace	std;// temporary
 
@@ -81,9 +77,10 @@ void	Commands::WelcomeMsg()
 //adjust motd
 void	Commands::MOTD()
 {
-	_sender._messages.push_back(RPL_MOTDSTART(_sender._nick));
-	_sender._messages.push_back(RPL_MOTD(_sender._nick));
-	_sender._messages.push_back(RPL_ENDOFMOTD(_sender._nick));
+	_sender._messages.push_back(ERR_NOMOTD(_sender._nick));
+	// _sender._messages.push_back(RPL_MOTDSTART(_sender._nick));
+	// _sender._messages.push_back(RPL_MOTD(_sender._nick));
+	// _sender._messages.push_back(RPL_ENDOFMOTD(_sender._nick));
 }
 
 void	Commands::completeRegistration(std::string nick)
@@ -153,9 +150,9 @@ void	Commands::CAP() {
 	if (_param.empty())
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else if (!_param.compare("LS") || !_param.compare("LS 302"))
-		_sender._messages.push_back("CAP * LS :");
+		_sender._messages.push_back("CAP * LS :\r\n");
 	else if (!_param.compare("LIST"))
-		_sender._messages.push_back("CAP * LIST :");
+		_sender._messages.push_back("CAP * LIST :\r\n");
 	else if (!_param.compare("END"))
 		return ;
 	else
@@ -167,7 +164,7 @@ void	Commands::MsgClient(std::string recipient, std::string text) {
 	if (it == Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));
 	else 
-		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? text : getCmd(text))));
+		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? removeCmd(text) : getCmd(text))));
 }
 
 /* 

@@ -14,7 +14,6 @@
 # include <cstring>
 # include <csignal>
 # include "Client.hpp"
-// # include "Commands.hpp"
 # include "Commands.hpp"
 # include "sstream"
 
@@ -22,6 +21,8 @@ typedef std::vector<std::string>::iterator	vecStrIt;
 
 class Client;
 class Channel;
+
+typedef std::map<std::string, Channel>::iterator	chnMapIt;
 
 enum Tags
 {
@@ -37,7 +38,6 @@ private:
 	int						_readBytes;
 	int						_change;
 	char					_buf[512];
-	std::string				_fullMsg;
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
 	
@@ -121,6 +121,8 @@ std::string					removeNl(std::string str);
 std::string					removeCmd(std::string msg);
 std::string					getCmd(std::string msg);
 std::vector<std::string>	splitPlusPlus(std::string str, std::string del);
+size_t						chkArgs(std::string args, size_t limiter);
+std::string					removeColon(std::string str);
 
 /*
 Structure:

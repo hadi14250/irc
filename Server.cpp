@@ -5,7 +5,7 @@ std::map<int, Client>			Server::_pfdsMap;
 std::map<std::string, int>		Server::_nickMap;
 std::map<std::string, Channel>	Server::_chanMap;
 std::string						Server::_password;
-std::string						Server::_servername;
+std::string						Server::_servername = "FT_IRC";
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
@@ -115,9 +115,7 @@ void	Server::addNewPfd(int tag)
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
 	newPfd.events = POLLIN | POLLOUT;
-	// newPfd.events = POLLIN; old
 	newClient._pfd = newPfd;
-
 	_pfdsMap[newClient._sockfd] = newClient;
 	_change = 1;
 }
@@ -176,55 +174,31 @@ void	Server::deletePfd(int fd)
 
  */
 
-
-// old readMsg
-
-// void	Server::readMsg(int fd)
-// {
-// 	std::memset(_buf, 0, sizeof(_buf));
-// 	_readBytes = recv(fd, _buf, sizeof(_buf), 0);
-// 	if (_readBytes <= 0)
-// 		deletePfd(fd);
-// 	else // irssi seems to group up some messages so this loop will parse through each of them seperately!
-// 	{
-// 		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
-// 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
-// 			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-// 		//exectue msg -> push appropriate send messages to receivers containers
-// 	}
-// }
-
-// new readMsg
-
-void	Server::readMsg(int fd)
+void	Server::readMsg(int fd)// done! handles ^D now
 {
-	while (true)
-	{
-		std::memset(_buf, 0, sizeof(_buf));
-		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
-		if (_readBytes <= 0)
-		{
-			deletePfd(fd);
-			return ;
+	Client & client = _pfdsMap[fd];
+
+	std::memset(_buf, 0, sizeof(_buf));
+	_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
+	if (_readBytes == 0) {
+		deletePfd(fd);
+		return ;
+	} else if (*_buf) {
+		std::cerr << " reading > " << _buf << std::endl;
+		if (client.appendBuffer(_buf) || client.chkOverflow()) {
+			if (client.chkOverflow())
+				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
+			else {
+				std::vector<std::string>	cmds = splitPlusPlus(client.getBuffer(), "\r\n");
+				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
+					std::cerr << " processing > " << *it << std::endl;
+					Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+				}
+				client._fullMsg.clear();
+			}
 		}
-		_fullMsg.append(_buf);
-		if (_buf[strlen(_buf) - 1] == '\n')
-			break;
 	}
-
-		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
-		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
-			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-		//exectue msg -> push appropriate send messages to receivers containers
-
-	// //PARSE AND EXECUTE ALL MESSAGES; reset _fullMsg; 
-	// Commands msg(fd, Server::_pfdsMap[fd]);
-	// testParse(msg);
-	// _fullMsg = ""; // new addition
-	// Server::_pfdsMap[fd].printPendingMsgs();
-
 }
-
 
 void	Server::sendMsg(int fd)
 {
@@ -232,6 +206,7 @@ void	Server::sendMsg(int fd)
 	std::deque<std::string>::iterator it = client._messages.begin();
 	for (; it != client._messages.end(); it++)
 	{
+		std::cerr << " sending > " + *it << std::endl;
 		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
 			std::cerr << "Failed to send msg: " << *it << std::endl;
 	}
@@ -252,6 +227,7 @@ In while loop
  */
 void	Server::createServer()
 {
+	std::cout << "creating server\n";
 	makeListenSockfd();
 	while (_run == 1)
 	{
@@ -259,7 +235,6 @@ void	Server::createServer()
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
-		// std::cout << "polled\n";
 		for (int i = 0; i < _pfdsCount; i++)
 		{
 			// std::cout << "inside for loop\n";
@@ -333,7 +308,7 @@ std::string	Server::getPassword()
 	return _password;
 }
 
-std::string	Server::getServername()
+std::string	Server::getServername()// not used by commands since the server name must be constant!
 {
 	return _servername;
 }

@@ -4,20 +4,20 @@
 
 //! hadi -> btw do we really need to pass the servername for eah call since its constant?
 
-#define RPL_WELCOME(servername, nick) \
-":" + servername + " 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "\n"
-#define RPL_WELCOMEBACK(servername, nick) \
-":" + servername + " 001 " + nick + " :Welcome back to the Internet Relay Network " + nick + "\n"
-#define RPL_YOURHOST(servername, nick, version) \
-":" + servername + " 002 " + nick + " :Your host is " + servername + ", running version " + version + "\n"
-#define RPL_CREATED(servername, nick) \
-":" + servername + " 003 " + nick + " :This server was created November 5th, 2022\n"
-#define RPL_MYINFO(servername, nick, version, usermodes, chanmodes) \
-":" + servername + " 004 " + nick + " " + servername + " " + version + " " + usermodes + " " + chanmodes + " :" + servername + " server\n"
+#define RPL_WELCOME(nick) \
+":" + SERVER_NAME + " 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "\n"
+#define RPL_WELCOMEBACK(nick) \
+":" + SERVER_NAME + " 001 " + nick + " :Welcome back to the Internet Relay Network " + nick + "\n"
+#define RPL_YOURHOST(nick, version) \
+":" + SERVER_NAME + " 002 " + nick + " :Your host is " + SERVER_NAME + ", running version " + version + "\n"
+#define RPL_CREATED(nick) \
+":" + SERVER_NAME + " 003 " + nick + " :This server was created November 5th, 2022\n"
+#define RPL_MYINFO(nick, version, usermodes, chanmodes) \
+":" + SERVER_NAME + " 004 " + nick + " " + SERVER_NAME + " " + version + " " + usermodes + " " + chanmodes + " :" + SERVER_NAME + " server\n"
 #define RPL_ISUPPORT 005
 #define RPL_BOUNCE 010
-#define RPL_UMODEIS(servername, nick, modes) \
-":" + servername + " 221 " + nick + " :+" + modes + "\n";
+#define RPL_UMODEIS(nick, modes) \
+":" + SERVER_NAME + " 221 " + nick + " :+" + modes + "\n";
 #define RPL_LUSERCLIENT 251
 #define RPL_LUSEROP 252
 #define RPL_LUSERUNKNOWN 253
@@ -47,19 +47,19 @@
 #define RPL_ENDOFWHOIS 318
 #define RPL_WHOISCHANNELS 319
 #define RPL_WHOISSPECIAL 320
-#define RPL_LISTSTART(servername, nick) \
-	":" + servername + " 321 " + nick + " Channel :Users Name\n"
-#define RPL_LIST(servername, nick, channel, users, mode, topic) \
-	":" + servername + " 322 " + nick + " " + channel + " " + users + " " + mode + " :" + topic + "\n"
-#define RPL_LISTEND(servername, nick) \
-	":" + servername + " 323 " + nick + " :End of /LIST\n"
-#define RPL_CHANNELMODEIS(servername, nick, channel, modes) \
-	":" + servername + " 324 " + nick + " " + channel + " :+" + modes + "\n"
+#define RPL_LISTSTART(nick) \
+	":" + SERVER_NAME + " 321 " + nick + " Channel :Users Name\n"
+#define RPL_LIST(nick, channel, users, mode, topic) \
+	":" + SERVER_NAME + " 322 " + nick + " " + channel + " " + users + " " + mode + " :" + topic + "\n"
+#define RPL_LISTEND(nick) \
+	":" + SERVER_NAME + " 323 " + nick + " :End of /LIST\n"
+#define RPL_CHANNELMODEIS(nick, channel, modes) \
+	":" + SERVER_NAME + " 324 " + nick + " " + channel + " :+" + modes + "\n"
 #define RPL_CREATIONTIME 329
 #define RPL_WHOISACCOUNT 330
-#define RPL_NOTOPIC(servername, nick, channel) ":" + servername + " 331 " + nick + " " + channel + " :No topic is set\n"
-#define RPL_TOPIC(servername, nick, channel, topic) \
-	":" + servername + " 332 " + nick + " " + channel + " :" + topic + "\n"
+#define RPL_NOTOPIC(nick, channel) ":" + SERVER_NAME + " 331 " + nick + " " + channel + " :No topic is set\n"
+#define RPL_TOPIC(nick, channel, topic) \
+	":" + SERVER_NAME + " 332 " + nick + " " + channel + " :" + topic + "\n"
 #define RPL_TOPICWHOTIME 333
 #define RPL_WHOISACTUALLY 338
 #define RPL_INVITING 341
@@ -68,10 +68,10 @@
 #define RPL_EXCEPTLIST 348
 #define RPL_ENDOFEXCEPTLIST 349
 #define RPL_VERSION 351
-#define RPL_NAMREPLY(servername, nick, symbol, channel, users) \
-	":" + servername + " 353 " + nick + " " + symbol + " #" + channel + " :" + users + "\n"
-#define RPL_ENDOFNAMES(servername, nick, channel) \
-	":" + servername + " 366 " + nick + " " + channel + " :End of /NAMES list\n"
+#define RPL_NAMREPLY(nick, symbol, channel, users) \
+	":" + SERVER_NAME + " 353 " + nick + " " + symbol + " #" + channel + " :" + users + "\n"
+#define RPL_ENDOFNAMES(nick, channel) \
+	":" + SERVER_NAME + " 366 " + nick + " " + channel + " :End of /NAMES list\n"
 #define RPL_BANLIST 367
 #define RPL_ENDOFBANLIST 368
 #define RPL_ENDOFWHOWAS 369
@@ -86,57 +86,57 @@
 #define RPL_REHASHING 382
 #define RPL_TIME 391
 #define ERR_UNKNOWNERROR 400
-#define ERR_NOSUCHNICK(servername, nick) \
-	":" + servername + " 401 " + nick + " :No such nick/channel\n"
+#define ERR_NOSUCHNICK(nick) \
+	":" + SERVER_NAME + " 401 " + nick + " :No such nick/channel\n"
 #define ERR_NOSUCHSERVER 402
-#define ERR_NOSUCHCHANNEL(servername, nick, channel) \
-	":" + servername + " 403 " + nick + " " + channel + " :No such channel\n"
+#define ERR_NOSUCHCHANNEL(nick, channel) \
+	":" + SERVER_NAME + " 403 " + nick + " " + channel + " :No such channel\n"
 #define ERR_CANNOTSENDTOCHAN 404
 #define ERR_TOOMANYCHANNELS 405
 #define ERR_WASNOSUCHNICK 406
 #define ERR_NOORIGIN 409
-#define ERR_INVALIDCAPCMD(servername, nick, command) \
-":" + servername + " 410 " + nick + ' ' + command + " :Invalid CAP command\n"
+#define ERR_INVALIDCAPCMD(nick, command) \
+":" + SERVER_NAME + " 410 " + nick + ' ' + command + " :Invalid CAP command\n"
 #define ERR_INPUTTOOLONG 417
-#define ERR_UNKNOWNCOMMAND(servername, nick, command) \
-":" + servername + " 421 " + nick + ' ' + command + " :Unknown command\n"
+#define ERR_UNKNOWNCOMMAND(nick, command) \
+":" + SERVER_NAME + " 421 " + nick + ' ' + command + " :Unknown command\n"
 #define ERR_NOMOTD 422
-#define ERR_NONICKNAMEGIVEN(servername, nick) \
-":" + servername + " 431 " + nick + " :No nickname given\n"
+#define ERR_NONICKNAMEGIVEN(nick) \
+":" + SERVER_NAME + " 431 " + nick + " :No nickname given\n"
 #define ERR_ERRONEUSNICKNAME 432
-#define ERR_NICKNAMEINUSE(servername, nick) \
-	":" + servername + " 433 * " + nick + " :Nickname is already in use\n"
-#define ERR_USERNOTINCHANNEL(servername, nick, channel) \
-	":" + servername + " 441 * <" + nick + "> isn't on " + channel + "\n"
-#define ERR_NOTONCHANNEL(servername, nick, channel) \
-	":" + servername + " 442 * " + nick + " :You're not on " + channel + "\n"
-#define ERR_USERONCHANNEL(servername, nick) \
-	":" + servername + " 443 * " + nick + " :You're already member of that channel\n"
+#define ERR_NICKNAMEINUSE(nick) \
+	":" + SERVER_NAME + " 433 * " + nick + " :Nickname is already in use\n"
+#define ERR_USERNOTINCHANNEL(nick, channel) \
+	":" + SERVER_NAME + " 441 * <" + nick + "> isn't on " + channel + "\n"
+#define ERR_NOTONCHANNEL(nick, channel) \
+	":" + SERVER_NAME + " 442 * " + nick + " :You're not on " + channel + "\n"
+#define ERR_USERONCHANNEL(nick) \
+	":" + SERVER_NAME + " 443 * " + nick + " :You're already member of that channel\n"
 #define ERR_NOTREGISTERED 451
-#define ERR_NEEDMOREPARAMS(servername, nick, command) \
-	":" + servername + " 461 " + nick + " " + command + " :Wrong num parameters\n"
-#define ERR_ALREADYREGISTERED(servername, nick) \
-	":" + servername + " 462 " + nick + " :You are Already Registered\n"
-#define ERR_PASSWDMISMATCH(servername, nick) \
-	":" + servername + " 464 " + nick + " :Password incorrect\n"
-#define ERR_YOUREBANNEDCREEP(servername, nick) \
-	":" + servername + " 465 " + nick + " :You are banned from this server\n"
-#define ERR_CHANNELISFULL(servername, nick, channel) \
-	":" + servername + " 471 " + nick + " " + channel + " :Cannot join channel , channel is full(+l)\n"
-#define ERR_UNKNOWNMODE(servername, nick, mode, channel) \
-	":" + servername + " 472 " + nick + " " + mode + " :is unknown mode char to me for that " + channel + "\n"
+#define ERR_NEEDMOREPARAMS(nick, command) \
+	":" + SERVER_NAME + " 461 " + nick + " " + command + " :Wrong num parameters\n"
+#define ERR_ALREADYREGISTERED(nick) \
+	":" + SERVER_NAME + " 462 " + nick + " :You are Already Registered\n"
+#define ERR_PASSWDMISMATCH(nick) \
+	":" + SERVER_NAME + " 464 " + nick + " :Password incorrect\n"
+#define ERR_YOUREBANNEDCREEP(nick) \
+	":" + SERVER_NAME + " 465 " + nick + " :You are banned from this server\n"
+#define ERR_CHANNELISFULL(nick, channel) \
+	":" + SERVER_NAME + " 471 " + nick + " " + channel + " :Cannot join channel , channel is full(+l)\n"
+#define ERR_UNKNOWNMODE(nick, mode, channel) \
+	":" + SERVER_NAME + " 472 " + nick + " " + mode + " :is unknown mode char to me for that " + channel + "\n"
 #define ERR_INVITEONLYCHAN 473
 #define ERR_BANNEDFROMCHAN 474
-#define ERR_BADCHANNELKEY(servername, nick, channel) \
-	":" + servername + " 475 " + nick + " " + channel + " :Bad channel key\n"
-#define ERR_BADCHANMASK(servername, nick) \
-	":" + servername + " 476 * " + nick + " :Bad Channel Mask\n"
-#define ERR_NOPRIVILEGES ":" + servername + " 481 " + nick + " :You need operator Privilege\n"
-#define ERR_CHANOPRIVSNEEDED(servername, nick) ":" + servername + " 482 " + nick + " :You need operator Privilege\n"
+#define ERR_BADCHANNELKEY(nick, channel) \
+	":" + SERVER_NAME + " 475 " + nick + " " + channel + " :Bad channel key\n"
+#define ERR_BADCHANMASK(nick) \
+	":" + SERVER_NAME + " 476 * " + nick + " :Bad Channel Mask\n"
+#define ERR_NOPRIVILEGES ":" + SERVER_NAME + " 481 " + nick + " :You need operator Privilege\n"
+#define ERR_CHANOPRIVSNEEDED(nick) ":" + SERVER_NAME + " 482 " + nick + " :You need operator Privilege\n"
 #define ERR_CANTKILLSERVER 483
 #define ERR_NOOPERHOST 491
-#define ERR_UMODEUNKNOWNFLAG(servername, nick, modechar) ":" + servername + " 501 " + nick + " " + mode + " :is unknown mode\n"
-#define ERR_USERSDONTMATCH(servername, nick) ":" + servername + " 502 " + nick + " :Cant change mode for other users\n"
+#define ERR_UMODEUNKNOWNFLAG(nick, modechar) ":" + SERVER_NAME + " 501 " + nick + " " + mode + " :is unknown mode\n"
+#define ERR_USERSDONTMATCH(nick) ":" + SERVER_NAME + " 502 " + nick + " :Cant change mode for other users\n"
 #define ERR_HELPNOTFOUND 524
 #define ERR_INVALIDKEY 525
 #define RPL_STARTTLS 670

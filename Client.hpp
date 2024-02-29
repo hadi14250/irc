@@ -27,6 +27,7 @@ private:
 	std::string					_server;
 	std::string					_realname;
 	std::string					_identifier; //<nick>!<user>@<host>
+	std::string					_fullMsg;
 	bool						_listenSock;
 	bool						_authenticated;
 	bool						_registered;
@@ -34,9 +35,6 @@ private:
 	std::deque<std::string>		_messages;
 	std::vector<std::string>	_channels;
 	std::vector<std::string>	_invitations;
-	//hadi->    will add a container to include all the channels the user is apart of!
-	// and another container to keep track of channel invitations!
-
 	// char					_mode; //do we need this?
 	// Client const & operator=(Client const & src);
 public:
@@ -44,8 +42,11 @@ public:
 	// Client(Client const & src);;
 	// ~Client();
 
-	void	printClient(); 
-	void	printPendingMsgs();
+	void		printClient(); 
+	void		printPendingMsgs();
+	bool		appendBuffer(char* buf);
+	bool		chkOverflow();
+	std::string	getBuffer();
 };
 
 /* NOTES:

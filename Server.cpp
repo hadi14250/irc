@@ -12,7 +12,6 @@ Server::Server(std::string const & port, std::string const & pswd)
 		_listenSockfd(-1),
 		_pfdsCount(0),
 		_readBytes(0),
-		_change(0),
 		_serv(NULL),
 		_pfds(NULL)
 {
@@ -105,9 +104,13 @@ void	Server::addNewPfd(int tag)
 		//taking this out of Client construction for better readability
 		socklen_t addrlen = sizeof(struct sockaddr_in);
 		struct sockaddr_in clientInfo;
+		std::memset(&clientInfo, 0, addrlen);
 		newClient._sockfd = accept(_listenSockfd, (struct sockaddr *)&clientInfo, &addrlen);
 		if (newClient._sockfd == -1)
 			throw AcceptException();
+		newClient._clientInfo = clientInfo;
+		// std::cout	<< "sin_port: " << ntohs(clientInfo.sin_port) << " " << clientInfo.sin_port << "\n"
+					// << "sin_addr: " << ntohl(clientInfo.sin_addr.s_addr) << " " << clientInfo.sin_addr.s_addr << "\n";
 	}
 	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
 		throw FcntlException();
@@ -146,6 +149,7 @@ void	Server::copyPfdMapToArray()
 */
 void	Server::deletePfd(int fd)
 {
+	//we must also erase the client from any channels they belong to
 	Client client = _pfdsMap[fd];
 	std::string nick = client._nick;
 
@@ -227,7 +231,7 @@ In while loop
  */
 void	Server::createServer()
 {
-	std::cout << "creating server\n";
+	std::cout << "Creating server\n";
 	makeListenSockfd();
 	while (_run == 1)
 	{
@@ -388,64 +392,4 @@ for (; s != NULL; s = s->ai_next)
 	i++;
 std::cout << "there are " << i << " structs in _serv\n";
 
-
-TESTING FOR CAP
-char buf[510] = {}; //can we do this?
-int nbytes = recv(_pfds[i].fd, buf, sizeof(buf), 0); //no flags = 0
-std::cout << "buf: " << buf;
-if (nbytes <= 0)
-{
-	std::cout << "recv failed\n";
-	deletePfd(_pfds[i].fd, nbytes);
-	change = 1;
-}
-else
-{
-	std::string buffer = buf;
-	std::string ret;
-	if (buffer.find("CAP LS") != std::string::npos)
-	{
-		ret = "CAP * LS :multi-prefix userhost-in-names\r\n";
-		// ret = "CAP * LS\r\n";
-	}
-	else if (buffer.find("CAP REQ") != std::string::npos)
-	{
-		ret = ": 451   :need to register first\r\nCAP * ACK :multi-prefix\r\n";
-	}
-	else if (buffer.find("MODE") != std::string::npos)
-	{
-		ret = ":localhost 403 h hbui-vu :No such channel\r\n";
-	}
-	else if (buffer.find("PING") != std::string::npos)
-	{
-		ret = ":localhost PONG localhost :localhost\r\n";
-	}
-	std::cout << "sending to: " << _pfds[i].fd << "\n";
-	if (send(_pfds[i].fd, ret.c_str(), ret.length() + 1, 0) == -1)
-		std::cout << "send unsuccessful\n";
-	std::cout << "sent " << ret.c_str() << "\n"; 
-	// :localhost 001 h :Welcome to the Internet Relay Chat Network user\r\n";
-}
-
-// void	Server::printPasswordPolicy()
-// {
-// 	std::cout	<< "Password must be 8 - 12 characters in length and may only "
-// 				<< "contain uppercase letters, lowercase letters, numbers, and "
-// 				<< "the following symbols: !, @, $, *"
-// 				<< std::endl;
-// }
-
-// void	Server::checkPassword() const
-// {
-// 	size_t	len = _password.length();
-
-// 	if (len < 8 || len > 12)
-// 		throw InvalidPasswordException();
-// 	for (std::string::const_iterator it = _password.begin(); it != _password.end(); it++)
-// 	{
-// 		if (!std::isalnum(*it) && 
-// 			(*it != '!' || *it != '@' || *it != '$' || *it != '*'))
-// 			throw InvalidPasswordException();
-// 	}
-// }
 */

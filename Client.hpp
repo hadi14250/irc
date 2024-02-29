@@ -32,6 +32,7 @@ private:
 	bool						_authenticated;
 	bool						_registered;
 	struct pollfd				_pfd;
+	struct sockaddr_in			_clientInfo;
 	std::deque<std::string>		_messages;
 	std::vector<std::string>	_channels;
 	std::vector<std::string>	_invitations;

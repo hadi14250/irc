@@ -110,8 +110,6 @@ void	Server::addNewPfd(int tag)
 		if (newClient._sockfd == -1)
 			throw AcceptException();
 		newClient._clientInfo = clientInfo;
-		// std::cout	<< "sin_port: " << ntohs(clientInfo.sin_port) << " " << clientInfo.sin_port << "\n"
-					// << "sin_addr: " << ntohl(clientInfo.sin_addr.s_addr) << " " << clientInfo.sin_addr.s_addr << "\n";
 	}
 	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
 		throw FcntlException();
@@ -166,19 +164,6 @@ void	Server::deletePfd(int fd)
 	_change = 1;
 }
 
-/* 
-	btw while I was trying to figure out how things were running here, I found few features of the command class
-	that I wouldn't use! first of all I changed the param from vector to string as a suggestion from abdulaziz because commands work differently and
-	having params as a vector could cause more trouble than ease like take privmsg for example it takes the cmd, recipient, and text
-	so if storing in a vecotr it should be split into proper chunks and the other commands work differently too
-	so I created few tiny util funtions that will help us like remove cmd, get command, remove trailing new line, split
-	if u want me to write a small description above those funtions on how they work lemme know!
-
-	I didn't want to mess with Commands.cpp or destory it so for now I have created Commands2, if its good then jsut destroy Commands.*pp
-	and rename Commands2 to Commands.* and don't forget to modify the makefile too in that case!
-
- */
-
 void	Server::readMsg(int fd)// done! handles ^D now
 {
 	Client & client = _pfdsMap[fd];
@@ -189,14 +174,12 @@ void	Server::readMsg(int fd)// done! handles ^D now
 		deletePfd(fd);
 		return ;
 	} else if (*_buf) {
-		std::cerr << " reading > " << _buf << std::endl;
 		if (client.appendBuffer(_buf) || client.chkOverflow()) {
 			if (client.chkOverflow())
 				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
 			else {
 				std::vector<std::string>	cmds = splitPlusPlus(client.getBuffer(), "\r\n");
 				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
-					std::cerr << " processing > " << *it << std::endl;
 					Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
 				}
 				client._fullMsg.clear();
@@ -211,7 +194,6 @@ void	Server::sendMsg(int fd)
 	std::deque<std::string>::iterator it = client._messages.begin();
 	for (; it != client._messages.end(); it++)
 	{
-		std::cerr << " sending > " + *it << std::endl;
 		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
 			std::cerr << "Failed to send msg: " << *it << std::endl;
 	}
@@ -242,8 +224,6 @@ void	Server::createServer()
 			throw PollException();
 		for (int i = 0; i < _pfdsCount; i++)
 		{
-			// std::cout << "inside for loop\n";
-			// std::cout << "_pfdsCount: " << _pfdsCount << "\n";
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
@@ -258,14 +238,12 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLIN)
 			{
-				// std::cout << "POLLIN\n";
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
 				//fd is ready for writing - use SEND HERE
-				// std::cout << "go here?\n"; 
 				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)

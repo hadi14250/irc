@@ -15,14 +15,14 @@
 # include <csignal>
 # include "Client.hpp"
 # include "Commands.hpp"
+# include "Channel.hpp"
 # include "sstream"
 
 typedef std::vector<std::string>::iterator	vecStrIt;
+typedef std::map<std::string, Channel>::iterator	chnMapIt;
 
 class Client;
 class Channel;
-
-typedef std::map<std::string, Channel>::iterator	chnMapIt;
 
 enum Tags
 {
@@ -123,11 +123,3 @@ std::string					getCmd(std::string msg);
 std::vector<std::string>	splitPlusPlus(std::string str, std::string del);
 size_t						chkArgs(std::string args, size_t limiter);
 std::string					removeColon(std::string str);
-
-/*
-Structure:
-1. Get user input port and password
-2. Check if port is valid (how do we do this?)
-3. Enact a password policy and check if password follows rules
-
-*/

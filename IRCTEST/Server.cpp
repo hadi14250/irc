@@ -164,27 +164,32 @@ void	Server::deletePfd(int fd)
 	_change = 1;
 }
 
-void	Server::readMsg(int fd)// done! handles ^D now
+void	Server::readMsg(int fd)
 {
 	Client & client = _pfdsMap[fd];
 
-	std::memset(_buf, 0, sizeof(_buf));
-	_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
-	if (_readBytes == 0) {
-		deletePfd(fd);
-		return ;
-	} else if (*_buf) {
-		if (client.appendBuffer(_buf) || client.chkOverflow()) {
-			if (client.chkOverflow())
-				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
-			else {
-				std::vector<std::string>	cmds = splitPlusPlus(client.getBuffer(), "\r\n");
-				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
-					Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-				}
-				client._fullMsg.clear();
-			}
+	while (true)
+	{
+		std::memset(_buf, 0, sizeof(_buf));
+		_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
+		client._fullMsg.append(_buf);
+		if (_readBytes <= 0)
+		{
+			// deletePfd(fd);
+			break;
 		}
+		if (_buf[strlen(_buf) - 1] == '\n')
+			break;
+	}
+	if (client._fullMsg.back() == '\n')
+	{
+		//parse
+		//DONT FORGET TO READ FROM client._fullMsg 
+		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
+		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
+			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+		//reset _fullMsg if parsed;
+		client._fullMsg = "";
 	}
 }
 
@@ -228,7 +233,6 @@ void	Server::createServer()
 			{
 				try
 				{
-					// std::cout << "adding a new client\n";
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 				}
 				catch(const std::exception& e)

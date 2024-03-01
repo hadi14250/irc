@@ -19,7 +19,7 @@
 #define RPL_ENDOFNAMES(nick, channelName) \
 	":FT_IRC 366 " + nick + " " + channelName + " :End of /NAMES list\r\n"
 #define RPL_MOTD(nick) \
-	":FT_IRC 372 " + nick + " :-MOTD MAIN BODY\r\n"
+	":FT_IRC 372 " + nick
 #define RPL_MOTDSTART(nick) \
 	":FT_IRC 375 " + nick + " :-Message of the day\r\n"
 #define RPL_ENDOFMOTD(nick) \
@@ -46,9 +46,16 @@
 //🧢
 #define ERR_INVALIDCAPCMD(nick, command) \
 	":FT_IRC 410 " + nick + ' ' + command + " :Invalid CAP command\r\n"
-
 #define ERR_UNKNOWNCOMMAND(nick, command) \
 	":FT_IRC 421 " + nick + ' ' + command + " :Unknown command\r\n"
+
+//WHOIS
+#define RPL_ENDOFWHOIS(nick) \
+	":FT_IRC 318 " + nick + " :End of /WHOIS list\r\n"
+#define RPL_WHOISUSER(nick, reqnick, username, host, realname) \
+	":FT_IRC 311 " + nick + " " + reqnick + " " + username + " " + host + " * " + realname + "\r\n"
+#define RPL_WHOISSERVER(nick, reqnick, server) \
+	":FT_IRC 312 " + nick + " " + reqnick + " " + server + " :FT_IRC\r\n"
 
 //privmsg
 #define ERR_NORECIPIENT(nick) \

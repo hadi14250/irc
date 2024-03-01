@@ -1,3 +1,8 @@
+/* BUGS / NOTES: 
+Note that USER command is still valid if only one parameter is given. I think this is correct
+if client disconnects, they are not erased from server
+*/
+
 #include "Commands.hpp"
 
 using namespace	std;// temporary
@@ -16,7 +21,7 @@ Commands::Commands(int fd, std::string command, std::string param, Client& sende
 
 void	Commands::postRegistrationCmds() {
 	cmdPtr	ptr;
-	std::string	cmds[] = {"JOIN", "NAMES", "MODE", "TOPIC", "INVITE", "KICK", "PRIVMSG", "printChan"};
+	std::string	cmds[] = {"JOIN", "NAMES", "MODE", "TOPIC", "INVITE", "KICK", "PRIVMSG", "WHOIS", "printChan"};
 	size_t	cmd = 0, amtCmds = sizeof(cmds) / sizeof(std::string);
 	for (; cmd < amtCmds && cmds[cmd].compare(_command); cmd++);
 	switch (cmd) {
@@ -27,7 +32,8 @@ void	Commands::postRegistrationCmds() {
 		case 4: ptr = &Commands::INVITE; break;
 		case 5: ptr = &Commands::KICK; break;
 		case 6: ptr = &Commands::PRIVMSG; break;
-		case 7: ptr = &Commands::printChan; break;
+		case 7: ptr = &Commands::WHOIS; break;
+		case 8: ptr = &Commands::printChan; break;
 		default :
 		_sender._messages.push_back(ERR_UNKNOWNCOMMAND(_sender._nick, _command));
 		return ;
@@ -74,13 +80,19 @@ void	Commands::WelcomeMsg()
 	_sender._messages.push_back(RPL_ISUPPORT(_sender._nick));
 }
 
-//adjust motd
 void	Commands::MOTD()
 {
-	_sender._messages.push_back(ERR_NOMOTD(_sender._nick));
-	// _sender._messages.push_back(RPL_MOTDSTART(_sender._nick));
-	// _sender._messages.push_back(RPL_MOTD(_sender._nick));
-	// _sender._messages.push_back(RPL_ENDOFMOTD(_sender._nick));
+	std::ifstream MOTDfile("welcome.motd");
+	if (!MOTDfile.is_open())
+		_sender._messages.push_back(ERR_NOMOTD(_sender._nick));
+	else
+	{
+		_sender._messages.push_back(RPL_MOTDSTART(_sender._nick));
+		std::string line;
+		while ((std::getline(MOTDfile, line)))
+			_sender._messages.push_back(RPL_MOTD(_sender._nick) + " :" + line + "\r\n");
+		_sender._messages.push_back(RPL_ENDOFMOTD(_sender._nick));
+	}
 }
 
 void	Commands::completeRegistration(std::string nick)
@@ -91,7 +103,7 @@ void	Commands::completeRegistration(std::string nick)
 	MOTD();
 }
 
-void	Commands::PASS() {//complete!
+void	Commands::PASS() {
 	if (_param.empty())
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else if (_sender._authenticated)
@@ -103,15 +115,16 @@ void	Commands::PASS() {//complete!
 }
 
 void	Commands::NICK() {
-	std::string	invLead = ":#$&0123456789";
+	std::string	invLead = "!@#$%&*()+=-;:<>,.?/0123456789";
+	std::string invStr = "!@*?,.";
 
 	if (!_sender._authenticated)
 		_sender._messages.push_back(ERR_NOTREGISTERED(_sender._nick, "password not provided!"));
 	else if (_param.empty())
-		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));//ERR_NONICKNAMEGIVEN
+		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(_sender._nick));
 	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NICKNAMEINUSE(_param));
-	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(" !@*?,.") != std::string::npos)
+	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos)
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
 		if (_sender._registered == true) {
@@ -128,20 +141,18 @@ void	Commands::NICK() {
 
 void	Commands::USER()
 {
-	Client& _sender = Server::_pfdsMap[_senderFd];
-
 	if (!_sender._authenticated)
 		_sender._messages.push_back(ERR_NOTREGISTERED(_sender._nick, "password not provided!"));
-	if (_sender._registered == true)
+	else if (_sender._registered == true)
 		_sender._messages.push_back(ERR_ALREADYREGISTERED(_sender._nick));
-	else if (_param.size() < 4)// check this
+	else if (_param.empty()) 
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else {
 		_sender._username = getCmd(_param);
 		_sender._hostname = getCmd(removeCmd(_param));
 		_sender._server = getCmd(removeCmd(removeCmd(_param)));
 		_sender._realname = getCmd(removeCmd(removeCmd(removeCmd(_param))));
-		if (_sender._nick.compare("*"))
+		if (_sender._nick.compare("*") != 0)
 			completeRegistration(_sender._nick);
 	}
 }
@@ -149,14 +160,28 @@ void	Commands::USER()
 void	Commands::CAP() {
 	if (_param.empty())
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
-	else if (!_param.compare("LS") || !_param.compare("LS 302"))
+	else if (_param.compare("LS") == 0 || _param.compare("LS 302") == 0)
 		_sender._messages.push_back("CAP * LS :\r\n");
-	else if (!_param.compare("LIST"))
-		_sender._messages.push_back("CAP * LIST :\r\n");
-	else if (!_param.compare("END"))
+	// else if (!_param.compare("LIST"))
+	// 	_sender._messages.push_back("CAP * LIST :\r\n"); <- we only need this if we have capabilities
+	else if (_param.compare("END") == 0)
 		return ;
 	else
 		_sender._messages.push_back(ERR_INVALIDCAPCMD(_sender._nick, _command));
+}
+
+void Commands::WHOIS() {
+	if (_param.empty())
+		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(_sender._nick));
+	else if (Server::_nickMap.find(_param) == Server::_nickMap.end())
+		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, _param));
+	else
+	{
+		Client &client = Server::_pfdsMap[Server::_nickMap[_param]];
+		_sender._messages.push_back(RPL_WHOISUSER(_sender._nick, client._nick, client._username, client._hostname, client._realname));
+		_sender._messages.push_back(RPL_WHOISSERVER(_sender._nick, client._nick, client._server));
+		_sender._messages.push_back(RPL_ENDOFWHOIS(_sender._nick));
+	}
 }
 
 void	Commands::MsgClient(std::string recipient, std::string text) {

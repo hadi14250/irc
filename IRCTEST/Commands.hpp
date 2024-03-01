@@ -51,7 +51,7 @@ public:
 	void	PRIVMSG();
 	// void	NOTICE();
 
-	// void	WHOIS();
+	void	WHOIS();
 
 	// void	KILL();
 };

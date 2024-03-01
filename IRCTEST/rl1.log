@@ -1,0 +1,183 @@
+<< CAP LS
+<< PASS hello
+<< NICK hjk$h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 001 hjk$h :Welcome to the Internet Relay Network hjk$h!~hbui-vu@hbui-vu
+<< MODE hjk$h +i
+>> :FT_IRC 002 hjk$h :Your host is FT_IRC
+>> :FT_IRC 003 hjk$h :This server was created February 29, 2024
+>> :FT_IRC 004 hjk$h :FT_IRC v1 io iotkl
+>> :FT_IRC 005 hjk$h CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 375 hjk$h :-Message of the day
+>> :FT_IRC 372 hjk$h :This is ft-IRC
+>> :FT_IRC 372 hjk$h :≽^•⩊•^≼
+>> :FT_IRC 372 hjk$h :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 hjk$h :End of /MOTD command
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< userhost helo
+>> :FT_IRC 421 hjk$h userhost :Unknown command
+<< CAP LS
+<< PASS hello
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 433 * h :Nickname already in use
+<< NICK h_
+>> :FT_IRC 001 * :Welcome to the Internet Relay Network h_!~hbui-vu@hbui-vu
+<< MODE * +i
+<< WHOIS h
+>> :FT_IRC 002 * :Your host is FT_IRC
+>> :FT_IRC 003 * :This server was created February 29, 2024
+>> :FT_IRC 004 * :FT_IRC v1 io iotkl
+>> :FT_IRC 005 * CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 375 * :-Message of the day
+>> :FT_IRC 372 * :This is ft-IRC
+>> :FT_IRC 372 * :≽^•⩊•^≼
+>> :FT_IRC 372 * :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 * :End of /MOTD command
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< WHOIS huong
+<< WHOIS huong
+<< WHOIS h
+<< CAP LS
+<< PASS hello
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 001 h :Welcome to the Internet Relay Network h!~hbui-vu@hbui-vu
+<< MODE h +i
+>> :FT_IRC 002 h :Your host is FT_IRC
+>> :FT_IRC 003 h :This server was created February 29, 2024
+>> :FT_IRC 004 h :FT_IRC v1 io iotkl
+>> :FT_IRC 005 h CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 375 h :-Message of the day
+>> :FT_IRC 372 h :This is ft-IRC
+>> :FT_IRC 372 h :≽^•⩊•^≼
+>> :FT_IRC 372 h :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 h :End of /MOTD command
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< WHOIS huong
+<< WHOIS huong
+<< CAP LS
+<< PASS hello
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 001 h :Welcome to the Internet Relay Network h!~hbui-vu@hbui-vu
+<< MODE h +i
+>> :FT_IRC 002 h :Your host is FT_IRC
+>> :FT_IRC 003 h :This server was created February 29, 2024
+>> :FT_IRC 004 h :FT_IRC v1 io iotkl
+>> :FT_IRC 005 h CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 375 h :-Message of the day
+>> :FT_IRC 372 h :This is ft-IRC
+>> :FT_IRC 372 h :≽^•⩊•^≼
+>> :FT_IRC 372 h :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 h :End of /MOTD command
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< WHOIS h
+>> :FT_IRC 311 h h hbui-vu hbui-vu* ::hbui-vu
+--> whois event
+>> :FT_IRC 318 h :ENd of /WHOIS list
+--> whois end
+<< WHOIS j
+>> :FT_IRC 401 h j :No such nick
+--> whois try whowas
+<< WHOWAS j 1
+>> :FT_IRC 421 h WHOWAS :Unknown command
+<< WHOIS j
+>> :FT_IRC 401 h j :No such nick
+--> whois try whowas
+<< WHOWAS j 1
+>> :FT_IRC 421 h WHOWAS :Unknown command
+<< WHOIS h
+>> :FT_IRC 311 h h hbui-vu hbui-vu* ::hbui-vu
+--> FAILED whowas
+--> whois event
+>> :FT_IRC 318 h :ENd of /WHOIS list
+--> whois end
+<< WHOIS j
+>> :FT_IRC 401 h j :No such nick
+--> FAILED whowas
+--> whois try whowas
+<< WHOWAS j 1
+>> :FT_IRC 421 h WHOWAS :Unknown command
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< CAP LS
+<< PASS hello
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 001 h :Welcome to the Internet Relay Network h!~hbui-vu@hbui-vu
+<< MODE h +i
+>> :FT_IRC 002 h :Your host is FT_IRC
+>> :FT_IRC 003 h :This server was created February 29, 2024
+>> :FT_IRC 004 h :FT_IRC v1 io iotkl
+>> :FT_IRC 005 h CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 375 h :-Message of the day
+>> :FT_IRC 372 h :This is ft-IRC
+>> :FT_IRC 372 h :≽^•⩊•^≼
+>> :FT_IRC 372 h :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 h :End of /MOTD command
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< WHOIS huong
+>> :FT_IRC 401 h huong :No such nick
+--> whois try whowas
+<< WHOWAS huong 1
+>> :FT_IRC 421 h WHOWAS :Unknown command
+<< WHOIS h
+>> :FT_IRC 311 h h hbui-vu hbui-vu * :hbui-vu
+--> whois event
+>> :FT_IRC 318 h :ENd of /WHOIS list
+--> whois end

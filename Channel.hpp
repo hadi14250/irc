@@ -57,6 +57,7 @@ class Channel {
 	bool						chkTopic();
 	void						geTopic(Client& user);
 	void						seTopic(std::string author, std::string topic);
+	void						relayMessage(Client &client, std::string message);
 //! tmp
 	void	printChan();
 };

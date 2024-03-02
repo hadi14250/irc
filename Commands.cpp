@@ -85,7 +85,7 @@ void	Commands::MOTD()
 
 void	Commands::completeRegistration(std::string nick)
 {
-	_sender._registered = false;
+	_sender._registered = true;
 	_sender._identifier = nick + "!~" + _sender._username + "@" + _sender._hostname;
 	WelcomeMsg();
 	MOTD();
@@ -108,25 +108,23 @@ void	Commands::NICK() {
 	if (!_sender._authenticated)
 		_sender._messages.push_back(ERR_NOTREGISTERED(_sender._nick, "password not provided!"));
 	else if (_param.empty())
-		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));//ERR_NONICKNAMEGIVEN
+		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(_sender._nick));
 	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NICKNAMEINUSE(_param));
 	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(" !@*?,.") != std::string::npos)
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
-		if (_sender._registered) {
-			cout << "server nick1" << endl;
+		if (_sender._nick.compare("*")) {
 			Server::_nickMap.erase(_sender._nick);
-			_sender._messages.push_back(NICKNAME(_sender._identifier, _param));
-			_sender._identifier = _param + "!" + _sender._username + "@" + _sender._hostname;
-			Server::_nickMap[_param] = _senderFd;
-			_sender._nick = _param;
-		} else if (_sender._username.size()) {
-			cout << "server nick" << endl;
-			_sender._nick = _param;
-			Server::_nickMap[_param] = _senderFd;
-			completeRegistration(_sender._nick);
+			_sender._messages.push_back(NICKNAME(_sender._nick, _param));
+			for (std::vector<Channel*>::iterator it = _sender._channels.begin(); it != _sender._channels.end(); it++)
+				(*it)->relayMessage(_sender, NICKNAME(_sender._identifier, _param));
 		}
+		Server::_nickMap[_param] = _senderFd;
+		_sender._nick = _param;
+		_sender._identifier = _sender._nick + "!" + _sender._username + "@" + _sender._hostname;
+		if (!_sender._registered && _sender._username.size())
+			completeRegistration(_sender._nick);
 	}
 }
 
@@ -145,12 +143,8 @@ void	Commands::USER()
 		_sender._hostname = getCmd(removeCmd(_param));
 		_sender._server = getCmd(removeCmd(removeCmd(_param)));
 		_sender._realname = getCmd(removeCmd(removeCmd(removeCmd(_param))));
-		cout << "." << _sender._nick << "." << endl;
-		// cout << "." << _sender._nick.compare("*") << "." << endl;
-		if (_sender._nick.compare("*")) {
+		if (_sender._nick.compare("*"))
 			completeRegistration(_sender._nick);
-			cout << "user debug" << endl;
-		}
 	}
 }
 

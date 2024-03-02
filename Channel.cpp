@@ -304,6 +304,13 @@ bool	Channel::chkTopic() {
 	return (_topic.empty() ? false : true);
 }
 
+void	Channel::relayMessage(Client &client, std::string message) {
+	for (chnMemIt it = _members.begin(); it != _members.end(); it++)
+		if (it->first != &client)
+			it->first->_messages.push_back(message);
+}
+
+
 //! tmp //////////////////////////////////////////////////////////////////////////////
 
 void	Channel::printChan() {

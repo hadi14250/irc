@@ -85,7 +85,7 @@ void	Commands::MOTD()
 
 void	Commands::completeRegistration(std::string nick)
 {
-	_sender._registered = true;
+	_sender._registered = false;
 	_sender._identifier = nick + "!~" + _sender._username + "@" + _sender._hostname;
 	WelcomeMsg();
 	MOTD();
@@ -114,15 +114,19 @@ void	Commands::NICK() {
 	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(" !@*?,.") != std::string::npos)
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
-		if (_sender._registered == true) {
+		if (_sender._registered) {
+			cout << "server nick1" << endl;
 			Server::_nickMap.erase(_sender._nick);
 			_sender._messages.push_back(NICKNAME(_sender._identifier, _param));
 			_sender._identifier = _param + "!" + _sender._username + "@" + _sender._hostname;
-		} else if (!_sender._username.empty()) {
-			completeRegistration(_param);
+			Server::_nickMap[_param] = _senderFd;
+			_sender._nick = _param;
+		} else if (_sender._username.size()) {
+			cout << "server nick" << endl;
+			_sender._nick = _param;
+			Server::_nickMap[_param] = _senderFd;
+			completeRegistration(_sender._nick);
 		}
-		_sender._nick = _param;
-		Server::_nickMap[_param] = _senderFd;
 	}
 }
 
@@ -132,7 +136,7 @@ void	Commands::USER()
 
 	if (!_sender._authenticated)
 		_sender._messages.push_back(ERR_NOTREGISTERED(_sender._nick, "password not provided!"));
-	if (_sender._registered == true)
+	if (_sender._registered)
 		_sender._messages.push_back(ERR_ALREADYREGISTERED(_sender._nick));
 	else if (_param.size() < 4)// check this
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
@@ -141,8 +145,12 @@ void	Commands::USER()
 		_sender._hostname = getCmd(removeCmd(_param));
 		_sender._server = getCmd(removeCmd(removeCmd(_param)));
 		_sender._realname = getCmd(removeCmd(removeCmd(removeCmd(_param))));
-		if (_sender._nick.compare("*"))
+		cout << "." << _sender._nick << "." << endl;
+		// cout << "." << _sender._nick.compare("*") << "." << endl;
+		if (_sender._nick.compare("*")) {
 			completeRegistration(_sender._nick);
+			cout << "user debug" << endl;
+		}
 	}
 }
 
@@ -249,21 +257,20 @@ void	Commands::JOIN() {// done! only JOIN 0 remains!
 }
 
 void	Commands::MODE() {
-	if (_param.empty())
-		return ;// return error
+	if (_param.empty() || (chkArgs(_param, 2) < 2))
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else if (_param.at(0) == '#') {
 		chnMapIt	it = Server::_chanMap.find(getCmd(_param));
 		_param = removeCmd(_param);
 		if (it != Server::_chanMap.end())
 			it->second.chanMode(_sender, getCmd(_param), removeCmd(_param));
 		else
-			_sender._messages.push_back("no such chan");//ERR_NOSUCHCHANNEL
-	} else {
-		cout << "user mode" << endl;
-	}
+			_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, getCmd(_param)));
+	} else
+		_sender._messages.push_back(ERR_UMODEUNKNOWNFLAG(_sender._nick));
 }
 
-void	Commands::TOPIC() {// done!
+void	Commands::TOPIC() {
 	chnMapIt	it;
 	if (_param.empty())
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
@@ -277,34 +284,34 @@ void	Commands::TOPIC() {// done!
 		(!chkArgs(removeCmd(_param), 1)) ? it->second.geTopic(_sender) : it->second.seTopic(_sender._nick, removeCmd(_param));
 }
 
-void	Commands::INVITE() {// seggs! beware
-	chnMapIt	it;
-	if (_param.empty() || (chkArgs(_param, 2) < 2))
+void	Commands::INVITE() {
+	if (_param.empty() || (chkArgs(_param, 2) < 2)) {
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
-	else if (Server::_chanMap.find(getCmd(_param)) == Server::_chanMap.end())
-		_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, getCmd(_param)));
-	else if (Server::_nickMap.find(getCmd(removeCmd(_param))) == Server::_nickMap.end())
-		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, getCmd(removeCmd(_param))));
+		return ;
+	}
+	chnMapIt	it;
+	std::string	channelName = getCmd(removeCmd(_param));
+	std::string	recipient = getCmd(_param);
+	if ((it = Server::_chanMap.find(channelName)) == Server::_chanMap.end())
+		_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, channelName));
+	else if (Server::_nickMap.find(recipient) == Server::_nickMap.end())
+		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));
 	else if (!it->second.chkIfMember(_sender._nick))
-		_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, getCmd(_param)));
-	else if (it->second.chkIfMember(getCmd(removeCmd(_param))))
-		_sender._messages.push_back(ERR_USERONCHANNEL(_sender._nick, getCmd(removeCmd(_param)), getCmd(_param)));
+		_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, channelName));
+	else if (it->second.chkIfMember(recipient))
+		_sender._messages.push_back(ERR_USERONCHANNEL(_sender._nick, recipient, channelName));
 	else if (!it->second.chkIfOper(_sender._nick))
-		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
+		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, channelName));
 	else {
 		_sender._messages.push_back(RPL_INVITING(_sender._nick, getCmd(removeCmd(_param)), getCmd(_param)));
-		Server::_pfdsMap[Server::_nickMap[getCmd(removeCmd(_param))]]._messages.push_back(INVITE_MSG(_sender._identifier, getCmd(removeCmd(_param)), getCmd(_param)));
+		Server::_pfdsMap[Server::_nickMap[recipient]]._messages.push_back(INVITE_MSG(_sender._identifier, getCmd(removeCmd(_param)), getCmd(_param)));
+		Server::_pfdsMap[Server::_nickMap[recipient]]._invitations.push_back(channelName);
 	}
 }
 
 void	Commands::KICK() {
 	cerr << "wip" << endl;
 }
-
-// void	Commands::KICK() {// part!
-// 	cerr << "wip" << endl;
-// }
-
 
 //! tmp
 

@@ -102,10 +102,18 @@
 	":FT_IRC 324 " + nick + ' ' + channelName + ' ' + modeStr + ' ' + modeArgs + "\r\n"
 #define ERR_INPUTTOOLONG(nick) \
 	":FT_IRC 417 " + nick + " :Input line was too long\r\n"
+#define ERR_UNKNOWNMODE(nick, mode) \
+	":FT_IRC 501 " + nick + ' ' + mode + " :da fag is this? Unknown mode character!\r\n"
+#define ERR_UMODEUNKNOWNFLAG(nick) \
+	":FT_IRC 472 " + nick + " :Unknown MODE flag\r\n"
+#define ERR_UNKNOWNERROR(nick, cmd, subCmd, info) \
+	":FT_IRC 400 " + nick + ' ' + cmd + ' ' + subCmd + " :" + info + "\r\n"
 
 #define INVITE_MSG(identifier, recipient, channelName) \
 	":" + identifier + " INVITE " + recipient + ' ' + channelName + "\r\n"
 #define JOIN_MSG(identifier, channelName) \
-	": " + identifier + " JOIN " + channelName + "\r\n"
+	":" + identifier + " JOIN " + channelName + "\r\n"
 #define PRIV_MSG(identifier, recipient, msg) \
-	": " + identifier + " PRIVMSG " + recipient + " :" + msg + "\r\n"
+	":" + identifier + " PRIVMSG " + recipient + " :" + msg + "\r\n"
+
+

@@ -178,7 +178,6 @@ void	Server::deletePfd(int fd)
 	and rename Commands2 to Commands.* and don't forget to modify the makefile too in that case!
 
  */
-
 void	Server::readMsg(int fd)// done! handles ^D now
 {
 	Client & client = _pfdsMap[fd];
@@ -194,10 +193,15 @@ void	Server::readMsg(int fd)// done! handles ^D now
 			if (client.chkOverflow())
 				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
 			else {
-				std::vector<std::string>	cmds = splitPlusPlus(client.getBuffer(), "\r\n");
-				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
-					std::cerr << " processing > " << *it << std::endl;
-					Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+				std::vector<std::string>	cmds = splitPlusPlus(client.getBuffer(), "\r\n"); // now server doesn't process empty args
+				for (vecStrIt it = cmds.begin(); it != cmds.end() && chkArgs(*it, 1); it++) {
+				//! tmp dev commands remove before submitting! // don't forget to remove from Server.hpp too //////////////////////////////////////////////////////////////////// V /////
+					if (!it->compare(0, 3, "dev")) 
+						addDevs(fd, getCmd(removeCmd(*it))); // takes arg dev {hadi or jen or huong} eg "dev hadi" adds a user with nick hadi!
+					else {
+						std::cerr << " processing > " << *it << std::endl;
+						Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+					}
 				}
 				client._fullMsg.clear();
 			}

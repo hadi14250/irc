@@ -60,6 +60,10 @@ private:
 	void	printPfdsMap();
 
 public:
+//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
+	void	addDevs(int fd, std::string devs);
+//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
+
 	static volatile sig_atomic_t 			_run;
 	static std::map<int, Client>			_pfdsMap;
 	static std::map<std::string, int>		_nickMap;

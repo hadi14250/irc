@@ -8,6 +8,7 @@
 #include "Client.hpp"
 #include <algorithm>
 #include <vector>
+#include <ctime>
 
 class Client;
 
@@ -45,11 +46,11 @@ class Channel {
 	bool						removeflag(char mode);
 	std::string					getValues(void);
 
-	void						handleModeO(Client& sender, char mode, bool addflag, std::string param);
-	void						handleModeK(Client& sender, char mode, bool addflag, std::string param);
-	void						handleModeL(Client& sender, char mode, bool addflag, std::string param);
-	void						handleTypeBC(Client& sender, char mode, bool addflag, std::string param);
-	void						handleTypeD(char mode, bool addflag);
+	bool						handleModeO(Client& sender, char mode, bool addflag, std::string param);
+	bool						handleModeK(Client& sender, char mode, bool addflag, std::string param);
+	bool						handleModeL(Client& sender, char mode, bool addflag, std::string param);
+	bool						handleTypeBC(Client& sender, char mode, bool addflag, std::string param);
+	bool						handleTypeD(char mode, bool addflag);
 
 	void						chanMode(Client& sender, std::string modes, std::string value);
 

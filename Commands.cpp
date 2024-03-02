@@ -91,15 +91,17 @@ void	Commands::completeRegistration(std::string nick)
 	MOTD();
 }
 
-void	Commands::PASS() {//complete!
+void	Commands::PASS() {
 	if (_param.empty())
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else if (_sender._authenticated)
 		_sender._messages.push_back(ERR_ALREADYREGISTERED(_sender._nick));
 	else if (_param.compare(Server::getPassword()))
 		_sender._messages.push_back(ERR_PASSWDMISMATCH(_sender._nick));
-	else
+	else {
+		cout << "auth" << endl;
 		_sender._authenticated = true;
+	}
 }
 
 void	Commands::NICK() {
@@ -166,7 +168,7 @@ void	Commands::MsgClient(std::string recipient, std::string text) {
 	if (it == Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));
 	else 
-		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? removeCmd(text) : getCmd(text))));
+		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? removeColon(text) : getCmd(text))));
 }
 
 /* 
@@ -193,8 +195,6 @@ void	Commands::PRIVMSG() {
 				_sender._messages.push_back(ERR_NORECIPIENT(_sender._nick));
 			else if (it->at(0) == '#' && Server::_chanMap.find(*it) != Server::_chanMap.end())
 				Server::_chanMap[*it].msgChannel(_sender, text);
-			else if (it->at(0) == '#')
-				cout << "err";
 			else
 				MsgClient(*it, text);
 		}

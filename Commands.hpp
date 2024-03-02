@@ -40,7 +40,7 @@ public:
 
 	void	JOIN();
 	void	NAMES();
-	// void	PART();
+	void	PART();
 	void	TOPIC();
 	void	INVITE();
 	void	KICK();

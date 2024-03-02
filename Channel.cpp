@@ -108,6 +108,10 @@ std::vector<std::string>	Channel::getChannelMembers() {
 void	Channel::msgChannel(Client& sender, std::string msg) {
 	chnMemIt	it = _members.begin();
 
+	if (!chkIfMember(sender._nick)) {
+		sender._messages.push_back(ERR_NOTONCHANNEL(sender._nick, _name));
+		return ;
+	}
 	for (; it != _members.end(); it++)
 		if ((it->first->_sockfd != sender._sockfd))
 			Server::_pfdsMap[it->first->_sockfd]._messages.push_back(PRIV_MSG(it->first->_identifier, _name, ((msg.size() && msg.at(0) == ':') ? removeColon(msg) : getCmd(msg) )) );
@@ -310,6 +314,15 @@ void	Channel::relayMessage(Client &client, std::string message) {
 			it->first->_messages.push_back(message);
 }
 
+void	Channel::removeMember(Client &client, std::string message) {
+	for (chnMemIt it = _members.begin(); it != _members.end(); it++)
+		it->first->_messages.push_back(message);
+	_members.erase(&client);
+	std::vector<Channel*>::iterator	it = client._channels.begin();
+	if (it != client._channels.end())
+		client._channels.erase(it);
+}
+
 
 //! tmp //////////////////////////////////////////////////////////////////////////////
 
@@ -319,6 +332,8 @@ void	Channel::printChan() {
 	for (; it != _members.end(); it++)
 		std::cerr << it->first->_nick << "oper -> " << (it->second ? "yes" : "no") << std::endl;
 }
+
+
 
 /* 
 :testre!~r@5.195.225.158 JOIN #awefawee

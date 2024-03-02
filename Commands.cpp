@@ -16,7 +16,7 @@ Commands::Commands(int fd, std::string command, std::string param, Client& sende
 
 void	Commands::postRegistrationCmds() {
 	cmdPtr	ptr;
-	std::string	cmds[] = {"JOIN", "NAMES", "MODE", "TOPIC", "INVITE", "KICK", "PRIVMSG", "printChan"};
+	std::string	cmds[] = {"JOIN", "NAMES", "MODE", "TOPIC", "INVITE", "KICK", "PRIVMSG", "PART", "printChan"};
 	size_t	cmd = 0, amtCmds = sizeof(cmds) / sizeof(std::string);
 	for (; cmd < amtCmds && cmds[cmd].compare(_command); cmd++);
 	switch (cmd) {
@@ -27,7 +27,8 @@ void	Commands::postRegistrationCmds() {
 		case 4: ptr = &Commands::INVITE; break;
 		case 5: ptr = &Commands::KICK; break;
 		case 6: ptr = &Commands::PRIVMSG; break;
-		case 7: ptr = &Commands::printChan; break;
+		case 7: ptr = &Commands::PART; break;
+		case 8: ptr = &Commands::printChan; break;
 		default :
 		_sender._messages.push_back(ERR_UNKNOWNCOMMAND(_sender._nick, _command));
 		return ;
@@ -190,12 +191,14 @@ void	Commands::PRIVMSG() {
 		text = removeCmd(_param);
 		recipients = splitPlusPlus(getCmd(_param), ",");
 		for (std::vector<std::string>::iterator	it = recipients.begin(); it != recipients.end(); it++) {
-			//TARGMAX privmsg, once u guys decide how many recipients I should relay the message to I'll add it here!
 			if (!it->size())
 				_sender._messages.push_back(ERR_NORECIPIENT(_sender._nick));
-			else if (it->at(0) == '#' && Server::_chanMap.find(*it) != Server::_chanMap.end())
-				Server::_chanMap[*it].msgChannel(_sender, text);
-			else
+			else if (it->at(0) == '#') {
+				if ( Server::_chanMap.find(*it) == Server::_chanMap.end())
+					_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, *it));
+				else
+					Server::_chanMap[*it].msgChannel(_sender, text);
+			} else
 				MsgClient(*it, text);
 		}
 	}
@@ -303,10 +306,6 @@ void	Commands::INVITE() {
 	}
 }
 
-void	Commands::KICK() {
-	cerr << "wip" << endl;
-}
-
 //! tmp
 
 void	Commands::printChan() {
@@ -316,14 +315,57 @@ chnMapIt it;
 	it->second.printChan();
 }
 
+void	Commands::KICK() {
+	if (chkArgs(_param, 2) < 2)
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 
-/* 
-privmsg
-:testrer!~r@5.195.225.158 PRIVMSG testre :hello
+	std::vector<std::string> channels = splitPlusPlus(getCmd(_param), ",");
+	std::vector<std::string> victims = splitPlusPlus(getCmd(removeCmd(_param)), ",");
 
-doesn't catch all words if not preceeded by a colon
-:testrer!~r@5.195.225.158 PRIVMSG #awefwaa :wassup
+	chnMapIt	mapIt;
+	vecStrIt	chnIt = channels.begin();
+	vecStrIt	vicIt = victims.begin();
+	while (true && vicIt != victims.end() && chnIt != channels.end()) {
+		if (chnIt->empty() || (chnIt->at(0) != '#'))
+			_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *chnIt, "provided channel names isn't valid!"));
+		else if ((mapIt = Server::_chanMap.find(*chnIt)) == Server::_chanMap.end())
+			_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, *chnIt));
+		else if (!mapIt->second.chkIfMember(_sender._nick))
+			_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, *chnIt));
+		else if (!mapIt->second.chkIfOper(_sender._nick))
+			_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, *chnIt));
+		else {
+			while (chnIt != channels.end() && vicIt != victims.end()) {
+				if (!mapIt->second.chkIfMember(*vicIt))
+					_sender._messages.push_back(ERR_USERNOTINCHANNEL(_sender._nick, *vicIt, *chnIt));
+				else
+					mapIt->second.removeMember(Server::_pfdsMap[Server::_nickMap[*vicIt]], KICK_MSG(_sender._identifier, *chnIt, *vicIt));
+				vicIt++;
+				if (channels.size() > 1) {
+					chnIt++;
+					break ;
+				}
+			}
+		}
+	}
+}
 
-#define PRIVMSG(identifier, recipient, msg)
+void	Commands::PART() {
+	chnMapIt	mapIt;
 
- */
+	if (!chkArgs(_param, 1))
+		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
+	else {
+		std::vector<std::string> channels = splitPlusPlus(_param, ",");
+
+		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
+			if ((mapIt = Server::_chanMap.find(*it)) == Server::_chanMap.end())
+				_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, *it));
+			else if (!mapIt->second.chkIfMember(_sender._nick))
+				_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, *it));
+			else
+				mapIt->second.removeMember(_sender, PART_MSG(_sender._identifier, *it));
+		}
+
+	}
+}

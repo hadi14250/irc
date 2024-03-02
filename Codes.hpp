@@ -113,6 +113,10 @@
 	":" + identifier + " INVITE " + recipient + ' ' + channelName + "\r\n"
 #define JOIN_MSG(identifier, channelName) \
 	":" + identifier + " JOIN " + channelName + "\r\n"
+#define PART_MSG(identifier, channelName) \
+	":" + identifier + " PART " + channelName + "\r\n"
+#define KICK_MSG(identifier, channelName, recipient) \
+	":" + identifier + " KICK " + channelName + ' ' + recipient + "\r\n"
 #define PRIV_MSG(identifier, recipient, msg) \
 	":" + identifier + " PRIVMSG " + recipient + " :" + msg + "\r\n"
 

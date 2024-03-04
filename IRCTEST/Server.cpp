@@ -23,12 +23,13 @@ Server::Server(std::string const & port, std::string const & pswd)
 
 Server::~Server()
 {
-	std::cout << "Server destructor called\n";
 	if (_serv)
 		freeaddrinfo(_serv);
 	if (_pfds)
 		delete [] _pfds;
-	//close any fds here
+	for (std::map<std::string, int>::iterator it = _nickMap.begin(); it != _nickMap.end(); it++)
+		close(it->second);
+	std::cout << "Server destructor called\n";
 }
 
 /* 
@@ -247,6 +248,7 @@ void	Server::createServer()
 			else if (_pfds[i].revents & POLLIN)
 			{
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
+				std::cout << "POLLIN fd: " << _pfds[i].fd << "\n";
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
@@ -256,6 +258,7 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLHUP)
 			{
+				std::cout << "POLLHUP deleting fd: " << _pfds[i].fd << "\n";
 				deletePfd(_pfds[i].fd);
 			}
 		}

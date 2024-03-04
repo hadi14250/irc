@@ -21,7 +21,7 @@ Commands::Commands(int fd, std::string command, std::string param, Client& sende
 
 void	Commands::postRegistrationCmds() {
 	cmdPtr	ptr;
-	std::string	cmds[] = {"JOIN", "NAMES", "MODE", "TOPIC", "INVITE", "KICK", "PRIVMSG", "WHOIS", "PART", "printChan"};
+	std::string	cmds[] = {"JOIN", "NAMES", "MODE", "TOPIC", "INVITE", "KICK", "PRIVMSG", "WHOIS", "PART", "QUIT", "printChan"};
 	size_t	cmd = 0, amtCmds = sizeof(cmds) / sizeof(std::string);
 	for (; cmd < amtCmds && cmds[cmd].compare(_command); cmd++);
 	switch (cmd) {
@@ -34,7 +34,8 @@ void	Commands::postRegistrationCmds() {
 		case 6: ptr = &Commands::PRIVMSG; break;
 		case 7: ptr = &Commands::WHOIS; break;
 		case 8: ptr = &Commands::PART; break;
-		case 9: ptr = &Commands::printChan; break;
+		case 9: ptr = &Commands::QUIT; break;
+		case 10: ptr = &Commands::printChan; break;
 		default :
 		_sender._messages.push_back(ERR_UNKNOWNCOMMAND(_sender._nick, _command));
 		return ;
@@ -392,6 +393,25 @@ void	Commands::PART() {
 				mapIt->second.removeMember(_sender, PART_MSG(_sender._identifier, *it));
 		}
 
+	}
+}
+
+void	Commands::QUIT()
+{
+	//for now we will send this message immediately without checking for pollout
+	std::string errorMsg = "ERROR :client quit\r\n";
+	if (send(_senderFd, errorMsg.c_str(), errorMsg.length(), 0) == -1)
+		std::cout << "Unable to send error quit message to client\n";
+	std::vector<Channel*> chanList = _sender._channels;
+	//iterate through clients channel lists
+	for (std::vector<Channel*>::iterator chanIt = chanList.begin(); chanIt != chanList.end(); chanIt++)
+	{
+		//notify everyone that client is quitting
+		std::map<Client *, bool>::iterator membersIt = (*chanIt)->_members.begin();
+		for (; membersIt != (*chanIt)->_members.end(); membersIt++)
+			membersIt->first->_messages.push_back(RPL_QUIT(_sender._identifier));
+		//erase the member from that channel list
+		(*chanIt)->_members.erase(&_sender);
 	}
 }
 

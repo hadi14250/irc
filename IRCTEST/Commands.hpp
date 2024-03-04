@@ -34,7 +34,7 @@ public:
 	void	UNKNOWN();
 	// void	ERROR();
 	// void	OPER();
-	// void	QUIT();
+	void	QUIT();
 
 	void	JOIN();
 	void	NAMES();

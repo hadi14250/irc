@@ -26,7 +26,6 @@ private:
 	std::string					_hostname;
 	std::string					_server;
 	std::string					_realname;
-	std::string					_identifier; //<nick>!<user>@<host>
 	std::string					_fullMsg;
 	bool						_listenSock;
 	bool						_authenticated;
@@ -34,9 +33,11 @@ private:
 	struct pollfd				_pfd;
 	struct sockaddr_in			_clientInfo;
 	std::deque<std::string>		_messages;
-	std::vector<Channel*>		_channels;
 	std::vector<std::string>	_invitations;
+	std::vector<Channel*>		_channels;
 public:
+	std::string					_identifier; //<nick>!<user>@<host>
+	
 	Client();
 	// Client(Client const & src);;
 	// ~Client();

@@ -30,9 +30,10 @@ class Channel {
 	bool						_topicOperOnly;
 	bool						_userLimit;//use this bool to know if there is a user limit
 
-	std::map<Client*, bool>	_members;// std::stirng for the nick, and bool for operator status!
 
 	public:
+	std::map<Client*, bool>		_members;// std::stirng for the nick, and bool for operator status!
+	
 	Channel();
 	Channel(std::string name);
 

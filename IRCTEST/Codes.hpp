@@ -127,5 +127,9 @@
 #define PRIV_MSG(identifier, recipient, msg) \
 	":" + identifier + " PRIVMSG " + recipient + " :" + msg + "\r\n"
 
+//quit
+#define RPL_QUIT(identifier) \
+	":" + identifier + " QUIT :Client quit\r\n"
+
 
 	

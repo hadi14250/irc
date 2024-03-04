@@ -15,8 +15,6 @@ class Commands {
 	std::string					_command;
 	std::string					_param;
 	Client&						_sender;
-	// std::vector<std::string>	_receiver;
-	// handle eggor!
 
 public:
 	Commands(int fd, std::string command, std::string param, Client& sender);
@@ -32,7 +30,6 @@ public:
 	void	NICK();
 	void	USER();
 	void	PING();
-	void	printChan();
 	void	UNKNOWN();
 	// void	ERROR();
 	// void	OPER();

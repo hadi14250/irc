@@ -42,7 +42,6 @@ public:
 	Client();
 	// Client(Client const & src);;
 	// ~Client();
-
 	void		printClient(); 
 	void		printPendingMsgs();
 	bool		appendBuffer(char* buf);

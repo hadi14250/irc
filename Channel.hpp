@@ -36,6 +36,7 @@ class Channel {
 	Channel();
 	Channel(std::string name);
 
+	std::string					getChannelName() const;
 	std::vector<std::string>	getChannelMembers();
 	void						msgChannel(Client& sender, std::string msg);
 	bool						chkIfMember(std::string user);

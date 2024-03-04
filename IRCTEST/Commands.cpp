@@ -117,33 +117,6 @@ void	Commands::PASS() {
 	}
 }
 
-// void	Commands::NICK() {
-// 	std::string	invLead = "!@#$%&*()+=-;:<>,.?/0123456789";
-// 	std::string invStr = "!@*?,.";
-
-// 	if (!_sender._authenticated)
-// 		_sender._messages.push_back(ERR_NOTREGISTERED(_sender._nick, "password not provided!"));
-// 	else if (_param.empty())
-// 		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(_sender._nick));
-// 	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
-// 		_sender._messages.push_back(ERR_NICKNAMEINUSE(_param));
-// 	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos)
-// 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
-// 	else {
-// 		if (_sender._registered == true) {
-// 			Server::_nickMap.erase(_sender._nick);
-// 			_sender._messages.push_back(NICKNAME(_sender._identifier, _param));
-// 			_sender._identifier = _param + "!" + _sender._username + "@" + _sender._hostname;
-// 			for (std::vector<Channel*>::iterator it = _sender._channels.begin(); it != _sender._channels.end(); it++)
-// 				(*it)->relayMessage(_sender, NICKNAME(_sender._identifier, _param));
-// 		} else if (_sender._registered == false && !_sender._username.empty()) {
-// 			completeRegistration(_param);
-// 		}
-// 		_sender._nick = _param;
-// 		Server::_nickMap[_param] = _senderFd;
-// 	}
-// }
-
 void	Commands::NICK() {
 	std::string	invLead = "!@#$%&*()+=-;:<>,.?/0123456789";
 	std::string invStr = "!@*?,.";

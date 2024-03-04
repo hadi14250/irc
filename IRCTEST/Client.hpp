@@ -45,7 +45,7 @@ public:
 	void		printPendingMsgs();
 	bool		appendBuffer(char* buf);
 	bool		chkOverflow();
-	std::string	getFullMessage();
+	std::string	getFullMsg();
 };
 
 /* NOTES:

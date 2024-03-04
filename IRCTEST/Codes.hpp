@@ -126,3 +126,6 @@
 	":" + identifier + " KICK " + channelName + ' ' + recipient + "\r\n"
 #define PRIV_MSG(identifier, recipient, msg) \
 	":" + identifier + " PRIVMSG " + recipient + " :" + msg + "\r\n"
+
+
+	

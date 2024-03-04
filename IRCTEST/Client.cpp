@@ -27,7 +27,7 @@ bool	Client::chkOverflow() {
 	return ( (_fullMsg.size() > 512 || ( (_fullMsg.size() == 512) && (_fullMsg.at(_fullMsg.size() - 1) != '\n') ) ? true : false) );
 }
 
-std::string	Client::getFullMessage() {
+std::string	Client::getFullMsg() {
 	return _fullMsg;
 }
 

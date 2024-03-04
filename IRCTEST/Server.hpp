@@ -16,7 +16,7 @@
 # include "Client.hpp"
 # include "Commands.hpp"
 # include "Channel.hpp"
-# include "sstream"
+// # include "sstream"
 
 typedef std::vector<std::string>::iterator	vecStrIt;
 typedef std::map<std::string, Channel>::iterator	chnMapIt;
@@ -47,7 +47,6 @@ private:
 	Server(Server const &);
 	Server const &	operator=(Server const &);
 
-	// void		checkPassword() const;
 	void		checkPort() const;
 	void		makeListenSockfd();
 	void		addNewPfd(int tag);
@@ -57,9 +56,14 @@ private:
 	void		sendMsg(int fd);
 	static void	signalHandler(int signum);
 
-	void	printPfdsMap();
+	// void	printPfdsMap();
 
 public:
+
+//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
+	void	addDevs(int fd, std::string devs);
+//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
+	
 	static volatile sig_atomic_t 			_run;
 	static std::map<int, Client>			_pfdsMap;
 	static std::map<std::string, int>		_nickMap;
@@ -69,7 +73,6 @@ public:
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 
-	// static void			printPasswordPolicy();
 	void				createServer();
 	static void			setSignals();
 	static std::string	getPassword();

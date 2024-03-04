@@ -46,17 +46,19 @@ class Channel {
 	bool						removeflag(char mode);
 	std::string					getValues(void);
 
-	void						handleModeO(Client& sender, char mode, bool addflag, std::string param);
-	void						handleModeK(Client& sender, char mode, bool addflag, std::string param);
-	void						handleModeL(Client& sender, char mode, bool addflag, std::string param);
-	void						handleTypeBC(Client& sender, char mode, bool addflag, std::string param);
-	void						handleTypeD(char mode, bool addflag);
+	bool						handleModeO(Client& sender, char mode, bool addflag, std::string param);
+	bool						handleModeK(Client& sender, char mode, bool addflag, std::string param);
+	bool						handleModeL(Client& sender, char mode, bool addflag, std::string param);
+	bool						handleTypeBC(Client& sender, char mode, bool addflag, std::string param);
+	bool						handleTypeD(char mode, bool addflag);
 
 	void						chanMode(Client& sender, std::string modes, std::string value);
 
 	bool						chkTopic();
 	void						geTopic(Client& user);
 	void						seTopic(std::string author, std::string topic);
+	void						removeMember(Client &client, std::string message);
+	void						relayMessage(Client &client, std::string message);
 //! tmp
 	void	printChan();
 };

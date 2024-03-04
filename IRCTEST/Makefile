@@ -1,10 +1,10 @@
-# NAME = irc <- commented this out becuz subject pdf wants prog name to be ircserv!
 NAME = ircserv
 
-SRCS = main.cpp Server.cpp Client.cpp Commands.cpp Utils.cpp Channel.cpp
+TMP = tmp_dev_cmds.cpp 
 
-CXXFLAGS = -Wall -Wextra -Werror 
-# -std=c++98
+SRCS = main.cpp Server.cpp Client.cpp Commands.cpp Utils.cpp Channel.cpp $(TMP)
+
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 CXX = c++
 
@@ -17,10 +17,9 @@ all: $(NAME)
 
 clean:
 	$(RM) $(OBJS)
-#	rm -rf *.o     <- this isn't safe! better alt is rm -f $(OBJS)
 
 fclean: clean
-	rm -rf $(NAME)
+	$(RM) $(NAME)
 
 re: fclean all
 

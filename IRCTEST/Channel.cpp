@@ -1,5 +1,7 @@
 #include "Channel.hpp"
 
+using namespace std;
+
 Channel::Channel() :
 						_name(""),
 						_topic(""),
@@ -63,7 +65,7 @@ bool	Channel::joinChannel(Client& newMember, std::string password) {
 	else {
 		if (_inviteOnly)
 			newMember._invitations.erase(it);
-		newMember._channels.push_back(_name);
+		newMember._channels.push_back(this);
 		_members[&newMember] = false;
 		if (!_curMemAmt)
 			_members[&newMember] = true;
@@ -106,12 +108,16 @@ std::vector<std::string>	Channel::getChannelMembers() {
 void	Channel::msgChannel(Client& sender, std::string msg) {
 	chnMemIt	it = _members.begin();
 
+	if (!chkIfMember(sender._nick)) {
+		sender._messages.push_back(ERR_NOTONCHANNEL(sender._nick, _name));
+		return ;
+	}
 	for (; it != _members.end(); it++)
 		if ((it->first->_sockfd != sender._sockfd))
 			Server::_pfdsMap[it->first->_sockfd]._messages.push_back(PRIV_MSG(it->first->_identifier, _name, ((msg.size() && msg.at(0) == ':') ? removeColon(msg) : getCmd(msg) )) );
 }
 
-void	Channel::handleModeO(Client& sender, char mode, bool addflag, std::string param) {
+bool	Channel::handleModeO(Client& sender, char mode, bool addflag, std::string param) {
 	std::map<std::string, int>::iterator	it = Server::_nickMap.find(param);
 
 	if (it == Server::_nickMap.end())
@@ -119,14 +125,16 @@ void	Channel::handleModeO(Client& sender, char mode, bool addflag, std::string p
 	else if (!chkIfMember(param))
 		sender._messages.push_back(ERR_USERNOTINCHANNEL(sender._nick, param, _name));
 	else if (sender._sockfd == it->second) // if mate tries to oper him self again just drop it!
-		return ;
+		return false;
 	else {
 		manipOper(param, addflag);
 		addflag ? addFlag(mode) : removeflag(mode);
+		return true;
 	}
+	return false;
 }
 
-void	Channel::handleModeK(Client& sender, char mode, bool addflag, std::string param) {
+bool	Channel::handleModeK(Client& sender, char mode, bool addflag, std::string param) {
 	if (addflag && _pass.size())
 		sender._messages.push_back(ERR_KEYSET(sender._nick, _name));
 	else if (addflag && (param.find(" ") != std::string::npos))
@@ -134,7 +142,9 @@ void	Channel::handleModeK(Client& sender, char mode, bool addflag, std::string p
 	else {
 		_pass = (addflag ? param : "");
 		addflag ? addFlag(mode) : removeflag(mode);
+		return true;
 	}
+	return false;
 }
 
 bool	Channel::addFlag(char mode) {
@@ -157,46 +167,53 @@ bool	Channel::removeflag(char mode) {
 	return true;
 }
 
-void	Channel::handleModeL(Client& sender, char mode, bool addflag, std::string param) {
+bool	Channel::handleModeL(Client& sender, char mode, bool addflag, std::string param) {
 	if (!addflag) {
 		_userLimit = false;
 		_maxMemAmt = 0;
 		removeflag(mode);
 	} else {
+		cout << "user limit " << endl;
 		std::stringstream	ss;
 		std::string			excess;
 
+		ss << param;
 		if (param.at(0) == '-')
 			sender._messages.push_back(ERR_INVALIDMODEPARAM(sender._nick, _name, 'l', param, "negative number? seriously!"));
 		else if (!(ss >> _maxMemAmt))
-			sender._messages.push_back(ERR_INVALIDMODEPARAM(sender._nick, _name, 'l', param, "not a number!"));
+			sender._messages.push_back(ERR_INVALIDMODEPARAM(sender._nick, _name, 'l', param, "not a number1!"));
 		else if ((ss >> excess) && excess.size())
 			sender._messages.push_back(ERR_INVALIDMODEPARAM(sender._nick, _name, 'l', param, "not a number!"));
 		else {
 			_userLimit = true;
 			addFlag(mode);
+			return true;
 		}
+		return false;
 	}
-	(void)mode;
+	return true;
 }
 
-void	Channel::handleTypeBC(Client& sender, char mode, bool addflag, std::string param) {
+bool	Channel::handleTypeBC(Client& sender, char mode, bool addflag, std::string param) {
+	bool	returnValue = false;
+
 	if ((mode == 'o' || addflag) && param.empty())
 		sender._messages.push_back(ERR_NEEDMOREPARAMS(sender._nick, "MODE"));
 	else if (mode == 'k')
-		handleModeK(sender, mode, addflag, param);
+		returnValue = handleModeK(sender, mode, addflag, param);
 	else if (mode == 'l')
-		handleModeL(sender, mode, addflag, param);
+		returnValue = handleModeL(sender, mode, addflag, param);
 	else if (mode == 'o')
-		handleModeO(sender, mode, addflag, param);
+		returnValue = handleModeO(sender, mode, addflag, param);
+	return returnValue;
 }
 
-void	Channel::handleTypeD(char mode, bool addflag) {
+bool	Channel::handleTypeD(char mode, bool addflag) {
 	if (addflag && addFlag(mode)) {
 		mode == 'i' ? _inviteOnly = true : _topicOperOnly = true;
-		
 	} else if (removeflag(mode))
-		mode == 't' ? _inviteOnly = !true : _topicOperOnly = !true;
+		mode == 'i' ? _inviteOnly = !true : _topicOperOnly = !true;
+	return true;
 }
 
 std::string	Channel::getValues(void) {
@@ -220,7 +237,8 @@ std::string	Channel::getValues(void) {
 void	Channel::chanMode(Client& sender, std::string modes, std::string value) {
 	std::string	printMode;
 	std::string	printValue;
-	bool		sign;
+	bool		appendPrint;
+	short		sign = -1;
 
 	if (!chkIfMember(sender._nick))
 		sender._messages.push_back(ERR_NOTONCHANNEL(sender._nick, _name));
@@ -230,25 +248,37 @@ void	Channel::chanMode(Client& sender, std::string modes, std::string value) {
 		sender._messages.push_back(RPL_CHANNELMODEIS(sender._nick, _name, _activeMode, getValues()));
 	else {
 		for (size_t i = 0; i < modes.size(); i++) {
+			appendPrint = false;
 			sign = (modes.at(i) == '-' ? 0 : (modes.at(i) == '+' ? 1 : sign));
 			if (modes.at(i) == '-' || modes.at(i) == '+')
 				i++;
+
 			if (_modes.substr(0, 3).find_first_of(modes.at(i)) != std::string::npos)
-				handleTypeBC(sender, modes.at(i), sign, getCmd(value));
-			else if (_modes.substr(3, 2).find_first_of(modes.at(i)) != std::string::npos)
-				handleTypeD(modes.at(i), sign);
-			else
-				std::cerr << "error";// unknown mode!
-			printMode += (sign ? "+" : "-") + modes.substr(i, 1);
-			std::cerr << "value = " << value << std::endl;
-			std::cerr << "get cmd value = " << getCmd(value) << std::endl;
-			if (_modes.substr(0, 3).find_first_of(modes.at(i)) != std::string::npos) {
-				printValue += (printValue.empty() ? "" : ",") + (!modes.substr(i, 1).compare("k") ? "-\\(\",)/-" : getCmd(value));
-				value = removeCmd(value);
+			{
+				if (sign < 0)
+					sender._messages.push_back(ERR_UNKNOWNERROR(sender._nick, "MODE", modes.at(i), "modestring must always precede with a sign! +/-"));
+				else 
+					appendPrint = handleTypeBC(sender, modes.at(i), sign, getCmd(value));
 			}
-			for (chnMemIt it = _members.begin(); it != _members.end(); it++)
-				it->first->_messages.push_back(":" + sender._identifier + " MODE " + _name + " " + printMode + " " + printValue + "\r\n");
+			else if (_modes.substr(3, 2).find_first_of(modes.at(i)) != std::string::npos) {
+				if (sign < 0)
+					sender._messages.push_back(ERR_UNKNOWNERROR(sender._nick, "MODE", modes.at(i), "modestring must always precede with a sign! +/-"));
+				else 
+					appendPrint = handleTypeD(modes.at(i), sign);
+			}
+			else
+				sender._messages.push_back(ERR_UNKNOWNMODE(sender._nick, modes.at(i)));
+
+			if (appendPrint) {
+				printMode += (sign ? "+" : "-") + modes.substr(i, 1);
+				if (_modes.substr(0, 3).find_first_of(modes.at(i)) != std::string::npos) {
+					printValue += (printValue.empty() ? "" : ",") + (!modes.substr(i, 1).compare("k") ? "-\\(\",)/-" : getCmd(value)); //hiding sensitive info!
+					value = removeCmd(value);
+				}
+			}
 		}
+		for (chnMemIt it = _members.begin(); it != _members.end() && printMode.size(); it++)
+			it->first->_messages.push_back(":" + sender._identifier + " MODE " + _name + " " + printMode + " " + printValue + "\r\n");
 	}
 }
 
@@ -278,6 +308,22 @@ bool	Channel::chkTopic() {
 	return (_topic.empty() ? false : true);
 }
 
+void	Channel::relayMessage(Client &client, std::string message) {
+	for (chnMemIt it = _members.begin(); it != _members.end(); it++)
+		if (it->first != &client)
+			it->first->_messages.push_back(message);
+}
+
+void	Channel::removeMember(Client &client, std::string message) {
+	for (chnMemIt it = _members.begin(); it != _members.end(); it++)
+		it->first->_messages.push_back(message);
+	_members.erase(&client);
+	std::vector<Channel*>::iterator	it = client._channels.begin();
+	if (it != client._channels.end())
+		client._channels.erase(it);
+}
+
+
 //! tmp //////////////////////////////////////////////////////////////////////////////
 
 void	Channel::printChan() {
@@ -286,6 +332,8 @@ void	Channel::printChan() {
 	for (; it != _members.end(); it++)
 		std::cerr << it->first->_nick << "oper -> " << (it->second ? "yes" : "no") << std::endl;
 }
+
+
 
 /* 
 :testre!~r@5.195.225.158 JOIN #awefawee

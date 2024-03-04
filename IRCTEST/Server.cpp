@@ -183,13 +183,32 @@ void	Server::readMsg(int fd)
 	}
 	if (client._fullMsg.back() == '\n')
 	{
-		//parse
-		//DONT FORGET TO READ FROM client._fullMsg 
-		std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
-		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
-			Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-		//reset _fullMsg if parsed;
-		client._fullMsg = "";
+		// //DONT FORGET TO READ FROM client._fullMsg 
+		// std::vector<std::string>	cmds = splitPlusPlus(_buf, "\r\n");
+		// for (vecStrIt it = cmds.begin(); it != cmds.end(); it++)
+		// 	Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+		// //reset _fullMsg if parsed;
+		// client._fullMsg = "";
+		// std::cerr << " reading > " << _buf << std::endl;
+		if (client.appendBuffer(_buf) || client.chkOverflow()) { //do we need appendBuffer?
+			if (client.chkOverflow())
+				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
+			else {
+				std::vector<std::string>	cmds = splitPlusPlus(client.getFullMessage(), "\r\n"); // now server doesn't process empty args
+				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
+					if (!chkArgs(*it, 1))
+						continue ;
+				//! tmp dev commands remove before submitting! // don't forget to remove from Server.hpp too //////////////////////////////////////////////////////////////////// V /////
+					if (!it->compare(0, 3, "dev")) 
+						addDevs(fd, getCmd(removeCmd(*it))); // takes arg dev {hadi or jen or huong} eg "dev hadi" adds a user with nick hadi!
+					else {
+						std::cerr << " processing > " << *it << std::endl;
+						Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+					}
+				}
+				client._fullMsg.clear();
+			}
+		}
 	}
 }
 
@@ -282,13 +301,13 @@ void	Server::setSignals()
 	std::signal(SIGQUIT, signalHandler);
 }
 
-void	Server::printPfdsMap()
-{
-	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
-	{
-		it->second.printClient();
-	}
-}
+// void	Server::printPfdsMap()
+// {
+// 	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
+// 	{
+// 		it->second.printClient();
+// 	}
+// }
 
 std::string	Server::getPassword()
 {

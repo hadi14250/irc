@@ -11,6 +11,7 @@
 
 class Server;
 class Commands;
+class Channel;
 
 class Client
 {
@@ -33,20 +34,18 @@ private:
 	struct pollfd				_pfd;
 	struct sockaddr_in			_clientInfo;
 	std::deque<std::string>		_messages;
-	std::vector<std::string>	_channels;
+	std::vector<Channel*>		_channels;
 	std::vector<std::string>	_invitations;
-	// char					_mode; //do we need this?
-	// Client const & operator=(Client const & src);
 public:
 	Client();
 	// Client(Client const & src);;
 	// ~Client();
 
-	void		printClient(); 
+	// void		printClient(); 
 	void		printPendingMsgs();
 	bool		appendBuffer(char* buf);
 	bool		chkOverflow();
-	std::string	getBuffer();
+	std::string	getFullMessage();
 };
 
 /* NOTES:

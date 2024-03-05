@@ -104,6 +104,58 @@ In a while loop the checks variable _run (_run will switch to 0 if a signal is c
 6. upon exit, free addrinfo struct (and everything else that needs to be freed) before exiting
 
 Function used (with corresponding structs):
+getaddrinfo() - use this to prep socket address for use
+
+int getaddrinfo(const char *node,     // e.g. "www.example.com" or IP
+                const char *service,  // e.g. "http" or port number
+                const struct addrinfo *hints,
+                struct addrinfo **res);
+struct addrinfo {
+    int              ai_flags;     // AI_PASSIVE, AI_CANONNAME, etc.
+    int              ai_family;    // AF_INET, AF_INET6, AF_UNSPEC
+    int              ai_socktype;  // SOCK_STREAM, SOCK_DGRAM
+    int              ai_protocol;  // use 0 for "any"
+    size_t           ai_addrlen;   // size of ai_addr in bytes
+    struct sockaddr *ai_addr;      // struct sockaddr_in or _in6
+    char            *ai_canonname; // full canonical hostname
+
+    struct addrinfo *ai_next;      // linked list, next node
+};
+
+int socket(int domain, int type, int protocol)
+use data from getaddrinfo to call directly in socket()
+
+int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
+same as socket, use info from addrinfo struct
+
+struct sockaddr_in {
+    short int          sin_family;  // Address family, AF_INET
+    unsigned short int sin_port;    // Port number
+    struct in_addr     sin_addr;    // Internet address
+    unsigned char      sin_zero[8]; // Same size as struct sockaddr
+};
+
+int listen(int sockfd, int backlog); 
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); 
+
+int send(int sockfd, const void *msg, int len, int flags); 
+
+int recv(int sockfd, void *buf, int len, int flags);
+
+int poll(struct pollfd fds[], nfds_t nfds, int timeout);
+struct pollfd {
+    int fd;         // the socket descriptor
+    short events;   // bitmap of events we're interested in
+    short revents;  // when poll() returns, bitmap of events that occurred
+};
+
+fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) -> fcntl is capable of many things but 
+this is how you set fds to nonblocking
+
+
+
+
 
 Extra notes:
 

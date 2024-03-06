@@ -176,10 +176,12 @@ void	Server::readMsg(int fd)// done! handles ^D now
 		return ;
 	} else if (*_buf) {
 		std::cerr << " reading > " << _buf << std::endl;
-		if (client.appendBuffer(_buf) || client.chkOverflow()) {
+		if (client.appendBuffer(_buf) || client.chkOverflow())
+		{
 			if (client.chkOverflow())
 				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
-			else {
+			else 
+			{
 				std::vector<std::string>	cmds = splitPlusPlus(client.getFullMsg(), "\r\n"); // now server doesn't process empty args
 				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
 					if (!chkArgs(*it, 1))
@@ -192,8 +194,8 @@ void	Server::readMsg(int fd)// done! handles ^D now
 						Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
 					}
 				}
-				client._fullMsg.clear();
 			}
+			client._fullMsg.clear();
 		}
 	}
 }

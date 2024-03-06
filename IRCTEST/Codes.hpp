@@ -110,7 +110,7 @@
 #define ERR_INPUTTOOLONG(nick) \
 	":FT_IRC 417 " + nick + " :Input line was too long\r\n"
 #define ERR_UNKNOWNMODE(nick, mode) \
-	":FT_IRC 501 " + nick + ' ' + mode + " :da fag is this? Unknown mode character!\r\n"
+	":FT_IRC 501 " + nick + ' ' + mode + " :Unknown mode character!\r\n"
 #define ERR_UMODEUNKNOWNFLAG(nick) \
 	":FT_IRC 472 " + nick + " :Unknown MODE flag\r\n"
 #define ERR_UNKNOWNERROR(nick, cmd, subCmd, info) \

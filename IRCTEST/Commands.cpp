@@ -1,8 +1,3 @@
-/* BUGS / NOTES: 
-Note that USER command is still valid if only one parameter is given. I think this is correct
-if client disconnects, they are not erased from server
-*/
-
 #include "Commands.hpp"
 
 using namespace	std;// temporary
@@ -35,7 +30,7 @@ void	Commands::postRegistrationCmds() {
 		case 7: ptr = &Commands::WHOIS; break;
 		case 8: ptr = &Commands::PART; break;
 		case 9: ptr = &Commands::QUIT; break;
-		case 10: ptr = &Commands::printChan; break;
+		// case 10: ptr = &Commands::printChan; break;
 		default :
 		_sender._messages.push_back(ERR_UNKNOWNCOMMAND(_sender._nick, _command));
 		return ;
@@ -231,13 +226,16 @@ void	Commands::PRIVMSG() {
 }
 
 void	Commands::NAMES() {
-	for (chnMapIt it = Server::_chanMap.begin(); _param.empty() && (it != Server::_chanMap.end()); it++)
-		_param += (it != Server::_chanMap.begin() ? ("," + it->first) : it->first);
+	if (_param.empty())
+		for (chnMapIt it = Server::_chanMap.begin(); it != Server::_chanMap.end(); it++)
+			_param += (it != Server::_chanMap.begin() ? ("," + it->first) : it->first);
 	std::vector<std::string>	message;
 	std::vector<std::string>	channels = splitPlusPlus(_param, ",");
 	for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
-		if (Server::_chanMap.find(*it) == Server::_chanMap.end())
+		if (Server::_chanMap.find(*it) == Server::_chanMap.end()) {
+			_sender._messages.push_back(RPL_ENDOFNAMES(_sender._nick, *it));
 			continue ;
+		}
 		message = Server::_chanMap[*it].getChannelMembers();
 		for (vecStrIt msgIt = message.begin(); msgIt != message.end(); msgIt++)
 			_sender._messages.push_back(RPL_NAMREPLY(_sender._nick, *it, *msgIt));
@@ -253,9 +251,14 @@ void	Commands::JOIN() {// done! only JOIN 0 remains!
 
 	if (!chkArgs(_param, 0))
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
-	else if (!_param.compare("0"))
-		cout << "no more chann!";
-	else {
+	else if (!_param.compare("0")) {
+		_command = "PART";
+		_param.clear();
+		for (std::vector<Channel*>::iterator it = _sender._channels.begin(); it != _sender._channels.end(); it++) {
+			_param += (_param.empty() ? "" : ",") + (*it)->getChannelName();
+		}
+		PART();
+	} else {
 		if ((channels = splitPlusPlus(_param, ",")).empty())
 			_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, "", "channel Name not provided!"));
 		keys = splitPlusPlus(getCmd(removeCmd(_param)), ",");
@@ -332,15 +335,6 @@ void	Commands::INVITE() {
 	}
 }
 
-//! tmp
-
-void	Commands::printChan() {
-chnMapIt it;
-	if ((it = Server::_chanMap.find(_param)) == Server::_chanMap.end())
-		return ;
-	it->second.printChan();
-}
-
 void	Commands::KICK() {
 	if (chkArgs(_param, 2) < 2)
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
@@ -362,9 +356,9 @@ void	Commands::KICK() {
 			_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, *chnIt));
 		else {
 			while (chnIt != channels.end() && vicIt != victims.end()) {
-				if (!mapIt->second.chkIfMember(*vicIt))
+				if (!mapIt->second.chkIfMember(*vicIt) && _sender._nick.compare(*vicIt))
 					_sender._messages.push_back(ERR_USERNOTINCHANNEL(_sender._nick, *vicIt, *chnIt));
-				else
+				else if (_sender._nick.compare(*vicIt))
 					mapIt->second.removeMember(Server::_pfdsMap[Server::_nickMap[*vicIt]], KICK_MSG(_sender._identifier, *chnIt, *vicIt));
 				vicIt++;
 				if (channels.size() > 1) {
@@ -396,6 +390,7 @@ void	Commands::PART() {
 	}
 }
 
+
 void	Commands::QUIT()
 {
 	//for now we will send this message immediately without checking for pollout
@@ -414,15 +409,3 @@ void	Commands::QUIT()
 		(*chanIt)->_members.erase(&_sender);
 	}
 }
-
-
-/* 
-privmsg
-:testrer!~r@5.195.225.158 PRIVMSG testre :hello
-
-doesn't catch all words if not preceeded by a colon
-:testrer!~r@5.195.225.158 PRIVMSG #awefwaa :wassup
-
-#define PRIVMSG(identifier, recipient, msg)
-
- */

@@ -32,11 +32,11 @@ class Channel {
 
 
 	public:
-	std::map<Client*, bool>		_members;// std::stirng for the nick, and bool for operator status!
-	
 	Channel();
 	Channel(std::string name);
 
+	std::map<Client*, bool>		_members;// std::stirng for the nick, and bool for operator status!
+	std::string					getChannelName() const;
 	std::vector<std::string>	getChannelMembers();
 	void						msgChannel(Client& sender, std::string msg);
 	bool						chkIfMember(std::string user);

@@ -234,6 +234,7 @@ void	Server::createServer()
 			throw PollException();
 		for (int i = 0; i < _pfdsCount; i++)
 		{
+
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
@@ -264,6 +265,7 @@ void	Server::createServer()
 		}
 		if (_change == 1)
 			copyPfdMapToArray();
+		
 	}
 }
 

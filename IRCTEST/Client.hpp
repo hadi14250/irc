@@ -42,7 +42,7 @@ public:
 	// Client(Client const & src);;
 	// ~Client();
 
-	// void		printClient(); 
+	void		printClient(); 
 	void		printPendingMsgs();
 	bool		appendBuffer(char* buf);
 	bool		chkOverflow();

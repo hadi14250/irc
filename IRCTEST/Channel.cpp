@@ -1,7 +1,5 @@
 #include "Channel.hpp"
 
-using namespace std;
-
 Channel::Channel() :
 						_name(""),
 						_topic(""),
@@ -29,6 +27,11 @@ Channel::Channel(std::string name) :
 {
 	Server::_chanMap[name] = *this;
 }
+
+std::string	Channel::getChannelName() const {
+	return _name;
+}
+
 
 bool	Channel::chkIfMember(std::string user) {
 	chnMemIt	it;
@@ -173,7 +176,6 @@ bool	Channel::handleModeL(Client& sender, char mode, bool addflag, std::string p
 		_maxMemAmt = 0;
 		removeflag(mode);
 	} else {
-		cout << "user limit " << endl;
 		std::stringstream	ss;
 		std::string			excess;
 
@@ -322,37 +324,3 @@ void	Channel::removeMember(Client &client, std::string message) {
 	if (it != client._channels.end())
 		client._channels.erase(it);
 }
-
-
-//! tmp //////////////////////////////////////////////////////////////////////////////
-
-void	Channel::printChan() {
-	chnMemIt it = _members.begin();
-	std::cerr << "print chann of ->" << _name << std::endl;
-	for (; it != _members.end(); it++)
-		std::cerr << it->first->_nick << "oper -> " << (it->second ? "yes" : "no") << std::endl;
-}
-
-
-
-/* 
-:testre!~r@5.195.225.158 JOIN #awefawee
-:zirconium.libera.chat MODE #awefawee +Cnst
-:zirconium.libera.chat 353 testre @ #awefawee :@testre
-:zirconium.libera.chat 366 testre #awefawee :End of /NAMES list.
-
-:testrer!~erf@5.195.225.158 JOIN #awefawee
-:tungsten.libera.chat 353 testrer @ #awefawee :testrer @testre
-:tungsten.libera.chat 366 testrer #awefawee :End of /NAMES list.
-
-
-notify others like
-:testrer!~erf@5.195.225.158 JOIN #awefawee
-
-join after topic set
-:testerer!~r@5.195.225.158 JOIN #awefawee
-:osmium.libera.chat 332 testerer #awefawee :ae
-:osmium.libera.chat 333 testerer #awefawee testre!~r@5.195.225.158 1708969438
-:osmium.libera.chat 353 testerer @ #awefawee :testerer @testre
-:osmium.libera.chat 366 testerer #awefawee :End of /NAMES list.
- */

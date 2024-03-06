@@ -390,7 +390,7 @@ void	Commands::PART() {
 	}
 }
 
-
+//immediately remove from server lists including pfd_array
 void	Commands::QUIT()
 {
 	//for now we will send this message immediately without checking for pollout

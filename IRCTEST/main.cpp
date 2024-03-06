@@ -17,5 +17,11 @@ int main(int argc, char **argv){
 	{
 		std::cerr << e.what() << '\n';
 	}
-	std::cout 
 }
+
+/* BUGS:
+JOIN - if password is set, we cannot join channel even with correct password - Bad Channel Mask
+Redo read messages in server
+check that when client leaves the client object is gone 
+are we deleting client after client quits unexpectedly (^C)
+*/

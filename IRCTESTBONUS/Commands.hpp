@@ -51,6 +51,7 @@ public:
 	// void	NOTICE();
 	// void	ERROR();
 	// void	OPER();
+	std::string	BOT(); 
 };
 
 typedef void (Commands::*cmdPtr)(void);

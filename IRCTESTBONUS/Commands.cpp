@@ -1,4 +1,8 @@
 #include "Commands.hpp"
+#include "Bot.hpp"
+#include <cstdlib>
+#include <ctime>
+
 
 Commands::Commands(int fd, std::string command, std::string param, Client& sender)
 	:	_senderFd(fd),
@@ -188,6 +192,9 @@ void Commands::WHOIS() {
 
 void	Commands::MsgClient(std::string recipient, std::string text) {
 	std::map<std::string, int>::iterator it = Server::_nickMap.find(recipient);
+	if (text.find("BOT") != std::string::npos){
+		text = BOT();
+	} 
 	if (it == Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));
 	else 
@@ -394,4 +401,20 @@ void	Commands::PART() {
 void	Commands::QUIT()
 {
 	Server::deletePfd(_senderFd);
+}
+
+std::string	Commands::BOT() {
+	std::string reply;
+	if (_sender._isBotFirstCall == true) {
+		reply = Bot::botName + ": " +  Bot::popUpResponse + "\r\n";
+		_sender._isBotFirstCall = false;
+	}
+	else if (_sender._isBotFirstCall == false) {
+		std::srand(static_cast<unsigned int>(std::time(nullptr)));
+	    int strSize = sizeof(Bot::helpResponse) / sizeof(Bot::helpResponse[0]);
+		int randIdx = std::rand() % strSize;
+	    const std::string& response = Bot::helpResponse[randIdx];
+		reply = Bot::botName + ": " + response + "\r\n";
+	}
+	return reply;
 }

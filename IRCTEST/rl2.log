@@ -1,0 +1,96 @@
+>> @time=2024-03-07T13:51:39.881Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T13:52:41.017Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T13:53:41.204Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T13:54:42.385Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T13:55:43.475Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T13:56:44.596Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T13:57:45.673Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T13:58:46.821Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T13:59:47.950Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:00:49.031Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:01:49.158Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:02:50.295Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:03:51.456Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:04:52.608Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< JOIN #chan1
+>> @time=2024-03-07T14:04:57.184Z :abcdefghijklmnop!~user@5.195.225.158 JOIN #chan1 * :Unknown
+>> @time=2024-03-07T14:04:57.184Z :erbium.libera.chat MODE #chan1 +Cnst
+>> @time=2024-03-07T14:04:57.184Z :erbium.libera.chat 353 abcdefghijklmnop @ #chan1 :@abcdefghijklmnop
+>> @time=2024-03-07T14:04:57.184Z :erbium.libera.chat 366 abcdefghijklmnop #chan1 :End of /NAMES list.
+<< MODE #chan1
+>> @time=2024-03-07T14:04:59.696Z :erbium.libera.chat 324 abcdefghijklmnop #chan1 +Cnst
+--> chanquery mode
+>> @time=2024-03-07T14:04:59.696Z :erbium.libera.chat 329 abcdefghijklmnop #chan1 1709820297
+--> event 329
+<< WHO #chan1 %tcuhnfdar,743
+>> @time=2024-03-07T14:05:02.205Z :erbium.libera.chat 354 abcdefghijklmnop 743 #chan1 ~user 5.195.225.158 abcdefghijklmnop H@ 0 0 :Unknown
+--> silent event whox
+>> @time=2024-03-07T14:05:02.205Z :erbium.libera.chat 315 abcdefghijklmnop #chan1 :End of /WHO list.
+--> chanquery who end
+<< PRIVMSG #chan1 :MODE #chan1 +k lll lll
+<< MODE #chan1 b
+>> @time=2024-03-07T14:05:06.221Z :erbium.libera.chat 368 abcdefghijklmnop #chan1 :End of Channel Ban List
+--> chanquery ban end
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:05:53.752Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:06:54.888Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+>> @time=2024-03-07T14:07:01.281Z :Guest4837!~user@5.195.225.158 JOIN #chan1 * :Unknown
+>> @time=2024-03-07T14:07:10.352Z :Guest4837!~user@5.195.225.158 PART #chan1
+<< PRIVMSG #chan1 :MODE #chan1 +k lll
+<< MODE #chan1 +klll lll
+>> @time=2024-03-07T14:07:36.837Z :erbium.libera.chat 461 abcdefghijklmnop MODE :Not enough parameters
+>> @time=2024-03-07T14:07:43.489Z :Guest4837!~user@5.195.225.158 JOIN #chan1 * :Unknown
+>> @time=2024-03-07T14:07:55.096Z :Guest4837!~user@5.195.225.158 PART #chan1
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:07:56.053Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< MODE #chan1 +k lll
+>> @time=2024-03-07T14:08:11.518Z :abcdefghijklmnop!~user@5.195.225.158 MODE #chan1 +k lll
+<< MODE #chan1 -l
+<< MODE #chan1 -k lll
+>> @time=2024-03-07T14:08:41.631Z :abcdefghijklmnop!~user@5.195.225.158 MODE #chan1 -k *
+<< MODE #chan1 +klll lll lll
+>> @time=2024-03-07T14:08:48.336Z :erbium.libera.chat 461 abcdefghijklmnop MODE :Not enough parameters
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:08:56.212Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong
+<< MODE #chan1 +klll lll
+>> @time=2024-03-07T14:08:57.904Z :erbium.libera.chat 461 abcdefghijklmnop MODE :Not enough parameters
+>> @time=2024-03-07T14:09:05.053Z :Guest4837!~user@5.195.225.158 JOIN #chan1 * :Unknown
+>> @time=2024-03-07T14:09:08.480Z :Guest4837!~user@5.195.225.158 PART #chan1
+<< MODE #chan1 +k lll
+>> @time=2024-03-07T14:09:20.081Z :abcdefghijklmnop!~user@5.195.225.158 MODE #chan1 +k lll
+>> @time=2024-03-07T14:09:43.063Z :Guest4837!~user@5.195.225.158 JOIN #chan1 * :Unknown
+<< PING erbium.libera.chat
+>> @time=2024-03-07T14:09:57.382Z :erbium.libera.chat PONG erbium.libera.chat :erbium.libera.chat
+--> lag pong

@@ -7,11 +7,11 @@
 # include "Server.hpp"
 # include <deque>
 # include <vector>
-// # include "Commands.hpp"
 # include "Commands.hpp"
 
 class Server;
 class Commands;
+class Channel;
 
 class Client
 {
@@ -26,7 +26,6 @@ private:
 	std::string					_hostname;
 	std::string					_server;
 	std::string					_realname;
-	std::string					_identifier; //<nick>!<user>@<host>
 	std::string					_fullMsg;
 	bool						_listenSock;
 	bool						_authenticated;
@@ -34,11 +33,11 @@ private:
 	struct pollfd				_pfd;
 	struct sockaddr_in			_clientInfo;
 	std::deque<std::string>		_messages;
-	std::vector<std::string>	_channels;
 	std::vector<std::string>	_invitations;
-	// char					_mode; //do we need this?
-	// Client const & operator=(Client const & src);
+	std::vector<Channel*>		_channels;
 public:
+	std::string					_identifier; //<nick>!<user>@<host>
+	
 	Client();
 	// Client(Client const & src);;
 	// ~Client();
@@ -47,7 +46,7 @@ public:
 	void		printPendingMsgs();
 	bool		appendBuffer(char* buf);
 	bool		chkOverflow();
-	std::string	getBuffer();
+	std::string	getFullMsg();
 };
 
 /* NOTES:

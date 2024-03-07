@@ -1,0 +1,116 @@
+About / Requirements
+Develop an IRC(Internet Relay Chat) server in C++98.
+Requirements:
+-The server must be able to handle multiple clients at the same time and never having
+-No forking is allowed. All I/O operations must be non-blocking
+-only one poll is allowed
+-communication between client and server must be done via TCP/IP (v4 or v6)
+-The server must be able to authenticate, set a nickname, username, join a channle, send, and receive private messages from reference client
+-All messages sent from one client to a channel have to be forwarded to all other clients in channel
+-Server must have both operators and regular users
+-These channel commands must be implemented:
+	-KICK
+	-INVITE
+	-TOPIC
+	-mode
+	
+Execute
+make
+./ircserv <port> <password>
+
+Irssi in Docker
+docker run -it --rm --name irssi --network host irssi
+/connect host.docker.internal <port> <password>
+note: on a computer that doesn't require docker to connect to irssi we can use localhost instead of host.docker.internal
+
+Rawlogs 
+run this in irssi
+/rawlog save <filename>.log
+
+run in terminal to connect to docker container
+docker exec -it <container_name> sh
+cat <filename>.log
+
+Sample servers
+/connect liberachat
+/connect chat.freenode.net
+
+Concepts
+What is a socket?
+A socket acts as an endpoint for sending and receiving data across a network.
+It can be described as a file descriptor that is bound to a destination address.
+It has some similar behaviors to UNIX files or devices in that it can be used with traditional operations such as read or wrtie;
+There are 2 main types of sockets:
+1. Stream sockets (SOCK_STREAM)
+	Uses TCP (Transfer Control Protocol) for communication
+	provides sequenced, constant, and bidirectional flow of data
+	Requires connection to be established (includes a handshake process)
+	Data is treated as a continuous stream of bytes and there is no specific boundaries between messages
+	Requires more overhead - needs to set up connection, error checking, retransmission mechanisms
+	TCP has flow control to adjust rate of data transmission base on receiver's ability to process data
+	Used when reliable data transmission is required - web browsing, email, file transfer
+2. Datagram sockets(SOCK_DGRAM)
+	Uses UDP (User Datagram Protocol) for communication
+	Messages may be received out of order from send order, duplicated, or not at all
+	Does not require a connection. Each datagram (packet) is sent independently and may take different routes to reach destination
+	Preserves message boundaries through individual datagram
+	Requires less overhead since they are connectionless and do not guarantee delivery
+	UDP does not have built in flow control
+	Used when real-time communication and low overhead is more important than reliability - video streaming, gaming, DNS
+
+These are two other sockets that are not as commonly used:
+3. Raw sockets(SOCK_RAW)
+4. Sequenced Packet sockets (SOCK_SEQPACKET)
+
+Blocking and Nonblocking
+Blocking - if there's no data, a socket will wait until data arrives. The function using the socket will essentially go to sleep
+By making a socket nonblocking, we can still move on to the next socket if there is no data to be read from the current socket
+
+Ports:
+Different services on the Internet use different well-known port numbers (see BIG IANA Port list)
+These ports number from 0 to 1023 and usually require special OS privileges to use.
+TCP uses both IP address and port number to connect to a socket
+
+IRC messages (IMPORTANT!!!)
+IRC messages from the server must be formatted in a specific way to send back to the client. 
+In fact, this makes up the majority of the project after building the server. 
+Generally the format is as follows:
+	:<prefix> <code> <nick> :<msg>
+	
+	1. prefix - this is the origin of the message. Usually it is the server name or the name of the sender
+	2. code - numerical code that denotes what the message is. See references for a list of all codes
+	3. nick - nickname of receiver
+	4. msg - the actual message
+		a note on using ':' - its a good idea to always append the last parameter with ':' even if it's sometimes not necessary
+
+Some commands are formatted differently (for example, CAP) so always check what the expected sned message shoudl look liek
+
+Pseudo code:
+For ft-IRC, we will work with stream sockets to create the server.
+
+1. create listening socket
+In a while loop the checks variable _run (_run will switch to 0 if a signal is called from server end)
+2. poll all fds - this function will switch revents in struct pollfd if fd is ready for some kind of action
+3. iterate through every socket fd and check if there is POLLIN/POLLOUT/POLLHUP in revents
+	if the socket fd is the listening socket and revents is POLLIN - we will add a client
+	else we check all other socket fds for the following
+		POLLIN - data can be read from fd without blocking
+			we read any messages coming in from that fd and drop the appropriate response messages into any relevant client's mailbox
+		POLLOUT - data can be written to fd without blocking
+			if the client's mailbox has messages, we will send all of those messages out
+		POLLHUP - fd has been closed or disconnected
+			delete client from our array
+4. if a new client has been added, modify our array accordingly
+6. upon exit, free addrinfo struct (and everything else that needs to be freed) before exiting
+
+Function used (with corresponding structs):
+
+Extra notes:
+
+
+
+References
+https://beej.us/guide/bgnet/html/
+https://modern.ircdocs.horse/
+http://chi.cs.uchicago.edu/chirc/irc_examples.html
+https://www.alien.net.au/irc/irc2numerics.html

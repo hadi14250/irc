@@ -1,0 +1,38 @@
+<< CAP LS
+<< PASS hello
+<< NICK jebucoy
+<< USER jebucoy jebucoy localhost :jebucoy
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 433 * jebucoy :Nickname already in use
+<< NICK jebucoy_
+>> :FT_IRC 001 jebucoy_ :Welcome to the Internet Relay Network jebucoy_!~jebucoy@jebucoy
+<< MODE jebucoy_ +i
+<< WHOIS jebucoy
+>> :FT_IRC 002 jebucoy_ :Your host is FT_IRC
+>> :FT_IRC 003 jebucoy_ :This server was created February 29, 2024
+>> :FT_IRC 004 jebucoy_ :FT_IRC v1 io iotkl
+>> :FT_IRC 005 jebucoy_ CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 375 jebucoy_ :-Message of the day
+>> :FT_IRC 372 jebucoy_ :This is ft-IRC
+>> :FT_IRC 372 jebucoy_ :≽^•⩊•^≼
+>> :FT_IRC 372 jebucoy_ :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 jebucoy_ :End of /MOTD command
+>> :FT_IRC 472 jebucoy_ :Unknown MODE flag
+>> :FT_IRC 311 jebucoy_ jebucoy jebucoy jebucoy * :jebucoy
+--> nickfind event whois
+>> :FT_IRC 312 jebucoy_ jebucoy localhost :FT_IRC
+--> event empty
+>> :FT_IRC 318 jebucoy_ :End of /WHOIS list
+--> event empty
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> :jebucoy!~jebucoy@jebucoy PRIVMSG jebucoy_ :
+<< JOIN #chan2
+>> :FT_IRC 473 jebucoy_ #chan2 :Cannot join channel (+i), invite only channel!
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< JOIN #chan2
+>> :FT_IRC 473 jebucoy_ #chan2 :Cannot join channel (+i), invite only channel!

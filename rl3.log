@@ -1,0 +1,70 @@
+<< CAP LS
+<< PASS hello
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 001 h :Welcome to the Internet Relay Network h!~hbui-vu@hbui-vu
+<< MODE h +i
+>> :FT_IRC 002 h :Your host is FT_IRC
+>> :FT_IRC 003 h :This server was created February 29, 2024
+>> :FT_IRC 004 h :FT_IRC v1 io iotkl
+>> :FT_IRC 005 h CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 375 h :-Message of the day
+>> :FT_IRC 372 h :This is ft-IRC
+>> :FT_IRC 372 h :≽^•⩊•^≼
+>> :FT_IRC 372 h :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 h :End of /MOTD command
+>> CAP * LS :
+>> :FT_IRC 462 h :You are already registered
+>> :FT_IRC 433 * h :Nickname already in use
+>> :FT_IRC 462 h :You are already registered
+>> :FT_IRC 472 h :Unknown MODE flag
+>> :FT_IRC 472 h :Unknown MODE flag
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> PONG :FT_IRC
+<< NICK hhh
+>> :h!~hbui-vu@hbui-vu NICK :hhh
+>> :FT_IRC 433 * hhh :Nickname already in use
+<< JOIN #chan1
+>> :hhh!hbui-vu@hbui-vu JOIN #chan1
+>> :FT_IRC 353 hhh = #chan1 :@hhh
+>> :FT_IRC 366 hhh #chan1 :End of /NAMES list
+<< MODE #chan1
+>> :FT_IRC 443 hhh hhh #chan1 :is already on channel
+>> :FT_IRC 461 hhh MODE :Need more parameters
+>> :FT_IRC 461 hhh MODE :Need more parameters
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> PONG :FT_IRC
+<< INVITE h #chan1
+>> :FT_IRC 341 hhh #chan1 h
+>> :FT_IRC 341 hhh #chan1 h
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> FAILED mode channel: chanquery abort
+<< MODE #chan1
+--> lag pong
+>> PONG :FT_IRC
+>> :FT_IRC 461 hhh MODE :Need more parameters
+>> :FT_IRC 461 hhh MODE :Need more parameters
+<< MODE #chan1 +i
+>> :hhh!hbui-vu@hbui-vu MODE #chan1 +i 
+>> :hhh!hbui-vu@hbui-vu MODE #chan1 +i 
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> PONG :FT_IRC
+>> :h!~hbui-vu@hbui-vu JOIN #chan1
+>> :h!~hbui-vu@hbui-vu PART #chan1
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> FAILED mode channel: chanquery abort
+<< WHO #chan1
+--> lag pong
+>> PONG :FT_IRC
+>> :FT_IRC 421 hhh WHO :Unknown command
+>> :FT_IRC 421 hhh WHO :Unknown command

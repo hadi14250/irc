@@ -7,14 +7,14 @@ std::map<std::string, Channel>	Server::_chanMap;
 std::string						Server::_password;
 std::string						Server::_servername = "FT_IRC";
 int								Server::_change = 0;
+int								Server::_pfdsCount = 0;
+struct pollfd*					Server::_pfds = NULL;
 
 Server::Server(std::string const & port, std::string const & pswd)
 	:	_port(port),
 		_listenSockfd(-1),
-		_pfdsCount(0),
 		_readBytes(0),
-		_serv(NULL),
-		_pfds(NULL)
+		_serv(NULL)
 {
 	_password = pswd;
 	checkPort();
@@ -23,12 +23,13 @@ Server::Server(std::string const & port, std::string const & pswd)
 
 Server::~Server()
 {
-	std::cout << "Server destructor called\n";
 	if (_serv)
 		freeaddrinfo(_serv);
 	if (_pfds)
 		delete [] _pfds;
-	//close any fds here
+	for (std::map<std::string, int>::iterator it = _nickMap.begin(); it != _nickMap.end(); it++)
+		close(it->second);
+	std::cout << "Server destructor called\n";
 }
 
 /* 
@@ -110,8 +111,6 @@ void	Server::addNewPfd(int tag)
 		if (newClient._sockfd == -1)
 			throw AcceptException();
 		newClient._clientInfo = clientInfo;
-		// std::cout	<< "sin_port: " << ntohs(clientInfo.sin_port) << " " << clientInfo.sin_port << "\n"
-					// << "sin_addr: " << ntohl(clientInfo.sin_addr.s_addr) << " " << clientInfo.sin_addr.s_addr << "\n";
 	}
 	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
 		throw FcntlException();
@@ -150,6 +149,20 @@ void	Server::copyPfdMapToArray()
 */
 void	Server::deletePfd(int fd)
 {
+	std::string errorMsg = "ERROR :client quit\r\n";
+	if (send(fd, errorMsg.c_str(), errorMsg.length(), 0) == -1)
+		std::cout << "Unable to send error quit message to client\n";
+	std::vector<Channel*> chanList = Server::_pfdsMap[fd]._channels;
+	//iterate through clients channel lists
+	for (std::vector<Channel*>::iterator chanIt = chanList.begin(); chanIt != chanList.end(); chanIt++)
+	{
+		//notify everyone that client is quitting
+		std::map<Client *, bool>::iterator membersIt = (*chanIt)->_members.begin();
+		for (; membersIt != (*chanIt)->_members.end(); membersIt++)
+			membersIt->first->_messages.push_back(RPL_QUIT(Server::_pfdsMap[fd]._identifier));
+		//erase the member from that channel list
+		(*chanIt)->_members.erase(&Server::_pfdsMap[fd]);
+	}
 	//we must also erase the client from any channels they belong to
 	Client client = _pfdsMap[fd];
 	std::string nick = client._nick;
@@ -163,7 +176,15 @@ void	Server::deletePfd(int fd)
 	if (it != _nickMap.end())
 		_nickMap.erase(nick);
 	
-	_change = 1; //delete this and manually resize pfds_array
+	//resizing
+	_pfdsCount = _pfdsMap.size();
+	if (_pfds)
+		delete [] _pfds;
+	_pfds = new struct pollfd[_pfdsCount]();
+	int i = 0;
+	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
+		_pfds[i++] = it->second._pfd;
+	
 }
 
 void	Server::readMsg(int fd)// done! handles ^D now
@@ -181,10 +202,17 @@ void	Server::readMsg(int fd)// done! handles ^D now
 			if (client.chkOverflow())
 				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
 			else {
-				std::vector<std::string>	cmds = splitPlusPlus(client.getBuffer(), "\r\n");
+				std::vector<std::string>	cmds = splitPlusPlus(client.getFullMsg(), "\r\n"); // now server doesn't process empty args
 				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
-					std::cerr << " processing > " << *it << std::endl;
-					Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+					if (!chkArgs(*it, 1))
+						continue ;
+				//! tmp dev commands remove before submitting! // don't forget to remove from Server.hpp too //////////////////////////////////////////////////////////////////// V /////
+					if (!it->compare(0, 3, "dev")) 
+						addDevs(fd, getCmd(removeCmd(*it))); // takes arg dev {hadi or jen or huong} eg "dev hadi" adds a user with nick hadi!
+					else {
+						std::cerr << " processing > " << *it << std::endl;
+						Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
+					}
 				}
 				client._fullMsg.clear();
 			}
@@ -198,7 +226,6 @@ void	Server::sendMsg(int fd)
 	std::deque<std::string>::iterator it = client._messages.begin();
 	for (; it != client._messages.end(); it++)
 	{
-		std::cerr << " sending > " + *it << std::endl;
 		if (send(fd, (*it).c_str(), (*it).length(), 0) == -1)
 			std::cerr << "Failed to send msg: " << *it << std::endl;
 	}
@@ -229,13 +256,11 @@ void	Server::createServer()
 			throw PollException();
 		for (int i = 0; i < _pfdsCount; i++)
 		{
-			// std::cout << "inside for loop\n";
-			// std::cout << "_pfdsCount: " << _pfdsCount << "\n";
+
 			if ((_pfds[i].revents & POLLIN) && _pfds[i].fd == _listenSockfd)
 			{
 				try
 				{
-					// std::cout << "adding a new client\n";
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 				}
 				catch(const std::exception& e)
@@ -245,23 +270,24 @@ void	Server::createServer()
 			}
 			else if (_pfds[i].revents & POLLIN)
 			{
-				// std::cout << "POLLIN\n";
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
+				std::cout << "POLLIN fd: " << _pfds[i].fd << "\n";
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
 				//fd is ready for writing - use SEND HERE
-				// std::cout << "go here?\n"; 
 				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)
 			{
+				std::cout << "POLLHUP deleting fd: " << _pfds[i].fd << "\n";
 				deletePfd(_pfds[i].fd);
 			}
 		}
 		if (_change == 1)
 			copyPfdMapToArray();
+		
 	}
 }
 
@@ -287,13 +313,13 @@ void	Server::setSignals()
 	std::signal(SIGQUIT, signalHandler);
 }
 
-void	Server::printPfdsMap()
-{
-	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
-	{
-		it->second.printClient();
-	}
-}
+// void	Server::printPfdsMap()
+// {
+// 	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
+// 	{
+// 		it->second.printClient();
+// 	}
+// }
 
 std::string	Server::getPassword()
 {

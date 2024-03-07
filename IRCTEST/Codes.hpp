@@ -13,13 +13,13 @@
 #define RPL_MYINFO(nick) \
 	":FT_IRC 004 " + nick + " :FT_IRC v1 io iotkl\r\n"
 #define RPL_ISUPPORT(nick) \
-	":FT_IRC 005 " + nick + " CHANMODES=,k,l,it :are supported by this server\r\n"
+	":FT_IRC 005 " + nick + " CHANMODES=k,l,it NICKLEN=9 USERLEN=9 CHANNELLEN=50 :are supported by this server\r\n"
 #define RPL_NAMREPLY(nick, channelName, args) \
 	":FT_IRC 353 " + nick + " = " + channelName + " :" + args + "\r\n"
 #define RPL_ENDOFNAMES(nick, channelName) \
 	":FT_IRC 366 " + nick + " " + channelName + " :End of /NAMES list\r\n"
 #define RPL_MOTD(nick) \
-	":FT_IRC 372 " + nick + " :-MOTD MAIN BODY\r\n"
+	":FT_IRC 372 " + nick
 #define RPL_MOTDSTART(nick) \
 	":FT_IRC 375 " + nick + " :-Message of the day\r\n"
 #define RPL_ENDOFMOTD(nick) \
@@ -46,11 +46,18 @@
 //🧢
 #define ERR_INVALIDCAPCMD(nick, command) \
 	":FT_IRC 410 " + nick + ' ' + command + " :Invalid CAP command\r\n"
-
 #define ERR_UNKNOWNCOMMAND(nick, command) \
 	":FT_IRC 421 " + nick + ' ' + command + " :Unknown command\r\n"
 
-//privmsg
+//WHOIS
+#define RPL_ENDOFWHOIS(nick) \
+	":FT_IRC 318 " + nick + " :End of /WHOIS list\r\n"
+#define RPL_WHOISUSER(nick, reqnick, username, host, realname) \
+	":FT_IRC 311 " + nick + " " + reqnick + " " + username + " " + host + " * " + realname + "\r\n"
+#define RPL_WHOISSERVER(nick, reqnick, server) \
+	":FT_IRC 312 " + nick + " " + reqnick + " " + server + " :FT_IRC\r\n"
+
+///privmsg
 #define ERR_NORECIPIENT(nick) \
 	":FT_IRC 411 " + nick + " :No recipient given\r\n"
 
@@ -102,10 +109,29 @@
 	":FT_IRC 324 " + nick + ' ' + channelName + ' ' + modeStr + ' ' + modeArgs + "\r\n"
 #define ERR_INPUTTOOLONG(nick) \
 	":FT_IRC 417 " + nick + " :Input line was too long\r\n"
+#define ERR_UNKNOWNMODE(nick, mode) \
+	":FT_IRC 501 " + nick + ' ' + mode + " :Unknown mode character!\r\n"
+#define ERR_UMODEUNKNOWNFLAG(nick) \
+	":FT_IRC 472 " + nick + " :Unknown MODE flag\r\n"
+#define ERR_BADCHANNAME(nick, channame) \
+	":FT_IRC 479 " + nick + " " + channame + " :Illegal channel name\r\n"
+#define ERR_UNKNOWNERROR(nick, cmd, subCmd, info) \
+	":FT_IRC 400 " + nick + ' ' + cmd + ' ' + subCmd + " :" + info + "\r\n"
 
 #define INVITE_MSG(identifier, recipient, channelName) \
 	":" + identifier + " INVITE " + recipient + ' ' + channelName + "\r\n"
 #define JOIN_MSG(identifier, channelName) \
-	": " + identifier + " JOIN " + channelName + "\r\n"
+	":" + identifier + " JOIN " + channelName + "\r\n"
+#define PART_MSG(identifier, channelName) \
+	":" + identifier + " PART " + channelName + "\r\n"
+#define KICK_MSG(identifier, channelName, recipient) \
+	":" + identifier + " KICK " + channelName + ' ' + recipient + "\r\n"
 #define PRIV_MSG(identifier, recipient, msg) \
-	": " + identifier + " PRIVMSG " + recipient + " :" + msg + "\r\n"
+	":" + identifier + " PRIVMSG " + recipient + " :" + msg + "\r\n"
+
+//quit
+#define RPL_QUIT(identifier) \
+	":" + identifier + " QUIT :Client quit\r\n"
+
+
+	

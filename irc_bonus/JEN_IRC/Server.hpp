@@ -15,14 +15,14 @@
 # include <csignal>
 # include "Client.hpp"
 # include "Commands.hpp"
-# include "sstream"
+# include "Channel.hpp"
+// # include "sstream"
 
 typedef std::vector<std::string>::iterator	vecStrIt;
+typedef std::map<std::string, Channel>::iterator	chnMapIt;
 
 class Client;
 class Channel;
-
-typedef std::map<std::string, Channel>::iterator	chnMapIt;
 
 enum Tags
 {
@@ -32,13 +32,13 @@ enum Tags
 
 class Server {
 private:
+	friend class Commands;
+
 	std::string				_port;
 	int						_listenSockfd;
-	int						_pfdsCount;
 	int						_readBytes;
 	char					_buf[512];
 	struct addrinfo*		_serv;
-	struct pollfd*			_pfds;
 	
 	static std::string		_password;
 	static std::string		_servername;
@@ -47,33 +47,38 @@ private:
 	Server(Server const &);
 	Server const &	operator=(Server const &);
 
-	// void		checkPassword() const;
 	void		checkPort() const;
 	void		makeListenSockfd();
-	void		addNewPfd(int tag);
 	void		copyPfdMapToArray();
-	void		deletePfd(int fd);
+	void		addNewPfd(int tag);
 	void		readMsg(int fd);
 	void		sendMsg(int fd);
 	static void	signalHandler(int signum);
 
-	void	printPfdsMap();
+	// void	printPfdsMap();
 
 public:
+
+//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
+	void	addDevs(int fd, std::string devs);
+//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
+	
 	static volatile sig_atomic_t 			_run;
 	static std::map<int, Client>			_pfdsMap;
 	static std::map<std::string, int>		_nickMap;
 	static std::map<std::string, Channel>	_chanMap;
 	static int								_change;
-	
+	static struct pollfd*					_pfds;
+	static int								_pfdsCount;
+
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 
-	// static void			printPasswordPolicy();
 	void				createServer();
 	static void			setSignals();
 	static std::string	getPassword();
 	static std::string	getServername();
+	static void			deletePfd(int fd);
 
 	/********************** TEMPORARY ***********************/
 	void	testParse(Commands & msg);
@@ -123,11 +128,3 @@ std::string					getCmd(std::string msg);
 std::vector<std::string>	splitPlusPlus(std::string str, std::string del);
 size_t						chkArgs(std::string args, size_t limiter);
 std::string					removeColon(std::string str);
-
-/*
-Structure:
-1. Get user input port and password
-2. Check if port is valid (how do we do this?)
-3. Enact a password policy and check if password follows rules
-
-*/

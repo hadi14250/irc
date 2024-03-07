@@ -13,16 +13,16 @@
 # include <fcntl.h>
 # include <cstring>
 # include <csignal>
+# include <cctype>
 # include "Client.hpp"
 # include "Commands.hpp"
-# include "sstream"
+# include "Channel.hpp"
 
 typedef std::vector<std::string>::iterator	vecStrIt;
+typedef std::map<std::string, Channel>::iterator	chnMapIt;
 
 class Client;
 class Channel;
-
-typedef std::map<std::string, Channel>::iterator	chnMapIt;
 
 enum Tags
 {
@@ -35,11 +35,8 @@ private:
 	std::string				_port;
 	int						_listenSockfd;
 	int						_pfdsCount;
-	int						_readBytes;
-	char					_buf[512];
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
-	
 	static std::string		_password;
 	static std::string		_servername;
 
@@ -47,8 +44,8 @@ private:
 	Server(Server const &);
 	Server const &	operator=(Server const &);
 
-	// void		checkPassword() const;
 	void		checkPort() const;
+	void		checkPass() const;
 	void		makeListenSockfd();
 	void		addNewPfd(int tag);
 	void		copyPfdMapToArray();
@@ -57,9 +54,14 @@ private:
 	void		sendMsg(int fd);
 	static void	signalHandler(int signum);
 
-	void	printPfdsMap();
+	// void	printPfdsMap();
 
 public:
+
+//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
+	void	addDevs(int fd, std::string devs);
+//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
+	
 	static volatile sig_atomic_t 			_run;
 	static std::map<int, Client>			_pfdsMap;
 	static std::map<std::string, int>		_nickMap;
@@ -69,7 +71,6 @@ public:
 	Server(std::string const & port, std::string const & pswd);
 	~Server();
 
-	// static void			printPasswordPolicy();
 	void				createServer();
 	static void			setSignals();
 	static std::string	getPassword();
@@ -82,7 +83,7 @@ public:
 	/********************** EXCEPTIONS **********************/
 
 	class InvalidPasswordException : public std::exception{
-		const char *what() const throw(){return "Invalid password";}
+		const char *what() const throw(){return "Invalid password. Rules: 1-25 char(s) long, printable chars only";}
 	};
 	class InvalidPortException : public std::exception{
 		const char *what() const throw(){return "Invalid port";}
@@ -123,11 +124,3 @@ std::string					getCmd(std::string msg);
 std::vector<std::string>	splitPlusPlus(std::string str, std::string del);
 size_t						chkArgs(std::string args, size_t limiter);
 std::string					removeColon(std::string str);
-
-/*
-Structure:
-1. Get user input port and password
-2. Check if port is valid (how do we do this?)
-3. Enact a password policy and check if password follows rules
-
-*/

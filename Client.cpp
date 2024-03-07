@@ -46,5 +46,16 @@ void Client::printClient()
 		std::cout << "revents: garbage value\n";
 }
 
+bool	Client::appendBuffer(char *buf) {
+	if (*buf)
+		_fullMsg += buf;
+	return ((_fullMsg.size() && _fullMsg.at(_fullMsg.size() - 1) == '\n') ? true : false);
+}
 
+bool	Client::chkOverflow() {
+	return ( (_fullMsg.size() > 512 || ( (_fullMsg.size() == 512) && (_fullMsg.at(_fullMsg.size() - 1) != '\n') ) ? true : false) );
+}
 
+std::string	Client::getBuffer() {
+	return _fullMsg;
+}

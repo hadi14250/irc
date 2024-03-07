@@ -1,0 +1,54 @@
+<< CAP LS
+<< PASS hello
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> CAP * LS :
+>> :FT_IRC 433 * h :Nickname already in use
+<< NICK h_
+>> :FT_IRC 462 * :You are already registered
+>> :FT_IRC 433 * h :Nickname already in use
+<< NICK h_
+>> :FT_IRC 001 * :Welcome to the Internet Relay Network h_!~hbui-vu@hbui-vu
+<< MODE * +i
+<< WHOIS h
+>> :FT_IRC 002 * :Your host is FT_IRC
+>> :FT_IRC 003 * :This server was created February 29, 2024
+>> :FT_IRC 004 * :FT_IRC v1 io iotkl
+>> :FT_IRC 005 * CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 375 * :-Message of the day
+>> :FT_IRC 372 * :This is ft-IRC
+>> :FT_IRC 372 * :≽^•⩊•^≼
+>> :FT_IRC 372 * :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 * :End of /MOTD command
+>> :FT_IRC 433 * h_ :Nickname already in use
+>> :FT_IRC 433 * h_ :Nickname already in use
+>> :FT_IRC 433 * h_ :Nickname already in use
+>> :FT_IRC 472 h_ :Unknown MODE flag
+>> :FT_IRC 472 h_ :Unknown MODE flag
+>> :FT_IRC 311 h_ h hbui-vu hbui-vu * :hbui-vu
+--> nickfind event whois
+>> :FT_IRC 312 h_ h localhost :FT_IRC
+--> event empty
+>> :FT_IRC 318 h_ :End of /WHOIS list
+--> event empty
+>> :FT_IRC 311 h_ h hbui-vu hbui-vu * :hbui-vu
+>> :FT_IRC 312 h_ h localhost :FT_IRC
+>> :FT_IRC 318 h_ :End of /WHOIS list
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> PONG :FT_IRC
+<< NICK h_
+>> :FT_IRC 433 * h_ :Nickname already in use
+>> :FT_IRC 433 * h_ :Nickname already in use
+<< NICK hhhh
+>> :h_!~hbui-vu@hbui-vu NICK :hhhh
+>> :FT_IRC 433 * hhhh :Nickname already in use
+<< NICK lll
+>> :hhhh!hbui-vu@hbui-vu NICK :lll
+>> :FT_IRC 433 * lll :Nickname already in use
+<< NICK aaaa
+>> :lll!hbui-vu@hbui-vu NICK :aaaa
+>> :FT_IRC 433 * aaaa :Nickname already in use

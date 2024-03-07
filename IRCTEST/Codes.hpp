@@ -13,7 +13,7 @@
 #define RPL_MYINFO(nick) \
 	":FT_IRC 004 " + nick + " :FT_IRC v1 io iotkl\r\n"
 #define RPL_ISUPPORT(nick) \
-	":FT_IRC 005 " + nick + " CHANMODES=,k,l,it :are supported by this server\r\n"
+	":FT_IRC 005 " + nick + " CHANMODES=k,l,it NICKLEN=9 USERLEN=9 CHANNELLEN=50 :are supported by this server\r\n"
 #define RPL_NAMREPLY(nick, channelName, args) \
 	":FT_IRC 353 " + nick + " = " + channelName + " :" + args + "\r\n"
 #define RPL_ENDOFNAMES(nick, channelName) \
@@ -113,6 +113,8 @@
 	":FT_IRC 501 " + nick + ' ' + mode + " :Unknown mode character!\r\n"
 #define ERR_UMODEUNKNOWNFLAG(nick) \
 	":FT_IRC 472 " + nick + " :Unknown MODE flag\r\n"
+#define ERR_BADCHANNAME(nick, channame) \
+	":FT_IRC 479 " + nick + " " + channame + " :Illegal channel name\r\n"
 #define ERR_UNKNOWNERROR(nick, cmd, subCmd, info) \
 	":FT_IRC 400 " + nick + ' ' + cmd + ' ' + subCmd + " :" + info + "\r\n"
 

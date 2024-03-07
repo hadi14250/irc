@@ -163,21 +163,8 @@ void	Server::deletePfd(int fd)
 	if (it != _nickMap.end())
 		_nickMap.erase(nick);
 	
-	_change = 1;
+	_change = 1; //delete this and manually resize pfds_array
 }
-
-/* 
-	btw while I was trying to figure out how things were running here, I found few features of the command class
-	that I wouldn't use! first of all I changed the param from vector to string as a suggestion from abdulaziz because commands work differently and
-	having params as a vector could cause more trouble than ease like take privmsg for example it takes the cmd, recipient, and text
-	so if storing in a vecotr it should be split into proper chunks and the other commands work differently too
-	so I created few tiny util funtions that will help us like remove cmd, get command, remove trailing new line, split
-	if u want me to write a small description above those funtions on how they work lemme know!
-
-	I didn't want to mess with Commands.cpp or destory it so for now I have created Commands2, if its good then jsut destroy Commands.*pp
-	and rename Commands2 to Commands.* and don't forget to modify the makefile too in that case!
-
- */
 
 void	Server::readMsg(int fd)// done! handles ^D now
 {

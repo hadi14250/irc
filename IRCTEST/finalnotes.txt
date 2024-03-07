@@ -113,3 +113,4 @@ References
 https://beej.us/guide/bgnet/html/
 https://modern.ircdocs.horse/
 http://chi.cs.uchicago.edu/chirc/irc_examples.html
+https://www.alien.net.au/irc/irc2numerics.html

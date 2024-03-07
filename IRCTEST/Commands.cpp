@@ -126,6 +126,8 @@ void	Commands::NICK() {
 	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos)
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
+		if (_param.length() > 9)
+			_param = _param.substr(0, 9); //truncate to 9 characters for NICK
 		if (_sender._nick.compare("*")) {
 			Server::_nickMap.erase(_sender._nick);
 			_sender._messages.push_back(NICKNAME(_sender._nick, _param));
@@ -153,6 +155,8 @@ void	Commands::USER()
 		_sender._hostname = getCmd(removeCmd(_param));
 		_sender._server = getCmd(removeCmd(removeCmd(_param)));
 		_sender._realname = getCmd(removeCmd(removeCmd(removeCmd(_param))));
+		if (_sender._username.size() > 9)
+			_sender._username = _sender._username.substr(0, 9); //do we need to do the same for hostname, server, realname?
 		if (_sender._nick.compare("*") != 0)
 			completeRegistration(_sender._nick);
 	}
@@ -244,6 +248,8 @@ void	Commands::NAMES() {
 }
 
 //gotta notify others bout user joining!
+//Need to allow password for channel
+//need to 
 void	Commands::JOIN() {// done! only JOIN 0 remains!
 	std::vector<std::string>	channels;
 	std::vector<std::string>	keys;
@@ -259,14 +265,24 @@ void	Commands::JOIN() {// done! only JOIN 0 remains!
 		}
 		PART();
 	} else {
+		//we need to redo all of this parsing again to account for keys and and channels. SEE JOIN in irchorse
 		if ((channels = splitPlusPlus(_param, ",")).empty())
 			_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, "", "channel Name not provided!"));
+		
 		keys = splitPlusPlus(getCmd(removeCmd(_param)), ",");
 		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
-			std::string	key = i >= keys.size() ? "" : keys.at(i);
-			if (Server::_chanMap.find(*it) == Server::_chanMap.end()) {
-				if (it->size() && it->at(0) == '#' && (it->find_first_of(" ^") == std::string::npos)/* && *it.size() > MAX_CHANNEL_NAME_LEN */)
-					Channel	newChan(*it);
+			std::string	key = i >= keys.size() ? "" : keys.at(i); //what does key do?
+
+			if (Server::_chanMap.find(*it) == Server::_chanMap.end()){ //if we type in JOIN #chan1 lll, we won't be able to find this exactly in the chan map and the key won't work
+				if (it->size() && it->at(0) == '#' && (it->find_first_of(" ^") == std::string::npos)){/* && *it.size() > MAX_CHANNEL_NAME_LEN */
+					if (it->size() > 50){
+						_sender._messages.push_back(ERR_BADCHANNAME(_sender._nick, *it));
+						continue;
+					}
+					else
+						Channel	newChan(*it);
+					std::cout << "size of _chanmap: " << Server::_chanMap.size() << "\n";
+				}
 				else {
 					_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *it, "Bad Channel Mask"));
 					continue ;
@@ -394,7 +410,7 @@ void	Commands::PART() {
 void	Commands::QUIT()
 {
 	//for now we will send this message immediately without checking for pollout
-	std::string errorMsg = "ERROR :client quit\r\n";
+	std::string errorMsg = "ERROR :client\r\n";
 	if (send(_senderFd, errorMsg.c_str(), errorMsg.length(), 0) == -1)
 		std::cout << "Unable to send error quit message to client\n";
 	std::vector<Channel*> chanList = _sender._channels;

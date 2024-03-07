@@ -13,10 +13,10 @@
 # include <fcntl.h>
 # include <cstring>
 # include <csignal>
+# include <cctype>
 # include "Client.hpp"
 # include "Commands.hpp"
 # include "Channel.hpp"
-// # include "sstream"
 
 typedef std::vector<std::string>::iterator	vecStrIt;
 typedef std::map<std::string, Channel>::iterator	chnMapIt;
@@ -35,11 +35,8 @@ private:
 	std::string				_port;
 	int						_listenSockfd;
 	int						_pfdsCount;
-	int						_readBytes;
-	char					_buf[512];
 	struct addrinfo*		_serv;
 	struct pollfd*			_pfds;
-	
 	static std::string		_password;
 	static std::string		_servername;
 
@@ -48,6 +45,7 @@ private:
 	Server const &	operator=(Server const &);
 
 	void		checkPort() const;
+	void		checkPass() const;
 	void		makeListenSockfd();
 	void		addNewPfd(int tag);
 	void		copyPfdMapToArray();
@@ -85,7 +83,7 @@ public:
 	/********************** EXCEPTIONS **********************/
 
 	class InvalidPasswordException : public std::exception{
-		const char *what() const throw(){return "Invalid password";}
+		const char *what() const throw(){return "Invalid password. Rules: 1-25 char(s) long, printable chars only";}
 	};
 	class InvalidPortException : public std::exception{
 		const char *what() const throw(){return "Invalid port";}

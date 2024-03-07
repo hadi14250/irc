@@ -47,7 +47,7 @@ private:
 	Server(Server const &);
 	Server const &	operator=(Server const &);
 
-	// void		checkPassword() const;
+	void		checkPassword() const;
 	void		checkPort() const;
 	void		makeListenSockfd();
 	void		addNewPfd(int tag);
@@ -86,7 +86,7 @@ public:
 	/********************** EXCEPTIONS **********************/
 
 	class InvalidPasswordException : public std::exception{
-		const char *what() const throw(){return "Invalid password";}
+		const char *what() const throw(){return "Invalid password! password requires a minimum of 6 characters!";}
 	};
 	class InvalidPortException : public std::exception{
 		const char *what() const throw(){return "Invalid port";}

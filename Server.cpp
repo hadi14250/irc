@@ -18,8 +18,14 @@ Server::Server(std::string const & port, std::string const & pswd)
 {
 	_password = pswd;
 	checkPort();
-	// checkPassword();
+	checkPassword();
 }
+
+void	Server::checkPassword() const {
+	if (_password.size() < 6)
+		throw InvalidPasswordException();
+}
+
 
 Server::~Server()
 {

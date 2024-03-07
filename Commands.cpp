@@ -113,7 +113,7 @@ void	Commands::NICK() {
 		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(_sender._nick));
 	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NICKNAMEINUSE(_param));
-	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(" !@*?,.") != std::string::npos)
+	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(" !@*?,.") != std::string::npos || _param.size() > NICK_MAX)
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
 		if (_sender._nick.compare("*")) {
@@ -141,7 +141,7 @@ void	Commands::USER()
 	else if (_param.size() < 4)// check this
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else {
-		_sender._username = getCmd(_param);
+		_sender._username = getCmd(_param).substr(0, USER_LEN);
 		_sender._hostname = getCmd(removeCmd(_param));
 		_sender._server = getCmd(removeCmd(removeCmd(_param)));
 		_sender._realname = getCmd(removeCmd(removeCmd(removeCmd(_param))));
@@ -221,8 +221,7 @@ void	Commands::NAMES() {
 	}
 }
 
-//gotta notify others bout user joining!
-void	Commands::JOIN() {// done! only JOIN 0 remains!
+void	Commands::JOIN() {
 	std::vector<std::string>	channels;
 	std::vector<std::string>	keys;
 	size_t						i = 0;
@@ -237,13 +236,13 @@ void	Commands::JOIN() {// done! only JOIN 0 remains!
 		}
 		PART();
 	} else {
-		if ((channels = splitPlusPlus(_param, ",")).empty())
+		if ((channels = splitPlusPlus(getCmd(_param), ",")).empty())
 			_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, "", "channel Name not provided!"));
 		keys = splitPlusPlus(getCmd(removeCmd(_param)), ",");
 		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
 			std::string	key = i >= keys.size() ? "" : keys.at(i);
 			if (Server::_chanMap.find(*it) == Server::_chanMap.end()) {
-				if (it->size() && it->at(0) == '#' && (it->find_first_of(" ^") == std::string::npos)/* && *it.size() > MAX_CHANNEL_NAME_LEN */)
+				if (it->size() && it->at(0) == '#' && ((it->find_first_of(" ^") == std::string::npos) || ((*it).size() > CHAN_LEN)) )
 					Channel	newChan(*it);
 				else {
 					_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *it, "Bad Channel Mask"));
@@ -285,7 +284,7 @@ void	Commands::TOPIC() {
 	else if (!it->second.chkIfOper(_sender._nick))
 		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
 	else
-		(!chkArgs(removeCmd(_param), 1)) ? it->second.geTopic(_sender) : it->second.seTopic(_sender._nick, removeCmd(_param));
+		(!chkArgs(removeCmd(_param), 1)) ? it->second.geTopic(_sender) : it->second.seTopic(_sender._nick, removeCmd(_param).substr(0, TOPC_LEN));
 }
 
 void	Commands::INVITE() {
@@ -317,8 +316,9 @@ void	Commands::KICK() {
 	if (chkArgs(_param, 2) < 2)
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 
-	std::vector<std::string> channels = splitPlusPlus(getCmd(_param), ",");
-	std::vector<std::string> victims = splitPlusPlus(getCmd(removeCmd(_param)), ",");
+	std::vector<std::string>	channels = splitPlusPlus(getCmd(_param), ",");
+	std::vector<std::string>	victims = splitPlusPlus(getCmd(removeCmd(_param)), ",");
+	std::string					kickMsg = (chkArgs(_param, 3) < 3) ? "removing user!" : removeCmd(removeCmd(_param)).substr(0, KICK_LEN);
 
 	chnMapIt	mapIt;
 	vecStrIt	chnIt = channels.begin();
@@ -337,7 +337,7 @@ void	Commands::KICK() {
 				if (!mapIt->second.chkIfMember(*vicIt) && _sender._nick.compare(*vicIt))
 					_sender._messages.push_back(ERR_USERNOTINCHANNEL(_sender._nick, *vicIt, *chnIt));
 				else if (_sender._nick.compare(*vicIt))
-					mapIt->second.removeMember(Server::_pfdsMap[Server::_nickMap[*vicIt]], KICK_MSG(_sender._identifier, *chnIt, *vicIt));
+					mapIt->second.removeMember(Server::_pfdsMap[Server::_nickMap[*vicIt]], KICK_MSG(_sender._identifier, *chnIt, *vicIt, kickMsg));
 				vicIt++;
 				if (channels.size() > 1) {
 					chnIt++;

@@ -226,10 +226,10 @@ std::string	Channel::getValues(void) {
 	for (size_t i = 0; i < _activeMode.size(); i++) {
 		if (modeArgs.find(_activeMode.at(i)) != std::string::npos) {
 			if (_activeMode.at(i) == 'k')
-				args = (args.empty() ? (" " + _pass) : _pass);
+				args += (args.size() ? (" " + _pass) : _pass);
 			if (_activeMode.at(i) == 'l') {
 				ss << _maxMemAmt;
-				args = (args.empty() ? (" " + ss.str()) : ss.str());
+				args += (args.size() ? (" " + ss.str()) : ss.str());
 			}
 		}
 	}
@@ -240,7 +240,7 @@ void	Channel::chanMode(Client& sender, std::string modes, std::string value) {
 	std::string	printMode;
 	std::string	printValue;
 	bool		appendPrint;
-	short		sign = -1;
+	short		sign = -1;// if -1 default, 0 is - and 1 is +
 
 	if (!chkIfMember(sender._nick))
 		sender._messages.push_back(ERR_NOTONCHANNEL(sender._nick, _name));
@@ -274,7 +274,7 @@ void	Channel::chanMode(Client& sender, std::string modes, std::string value) {
 			if (appendPrint) {
 				printMode += (sign ? "+" : "-") + modes.substr(i, 1);
 				if (_modes.substr(0, 3).find_first_of(modes.at(i)) != std::string::npos) {
-					printValue += (printValue.empty() ? "" : ",") + (!modes.substr(i, 1).compare("k") ? "-\\(\",)/-" : getCmd(value)); //hiding sensitive info!
+					printValue += (printValue.empty() ? "" : ",") + (!modes.substr(i, 1).compare("k") ? (sign ? "-\\(\",)/-" : "") : getCmd(value)); //hiding sensitive info!
 					value = removeCmd(value);
 				}
 			}

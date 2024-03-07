@@ -260,7 +260,7 @@ void	Commands::JOIN() {
 }
 
 void	Commands::MODE() {
-	if (_param.empty() || (chkArgs(_param, 2) < 2))
+	if (_param.empty() || (chkArgs(_param, 1) < 1))
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else if (_param.at(0) == '#') {
 		chnMapIt	it = Server::_chanMap.find(getCmd(_param));

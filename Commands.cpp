@@ -144,7 +144,7 @@ void	Commands::USER()
 		_sender._username = getCmd(_param).substr(0, USER_LEN);
 		_sender._hostname = getCmd(removeCmd(_param));
 		_sender._server = getCmd(removeCmd(removeCmd(_param)));
-		_sender._realname = getCmd(removeCmd(removeCmd(removeCmd(_param))));
+		_sender._realname = removeColon(removeCmd(removeCmd(removeCmd(_param))));
 		if (_sender._nick.compare("*"))
 			completeRegistration(_sender._nick);
 	}

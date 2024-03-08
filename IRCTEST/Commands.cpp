@@ -190,8 +190,16 @@ void	Commands::MsgClient(std::string recipient, std::string text) {
 	std::map<std::string, int>::iterator it = Server::_nickMap.find(recipient);
 	if (it == Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));
-	else 
-		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? removeCmd(text) : getCmd(text))));
+	else	
+	{
+		if (text.size() && text.at(0) == ':')
+		{
+			int textLen = text.size();
+			text = text.substr(1, textLen - 1);
+		}
+ 		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, text));
+ 		// Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? removeCmd(text) : getCmd(text))));
+	}
 }
 
 /* 
@@ -211,7 +219,10 @@ void	Commands::PRIVMSG() {
 		_sender._messages.push_back(ERR_NOTEXTTOSEND(_sender._nick));
 	else {
 		text = removeCmd(_param);
+		std::cout << "text is: " << text << "\n";
 		recipients = splitPlusPlus(getCmd(_param), ",");
+		for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); it++)
+			std::cout << "recipients: " << *it << "\n";
 		for (std::vector<std::string>::iterator	it = recipients.begin(); it != recipients.end(); it++) {
 			if (!it->size())
 				_sender._messages.push_back(ERR_NORECIPIENT(_sender._nick));

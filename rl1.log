@@ -1,0 +1,160 @@
+<< CAP LS
+<< PASS h
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 433 * h :Nickname already in use
+<< NICK h_
+>> :FT_IRC 001 h_ :Welcome to the Internet Relay Network h_!~hbui-vu@hbui-vu
+<< MODE h_ +i
+<< WHOIS h
+>> :FT_IRC 002 h_ :Your host is FT_IRC
+>> :FT_IRC 003 h_ :This server was created February 29, 2024
+>> :FT_IRC 004 h_ :FT_IRC v1 io iotkl
+>> :FT_IRC 005 h_ CHANMODES=,k,l,it CHANNELLEN=20 KICKLEN=50 NICKLEN=15 USERLEN=10 TOPICLEN=50 :are supported by this server
+>> :FT_IRC 375 h_ :-Message of the day
+>> :FT_IRC 372 h_ :-MOTD MAIN BODY
+>>  :This is ft-IRC
+>> :FT_IRC 372 h_ :-MOTD MAIN BODY
+>>  :≽^•⩊•^≼
+>> :FT_IRC 372 h_ :-MOTD MAIN BODY
+>>  :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 h_ :End of /MOTD command
+>> :FT_IRC 472 h_ :Unknown MODE flag
+>> :FT_IRC 311 h_ h hbui-vu hbui-vu * :hbui-vu
+--> nickfind event whois
+>> :FT_IRC 312 h_ h localhost :FT_IRC
+--> event empty
+>> :FT_IRC 318 h_ :End of /WHOIS list
+--> event empty
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> :hhh!hbui-vu@hbui-vu PRIVMSG h_ :SEND file.txt 2130706433 46719 0
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> :hhh!hbui-vu@hbui-vu PRIVMSG h_ :world
+<< CAP LS
+<< PASS h
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 433 * h :Nickname already in use
+<< NICK h_
+>> :FT_IRC 001 h_ :Welcome to the Internet Relay Network h_!~hbui-vu@hbui-vu
+<< MODE h_ +i
+<< WHOIS h
+>> :FT_IRC 002 h_ :Your host is FT_IRC
+>> :FT_IRC 003 h_ :This server was created February 29, 2024
+>> :FT_IRC 004 h_ :FT_IRC v1 io iotkl
+>> :FT_IRC 005 h_ CHANMODES=,k,l,it CHANNELLEN=20 KICKLEN=50 NICKLEN=15 USERLEN=10 TOPICLEN=50 :are supported by this server
+>> :FT_IRC 375 h_ :-Message of the day
+>> :FT_IRC 372 h_ :-MOTD MAIN BODY
+>>  :This is ft-IRC
+>> :FT_IRC 372 h_ :-MOTD MAIN BODY
+>>  :≽^•⩊•^≼
+>> :FT_IRC 372 h_ :-MOTD MAIN BODY
+>>  :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 h_ :End of /MOTD command
+>> :FT_IRC 472 h_ :Unknown MODE flag
+>> :FT_IRC 311 h_ h hbui-vu hbui-vu * :hbui-vu
+--> nickfind event whois
+>> :FT_IRC 312 h_ h localhost :FT_IRC
+--> event empty
+>> :FT_IRC 318 h_ :End of /WHOIS list
+--> event empty
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> :hhh!hbui-vu@hbui-vu PRIVMSG h_ :SEND file.txt 2130706433 46719 0
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> :hhh!hbui-vu@hbui-vu PRIVMSG h_ :world
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< JOIN #chan1
+>> :h_!~hbui-vu@hbui-vu JOIN #chan1
+>> :FT_IRC 353 h_ = #chan1 :@hhh h_
+>> :FT_IRC 366 h_ #chan1 :End of /NAMES list
+<< MODE #chan1
+>> :FT_IRC 482 h_ #chan1 :You're not channel operator
+<< PRIVMSG #chan1 :hello world
+<< CAP LS
+<< PASS h
+<< NICK h
+<< USER hbui-vu hbui-vu localhost :hbui-vu
+>> CAP * LS :
+<< CAP END
+>> :FT_IRC 001 h :Welcome to the Internet Relay Network h!~hbui-vu@hbui-vu
+<< MODE h +i
+>> :FT_IRC 002 h :Your host is FT_IRC
+>> :FT_IRC 003 h :This server was created February 29, 2024
+>> :FT_IRC 004 h :FT_IRC v1 io iotkl
+>> :FT_IRC 005 h CHANMODES=,k,l,it CHANNELLEN=20 KICKLEN=50 NICKLEN=15 USERLEN=10 TOPICLEN=50 :are supported by this server
+>> :FT_IRC 375 h :-Message of the day
+>> :FT_IRC 372 h :-MOTD MAIN BODY
+>>  :This is ft-IRC
+>> :FT_IRC 372 h :-MOTD MAIN BODY
+>>  :≽^•⩊•^≼
+>> :FT_IRC 372 h :-MOTD MAIN BODY
+>>  :creators: Huong, Jensen, Hadi
+>> :FT_IRC 376 h :End of /MOTD command
+>> :FT_IRC 472 h :Unknown MODE flag
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< NICK h
+>> :FT_IRC 433 * h :Nickname already in use
+<< NICK hhh
+>> :h NICK :hhh
+<< PRIVMSG h_ :DCC SEND file.txt 2130706433 46719 0
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PRIVMSG h_ ::hello world
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< JOIN #chan1
+>> :hhh!hbui-vu@hbui-vu JOIN #chan1
+>> :FT_IRC 353 hhh = #chan1 :@hhh
+>> :FT_IRC 366 hhh #chan1 :End of /NAMES list
+<< MODE #chan1
+>> :FT_IRC 324 hhh #chan1  
+--> chanquery mode
+<< WHO #chan1
+>> :FT_IRC 421 hhh WHO :Unknown command
+>> :h_!~hbui-vu@hbui-vu JOIN #chan1
+>> :hhh!hbui-vu@hbui-vu PRIVMSG #chan1 :hello world

@@ -145,7 +145,7 @@ void	Commands::USER()
 
 	if (!_sender._authenticated)
 		_sender._messages.push_back(ERR_NOTREGISTERED(_sender._nick, "password not provided!"));
-	if (_sender._registered)
+	else if (_sender._registered)
 		_sender._messages.push_back(ERR_ALREADYREGISTERED(_sender._nick));
 	else if (_param.size() < 4)// check this
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));

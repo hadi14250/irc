@@ -6,7 +6,7 @@ std::map<std::string, int>		Server::_nickMap;
 std::map<std::string, Channel>	Server::_chanMap;
 struct pollfd*					Server::_pfds = NULL;
 std::string						Server::_password;
-int								Server::_change = 0;
+// int								Server::_change = 0;
 int								Server::_pfdsCount = 0;
 
 
@@ -92,7 +92,7 @@ void	Server::makeListenSockfd()
 	if (listen(_listenSockfd, 5) == -1)
 		throw ListenException();
 	addNewPfd(LISTENFD);
-	copyPfdMapToArray();
+	// copyPfdMapToArray();
 }
 
 /*
@@ -128,26 +128,40 @@ void	Server::addNewPfd(int tag)
 	struct pollfd newPfd = {}; //initialize memory chunk to 0
 	newPfd.fd = newClient._sockfd;
 	newPfd.events = POLLIN | POLLOUT;
-	newClient._pfd = newPfd;
+	// newClient._pfd = newPfd;
 	_pfdsMap[newClient._sockfd] = newClient;
-	_change = 1;
+	
+	//add new pfd here
+	int newPfdsCount = _pfdsMap.size();
+	struct pollfd * newPfdsArray = new struct pollfd[newPfdsCount]();
+	if (_pfds != NULL)
+	{
+		std::copy(_pfds, _pfds + _pfdsCount, newPfdsArray);
+		delete [] _pfds;
+		_pfds = NULL;
+	}
+	newPfdsArray[newPfdsCount - 1] = newPfd;
+	_pfds = newPfdsArray;
+	_pfdsCount = newPfdsCount;
+
+	// _change = 1;
 }
 
 /* 
 1. update _pfdsCount to _pfdsMap.length()
 2. delete _pfds array if needed and create new array based on Map
 */
-void	Server::copyPfdMapToArray()
-{
-	_pfdsCount = _pfdsMap.size();
+// void	Server::copyPfdMapToArray()
+// {
+// 	_pfdsCount = _pfdsMap.size();
 
-	if (_pfds)
-		delete [] _pfds;
-	_pfds = new struct pollfd[_pfdsCount]();
-	int i = 0;
-	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
-		_pfds[i++] = it->second._pfd;
-}
+// 	if (_pfds)
+// 		delete [] _pfds;
+// 	_pfds = new struct pollfd[_pfdsCount]();
+// 	int i = 0;
+// 	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
+// 		_pfds[i++] = it->second._pfd;
+// }
 
 /* 
 1. Print error msg
@@ -185,13 +199,20 @@ void	Server::deletePfd(int fd)
 	std::cout << "Closed connection for client " << nick << " at fd: " << fd << "!\n";
 
 	//reset _pfdsCount and resize _pfds
-	_pfdsCount = _pfdsMap.size();
-	if (_pfds)
+	int newPfdsCount = _pfdsMap.size();
+	struct pollfd * newPfdsArray = new struct pollfd[_pfdsCount]();
+	//do we need to check if _pfds exist? at this point it should right?
+		int j = 0;
+		for (int i = 0; i < _pfdsCount; i++)
+		{
+			if (_pfds[i].fd == fd)
+				continue;
+			newPfdsArray[j] = _pfds[i];
+			j++;
+		}
 		delete [] _pfds;
-	_pfds = new struct pollfd[_pfdsCount]();
-	int i = 0;
-	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
-		_pfds[i++] = it->second._pfd;
+		_pfds = newPfdsArray;
+	_pfdsCount = newPfdsCount;
 }
 
 void	Server::readMsg(int fd)// done! handles ^D now
@@ -271,7 +292,7 @@ void	Server::createServer()
 	makeListenSockfd();
 	while (_run == 1)
 	{
-		_change = 0;
+		// _change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
@@ -282,6 +303,7 @@ void	Server::createServer()
 			{
 				try
 				{
+					std::cout << "adding new client\n";
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 				}
 				catch(const std::exception& e)
@@ -306,8 +328,8 @@ void	Server::createServer()
 				deletePfd(_pfds[i].fd);
 			}
 		}
-		if (_change == 1)
-			copyPfdMapToArray();
+		// if (_change == 1)
+			// copyPfdMapToArray();
 		
 	}
 }

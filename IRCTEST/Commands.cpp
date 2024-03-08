@@ -120,11 +120,11 @@ void	Commands::NICK() {
 		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(_sender._nick));
 	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NICKNAMEINUSE(_param));
-	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos || _param.size() > NICK_MAX)
+	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos)//|| _param.size() > NICK_MAX
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
-		// if (_param.length() > 9)
-		// 	_param = _param.substr(0, 9); // <-do we want to copy liberachat/DALnet?
+		if (_param.length() > 9)
+			_param = _param.substr(0, 15); // <-do we want to copy liberachat/DALnet?
 		if (_sender._nick.compare("*")) {
 			Server::_nickMap.erase(_sender._nick);
 			_sender._messages.push_back(NICKNAME(_sender._nick, _param));

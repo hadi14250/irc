@@ -89,7 +89,7 @@ void	Server::makeListenSockfd()
 		throw SetsockoptException();
 	if (bind(_listenSockfd, _serv->ai_addr, _serv->ai_addrlen) == -1)
 		throw BindException();
-	if (listen(_listenSockfd, 20) == -1)
+	if (listen(_listenSockfd, 10) == -1)
 		throw ListenException();
 	addNewPfd(LISTENFD);
 	// copyPfdMapToArray();
@@ -178,9 +178,11 @@ void	Server::deletePfd(int fd)
 	std::string nick = client._nick;
 
 	//use ERROR  command to send to client to report a fatal error (aka shutdown)
-	std::string errorMsg = "ERROR :client quit\r\n";
-	if (send(fd, errorMsg.c_str(), errorMsg.length(), 0) == -1)
-		std::cout << "Unable to send error quit message to client\n";
+	//THIS GAVE US UNDEFINED ERRORS!
+	// std::string errorMsg = "ERROR :client quit\r\n";
+	// if (send(fd, errorMsg.c_str(), errorMsg.length(), 0) == -1)
+	// 	std::cout << "Unable to send error quit message to client\n";
+
 	//iterate through clients channel lists and notify everyone client is quitting
 	for (std::vector<Channel*>::iterator chanIt = chanList.begin(); chanIt != chanList.end(); chanIt++)
 	{
@@ -217,35 +219,38 @@ void	Server::deletePfd(int fd)
 
 void	Server::readMsg(int fd)// done! handles ^D now
 {
-	std::cout << "reading fd: " << fd << "\n";
+	// std::cout << "reading fd: " << fd << "\n";
 	Client &	client = _pfdsMap[fd];
 	int			readBytes = 1;
 	char		buf[513];
-	int			i = 0;
+	// int			i = 0;
 
+	// std::cout << "reading msg\n";
 	while (readBytes > 0)
 	{
-		std::memset(buf, 0, sizeof(buf));
-		readBytes = recv(fd, buf, sizeof(buf) - 1, 0);
-		if (i == 0 && readBytes == 0) //if the first iteration and readBytes is already 0
+		std::memset(buf, 0, 513);
+		readBytes = recv(fd, buf, 512, 0);
+		// std::cout << "readBytes: " << readBytes << "\n";
+		// if (i == 0 && readBytes == 0) //if the first iteration and readBytes is already 0
+		if (readBytes == 0)
 		{
 			deletePfd(fd); //if we don't have this we get a weird infinite loop
 			return ;
 		}
-		if (*buf)
+		// if (*buf)
+		if (readBytes > 0)
 			client._fullMsg += buf;
-		i++;
+		// i++;
 	}
 	if (client.chkOverflow()) //if message is bigger than 512 bytes without the /r/n
 	{
 		client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
 		client._fullMsg.clear();
 	}
-	else if (!client._fullMsg.empty() && client._fullMsg.at(client._fullMsg.length() - 1) != '\n') //if message is less than 512 bytes but does nt have newline
+	else if (client._fullMsg.empty() || (!client._fullMsg.empty() && client._fullMsg.at(client._fullMsg.length() - 1) != '\n')) //if message is less than 512 bytes but does nt have newline
 		return;
 	else 
 	{
-		std::cout << "processing command\n";
 		std::vector<std::string>	cmds = splitPlusPlus(client.getFullMsg(), "\r\n"); // now server doesn't process empty args
 		client._fullMsg.clear();
 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) 
@@ -316,12 +321,13 @@ void	Server::createServer()
 			else if (_pfds[i].revents & POLLIN)
 			{
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
-				std::cout << "POLLIN fd: " << _pfds[i].fd << "\n";
+				// std::cout << "POLLIN fd: " << _pfds[i].fd << "\n";
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
 				//fd is ready for writing - use SEND HERE
+				// std::cout << "POLLOUT fd: " << _pfds[i].fd << "\n";
 				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)

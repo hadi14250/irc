@@ -30,6 +30,7 @@ private:
 	bool						_listenSock;
 	bool						_authenticated;
 	bool						_registered;
+	// bool						_quit;
 	// struct pollfd				_pfd;
 	struct sockaddr_in			_clientInfo;
 	std::deque<std::string>		_messages;

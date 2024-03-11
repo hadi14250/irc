@@ -74,6 +74,7 @@ public:
 	static void			setSignals();
 	static std::string	getPassword();
 	static void			deletePfd(int fd);
+	// void				quitClient(int fd);
 
 	/********************** TEMPORARY ***********************/
 	void	testParse(Commands & msg);

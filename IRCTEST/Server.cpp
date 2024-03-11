@@ -217,6 +217,7 @@ void	Server::deletePfd(int fd)
 
 void	Server::readMsg(int fd)// done! handles ^D now
 {
+	std::cout << "reading fd: " << fd << "\n";
 	Client &	client = _pfdsMap[fd];
 	int			readBytes = 1;
 	char		buf[513];
@@ -245,6 +246,7 @@ void	Server::readMsg(int fd)// done! handles ^D now
 	else 
 	{
 		std::vector<std::string>	cmds = splitPlusPlus(client.getFullMsg(), "\r\n"); // now server doesn't process empty args
+		client._fullMsg.clear();
 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) 
 		{
 			if (!chkArgs(*it, 1))
@@ -258,7 +260,6 @@ void	Server::readMsg(int fd)// done! handles ^D now
 				Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
 			}
 		}
-		client._fullMsg.clear();
 	}
 }
 

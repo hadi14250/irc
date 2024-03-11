@@ -24,6 +24,14 @@ bool	Client::appendBuffer(char *buf) {
 }
 
 bool	Client::chkOverflow() {
+	// std::cout << "checking overflow in chkOverflow\n";
+	// if (_fullMsg.size() > 512 || ((_fullMsg.size() == 512 && _fullMsg.at(_fullMsg.size() - 1 != '\n'))))
+	// // if (_fullMsg.size() > 512 || ((_fullMsg.size() == 512 && _fullMsg[_fullMsg.size() - 1] != '\n')))
+	// {
+	// 	std::cout << "checked overflow in chkOverflow\n";
+	// 	return true;
+	// }
+	// return false;
 	return ( (_fullMsg.size() > 512 || ( (_fullMsg.size() == 512) && (_fullMsg.at(_fullMsg.size() - 1) != '\n') ) ? true : false) );
 }
 

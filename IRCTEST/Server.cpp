@@ -241,10 +241,11 @@ void	Server::readMsg(int fd)// done! handles ^D now
 		client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
 		client._fullMsg.clear();
 	}
-	else if (client._fullMsg.at(client._fullMsg.length() - 1) != '\n') //if message is less than 512 bytes but does nt have newline
+	else if (!client._fullMsg.empty() && client._fullMsg.at(client._fullMsg.length() - 1) != '\n') //if message is less than 512 bytes but does nt have newline
 		return;
 	else 
 	{
+		std::cout << "processing command\n";
 		std::vector<std::string>	cmds = splitPlusPlus(client.getFullMsg(), "\r\n"); // now server doesn't process empty args
 		client._fullMsg.clear();
 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) 

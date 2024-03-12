@@ -173,8 +173,8 @@ void	Server::addNewPfd(int tag)
 */
 void	Server::deletePfd(int fd)
 {
-	std::vector<Channel*> chanList = Server::_pfdsMap[fd]._channels;
 	Client & client = _pfdsMap[fd];
+	std::vector<Channel*> clientChanList = client._channels;
 	std::string nick = client._nick;
 
 	//use ERROR  command to send to client to report a fatal error (aka shutdown)
@@ -184,13 +184,15 @@ void	Server::deletePfd(int fd)
 	// 	std::cout << "Unable to send error quit message to client\n";
 
 	//iterate through clients channel lists and notify everyone client is quitting
-	for (std::vector<Channel*>::iterator chanIt = chanList.begin(); chanIt != chanList.end(); chanIt++)
+	for (std::vector<Channel*>::iterator chanIt = clientChanList.begin(); chanIt != clientChanList.end(); chanIt++)
 	{
 		std::map<Client *, bool>::iterator membersIt = (*chanIt)->_members.begin();
 		for (; membersIt != (*chanIt)->_members.end(); membersIt++)
 			membersIt->first->_messages.push_back(RPL_QUIT(client._identifier));
 		//erase client from channel's member list
 		(*chanIt)->_members.erase(&client);
+		if ((*chanIt)->_members.empty())
+			Server::_chanMap.erase((*chanIt)->getChannelName());
 	}
 	//erase from server maps (_nickMap and _pfdsMap); close fd
 	std::map<std::string, int>::iterator it = _nickMap.find(nick);

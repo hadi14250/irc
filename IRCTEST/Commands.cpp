@@ -399,12 +399,17 @@ void	Commands::PART() {
 		std::vector<std::string> channels = splitPlusPlus(_param, ",");
 
 		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
-			if ((mapIt = Server::_chanMap.find(*it)) == Server::_chanMap.end())
+			mapIt = Server::_chanMap.find(*it);
+			if (mapIt == Server::_chanMap.end())
 				_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, *it));
 			else if (!mapIt->second.chkIfMember(_sender._nick))
 				_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, *it));
 			else
+			{
 				mapIt->second.removeMember(_sender, PART_MSG(_sender._identifier, *it));
+				if (mapIt->second._members.empty())
+					Server::_chanMap.erase(*it);
+			}
 		}
 
 	}

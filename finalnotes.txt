@@ -165,3 +165,8 @@ References
 https://beej.us/guide/bgnet/html/
 https://modern.ircdocs.horse/
 http://chi.cs.uchicago.edu/chirc/irc_examples.html
+
+
+
+seg fsults here:
+ KICK #chan qKICK #chan q1,q2

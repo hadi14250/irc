@@ -89,7 +89,7 @@ void	Server::makeListenSockfd()
 		throw SetsockoptException();
 	if (bind(_listenSockfd, _serv->ai_addr, _serv->ai_addrlen) == -1)
 		throw BindException();
-	if (listen(_listenSockfd, 10) == -1)
+	if (listen(_listenSockfd, 25) == -1)
 		throw ListenException();
 	addNewPfd(LISTENFD);
 	// copyPfdMapToArray();

@@ -147,7 +147,7 @@ void	Commands::USER()
 		_sender._messages.push_back(ERR_NOTREGISTERED(_sender._nick, "password not provided!"));
 	else if (_sender._registered)
 		_sender._messages.push_back(ERR_ALREADYREGISTERED(_sender._nick));
-	else if (_param.size() < 4)// check this
+	else if (_param.size() < 1)
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else {
 		_sender._username = getCmd(_param).substr(0, USER_LEN);
@@ -276,8 +276,16 @@ void	Commands::JOIN() {
 		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
 			std::string	key = i >= keys.size() ? "" : keys.at(i);
 			if (Server::_chanMap.find(*it) == Server::_chanMap.end()) {
-				if (it->size() && it->at(0) == '#' && ((it->find_first_of(" ^") == std::string::npos) || ((*it).size() > CHAN_LEN)) )
+				if (it->size() > CHAN_LEN)
+				{
+					_sender._messages.push_back(ERR_BADCHANNAME(_sender._nick, *it));
+					continue ;
+				}
+				else if (it->size() && (it->at(0) == '#' || it->at(0) == '&') && ((it->find_first_of(" ^") == std::string::npos) ) )
+				{
+					std::cout << "*it is: " << *it << "\n";
 					Channel	newChan(*it);
+				}
 				else {
 					_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *it, "Bad Channel Mask"));
 					continue ;

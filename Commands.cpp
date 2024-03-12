@@ -242,7 +242,7 @@ void	Commands::JOIN() {
 		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
 			std::string	key = i >= keys.size() ? "" : keys.at(i);
 			if (Server::_chanMap.find(*it) == Server::_chanMap.end()) {
-				if (it->size() && it->at(0) == '#' && ((it->find_first_of(" ^") == std::string::npos) || ((*it).size() > CHAN_LEN)) )
+				if (it->size() && it->at(0) == '#' && ((it->find_first_of(" ^") == std::string::npos) && ((*it).size() < CHAN_LEN)) )
 					Channel	newChan(*it);
 				else {
 					_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *it, "Bad Channel Mask"));

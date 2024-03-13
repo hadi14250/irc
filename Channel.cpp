@@ -59,7 +59,7 @@ bool	Channel::joinChannel(Client& newMember, std::string password) {
 
 	if (chkIfMember(newMember._nick))
 		newMember._messages.push_back(ERR_USERONCHANNEL(newMember._nick, newMember._nick, _name));
-	else if (_userLimit && (_curMemAmt >= _maxMemAmt))
+	else if (_userLimit && (_curMemAmt > _maxMemAmt))
 		newMember._messages.push_back(ERR_CHANNELISFULL(newMember._nick, _name));
 	else if (_inviteOnly && ((it = find(newMember._invitations.begin(), newMember._invitations.end(), _name)) == newMember._invitations.end()))
 		newMember._messages.push_back(ERR_INVITEONLYCHAN(newMember._nick, _name));

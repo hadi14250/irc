@@ -1,0 +1,76 @@
+<< CAP LS 302
+<< JOIN :
+>> CAP * LS :
+<< CAP END
+<< PASS hello
+<< NICK hadikaddoura
+<< USER hadikaddoura hadikaddoura localhost :Hadi Kaddoura
+>> :FT_IRC 451 *  :You have not registered!
+>> :FT_IRC 001 hadikaddoura :Welcome to the Internet Relay Network hadikaddoura!~hadikaddoura@hadikaddoura
+>> :FT_IRC 002 hadikaddoura :Your host is FT_IRC
+>> :FT_IRC 003 hadikaddoura :This server was created February 29, 2024
+>> :FT_IRC 004 hadikaddoura :FT_IRC v1 io iotkl
+>> :FT_IRC 005 hadikaddoura CHANMODES=,k,l,it :are supported by this server
+>> :FT_IRC 422 hadikaddoura :MOTD File is missing
+<< MODE hadikaddoura +i
+>> :FT_IRC 472 hadikaddoura :Unknown MODE flag
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< NICK hadi
+>> :hadikaddoura NICK :hadi
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< JOIN #chan1
+>> :hadi!hadikaddoura@hadikaddoura JOIN #chan1
+>> :FT_IRC 353 hadi = #chan1 :@hadi
+>> :FT_IRC 366 hadi #chan1 :End of /NAMES list
+<< MODE #chan1
+>> :FT_IRC 461 hadi MODE :Need more parameters
+<< MODE #chan1 +i#chan1
+>> :FT_IRC 501 hadi # :da fag is this? Unknown mode character!
+>> :FT_IRC 501 hadi c :da fag is this? Unknown mode character!
+>> :FT_IRC 501 hadi h :da fag is this? Unknown mode character!
+>> :FT_IRC 501 hadi a :da fag is this? Unknown mode character!
+>> :FT_IRC 501 hadi n :da fag is this? Unknown mode character!
+>> :FT_IRC 501 hadi 1 :da fag is this? Unknown mode character!
+>> :hadi!hadikaddoura@hadikaddoura MODE #chan1 +i 
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> FAILED mode channel: chanquery abort
+--> lag pong
+<< MODE #chan1
+>> :FT_IRC 461 hadi MODE :Need more parameters
+<< INVITE #chan1 #chan1
+>> :FT_IRC 401 hadi #chan1 :No such nick
+<< INVITE jen #chan1
+>> :FT_IRC 341 hadi #chan1 jen
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+>> :jen!hadikaddoura@hadikaddoura JOIN #chan1
+<< PRIVMSG #chan1 :hello
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> FAILED mode channel: chanquery abort
+--> lag pong
+<< WHO #chan1
+>> :FT_IRC 421 hadi WHO :Unknown command
+<< PRIVMSG #chan1 :heyy
+>> :hadi!hadikaddoura@hadikaddoura PRIVMSG #chan1 :whatsup
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> lag pong
+<< PRIVMSG #chan1 :heyy
+>> :hadi!hadikaddoura@hadikaddoura PRIVMSG #chan1 :hollo
+<< PRIVMSG #chan1 :rawlog save rl1.log
+<< PING FT_IRC
+>> PONG :FT_IRC
+--> FAILED who: chanquery abort
+--> lag pong
+<< WHO #chan1
+>> :FT_IRC 421 hadi WHO :Unknown command

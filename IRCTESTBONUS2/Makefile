@@ -4,8 +4,7 @@ TMP = tmp_dev_cmds.cpp
 
 SRCS = main.cpp Server.cpp Client.cpp Commands.cpp Utils.cpp Channel.cpp Bot.cpp $(TMP)
 
-CXXFLAGS = -Wall -Wextra -Werror -fsanitize=address
-# -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -fsanitize=address -std=c++98
 
 CXX = c++
 

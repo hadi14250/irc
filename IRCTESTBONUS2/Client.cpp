@@ -3,8 +3,8 @@
 // _mode('\0'),
 Client::Client()
 	:	_nick("*"),// when returning either an error or reply, if nick is empty u use '*' instead so it made sence to me to set it as default! feel free to remove this comment now that u know y I did this!
-		_isBotFirstCall(true),
 		_listenSock(true),
+		_isBotFirstCall(true),
 		_authenticated(false),
 		_registered(false)
 {
@@ -25,12 +25,21 @@ bool	Client::appendBuffer(char *buf) {
 }
 
 bool	Client::chkOverflow() {
+	// std::cout << "checking overflow in chkOverflow\n";
+	// if (_fullMsg.size() > 512 || ((_fullMsg.size() == 512 && _fullMsg.at(_fullMsg.size() - 1 != '\n'))))
+	// // if (_fullMsg.size() > 512 || ((_fullMsg.size() == 512 && _fullMsg[_fullMsg.size() - 1] != '\n')))
+	// {
+	// 	std::cout << "checked overflow in chkOverflow\n";
+	// 	return true;
+	// }
+	// return false;
 	return ( (_fullMsg.size() > 512 || ( (_fullMsg.size() == 512) && (_fullMsg.at(_fullMsg.size() - 1) != '\n') ) ? true : false) );
 }
 
 std::string	Client::getFullMsg() {
 	return _fullMsg;
 }
+
 
 // void Client::printClient()
 // {

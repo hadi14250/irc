@@ -17,6 +17,7 @@
 # include "Client.hpp"
 # include "Commands.hpp"
 # include "Channel.hpp"
+# include <algorithm>
 
 typedef std::vector<std::string>::iterator			vecStrIt;
 typedef std::map<std::string, Channel>::iterator	chnMapIt;
@@ -63,7 +64,7 @@ public:
 	static std::map<std::string, int>		_nickMap;
 	static std::map<std::string, Channel>	_chanMap;
 	static struct pollfd*					_pfds;
-	static int								_change;
+	// static int								_change;
 	static int								_pfdsCount;
 	
 	Server(std::string const & port, std::string const & pswd);
@@ -73,6 +74,7 @@ public:
 	static void			setSignals();
 	static std::string	getPassword();
 	static void			deletePfd(int fd);
+	// void				quitClient(int fd);
 
 	/********************** TEMPORARY ***********************/
 	void	testParse(Commands & msg);

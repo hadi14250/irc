@@ -4,6 +4,7 @@
 # include "Codes.hpp"
 # include "Client.hpp"
 # include "Channel.hpp"
+# include "Bot.hpp"
 # include <vector>
 
 
@@ -46,12 +47,13 @@ public:
 	void	PRIVMSG();
 
 	void	WHOIS();
+	
+	std::string	BOT();
 
 	// void	KILL();
 	// void	NOTICE();
 	// void	ERROR();
 	// void	OPER();
-	std::string	BOT(); 
 };
 
 typedef void (Commands::*cmdPtr)(void);

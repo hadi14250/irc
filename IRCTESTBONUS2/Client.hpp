@@ -27,11 +27,12 @@ private:
 	std::string					_server;
 	std::string					_realname;
 	std::string					_fullMsg;
-	bool						_isBotFirstCall;
 	bool						_listenSock;
+	bool						_isBotFirstCall;
 	bool						_authenticated;
 	bool						_registered;
-	struct pollfd				_pfd;
+	// bool						_quit;
+	// struct pollfd				_pfd;
 	struct sockaddr_in			_clientInfo;
 	std::deque<std::string>		_messages;
 	std::vector<std::string>	_invitations;

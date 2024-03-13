@@ -1,8 +1,4 @@
 #include "Commands.hpp"
-#include "Bot.hpp"
-#include <cstdlib>
-#include <ctime>
-
 
 Commands::Commands(int fd, std::string command, std::string param, Client& sender)
 	:	_senderFd(fd),
@@ -124,11 +120,11 @@ void	Commands::NICK() {
 		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(_sender._nick));
 	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NICKNAMEINUSE(_param));
-	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos || _param.size() > NICK_MAX)
+	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos)//|| _param.size() > NICK_MAX
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
-		// if (_param.length() > 9)
-		// 	_param = _param.substr(0, 9); // <-do we want to copy liberachat/DALnet?
+		if (_param.length() > 9)
+			_param = _param.substr(0, 15); // <-do we want to copy liberachat/DALnet?
 		if (_sender._nick.compare("*")) {
 			Server::_nickMap.erase(_sender._nick);
 			_sender._messages.push_back(NICKNAME(_sender._nick, _param));
@@ -149,9 +145,9 @@ void	Commands::USER()
 
 	if (!_sender._authenticated)
 		_sender._messages.push_back(ERR_NOTREGISTERED(_sender._nick, "password not provided!"));
-	if (_sender._registered)
+	else if (_sender._registered)
 		_sender._messages.push_back(ERR_ALREADYREGISTERED(_sender._nick));
-	else if (_param.size() < 4)// check this
+	else if (_param.size() < 1)
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else {
 		_sender._username = getCmd(_param).substr(0, USER_LEN);
@@ -192,13 +188,21 @@ void Commands::WHOIS() {
 
 void	Commands::MsgClient(std::string recipient, std::string text) {
 	std::map<std::string, int>::iterator it = Server::_nickMap.find(recipient);
-	if (text.find("BOT") != std::string::npos){
-		text = BOT();
-	} 
 	if (it == Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));
-	else 
-		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? removeCmd(text) : getCmd(text))));
+	else	
+	{
+		if (text.find("#SASSYBOT") != std::string::npos){
+			text = BOT();
+		} 
+		else if (text.size() && text.at(0) == ':')
+		{
+			int textLen = text.size();
+			text = text.substr(1, textLen - 1);
+		}
+ 		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, text));
+ 		// Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? removeCmd(text) : getCmd(text))));
+	}
 }
 
 /* 
@@ -218,7 +222,10 @@ void	Commands::PRIVMSG() {
 		_sender._messages.push_back(ERR_NOTEXTTOSEND(_sender._nick));
 	else {
 		text = removeCmd(_param);
+		std::cout << "text is: " << text << "\n";
 		recipients = splitPlusPlus(getCmd(_param), ",");
+		for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); it++)
+			std::cout << "recipients: " << *it << "\n";
 		for (std::vector<std::string>::iterator	it = recipients.begin(); it != recipients.end(); it++) {
 			if (!it->size())
 				_sender._messages.push_back(ERR_NORECIPIENT(_sender._nick));
@@ -228,7 +235,10 @@ void	Commands::PRIVMSG() {
 				else
 					Server::_chanMap[*it].msgChannel(_sender, text);
 			} else
+			{
+				// std::cout << "Messaging client: " << *it << "\n";
 				MsgClient(*it, text);
+			}
 		}
 	}
 }
@@ -272,8 +282,16 @@ void	Commands::JOIN() {
 		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
 			std::string	key = i >= keys.size() ? "" : keys.at(i);
 			if (Server::_chanMap.find(*it) == Server::_chanMap.end()) {
-				if (it->size() && it->at(0) == '#' && ((it->find_first_of(" ^") == std::string::npos) || ((*it).size() > CHAN_LEN)) )
+				if (it->size() > CHAN_LEN)
+				{
+					_sender._messages.push_back(ERR_BADCHANNAME(_sender._nick, *it));
+					continue ;
+				}
+				else if (it->size() && (it->at(0) == '#' || it->at(0) == '&') && ((it->find_first_of(" ^") == std::string::npos) ) )
+				{
+					std::cout << "*it is: " << *it << "\n";
 					Channel	newChan(*it);
+				}
 				else {
 					_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *it, "Bad Channel Mask"));
 					continue ;
@@ -311,8 +329,8 @@ void	Commands::TOPIC() {
 		_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, getCmd(_param)));
 	else if (!it->second.chkIfMember(_sender._nick))
 		_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, getCmd(_param)));
-	else if (!it->second.chkIfOper(_sender._nick))
-		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
+	// else if (!it->second.chkIfOper(_sender._nick))
+	// 	_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
 	else
 		(!chkArgs(removeCmd(_param), 1)) ? it->second.geTopic(_sender) : it->second.seTopic(_sender._nick, removeCmd(_param).substr(0, TOPC_LEN));
 }
@@ -343,8 +361,14 @@ void	Commands::INVITE() {
 }
 
 void	Commands::KICK() {
+	std::cout << "entered" << std::endl;
 	if (chkArgs(_param, 2) < 2)
+	{
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
+		return;
+	}
+
+	std::cout << "passed if" << std::endl;
 
 	std::vector<std::string>	channels = splitPlusPlus(getCmd(_param), ",");
 	std::vector<std::string>	victims = splitPlusPlus(getCmd(removeCmd(_param)), ",");
@@ -352,30 +376,30 @@ void	Commands::KICK() {
 
 	chnMapIt	mapIt;
 	vecStrIt	chnIt = channels.begin();
-	vecStrIt	vicIt = victims.begin();
-	while (true && vicIt != victims.end() && chnIt != channels.end()) {
-		if (chnIt->empty() || (chnIt->at(0) != '#'))
-			_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *chnIt, "provided channel names isn't valid!"));
-		else if ((mapIt = Server::_chanMap.find(*chnIt)) == Server::_chanMap.end())
-			_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, *chnIt));
-		else if (!mapIt->second.chkIfMember(_sender._nick))
-			_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, *chnIt));
-		else if (!mapIt->second.chkIfOper(_sender._nick))
-			_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, *chnIt));
-		else {
-			while (chnIt != channels.end() && vicIt != victims.end()) {
-				if (!mapIt->second.chkIfMember(*vicIt) && _sender._nick.compare(*vicIt))
-					_sender._messages.push_back(ERR_USERNOTINCHANNEL(_sender._nick, *vicIt, *chnIt));
-				else if (_sender._nick.compare(*vicIt))
-					mapIt->second.removeMember(Server::_pfdsMap[Server::_nickMap[*vicIt]], KICK_MSG(_sender._identifier, *chnIt, *vicIt, kickMsg));
-				vicIt++;
-				if (channels.size() > 1) {
-					chnIt++;
-					break ;
-				}
+
+	if (chnIt->empty() || (chnIt->at(0) != '#'))
+		_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *chnIt, "provided channel names isn't valid!"));
+	else if ((mapIt = Server::_chanMap.find(*chnIt)) == Server::_chanMap.end())
+		_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, *chnIt));
+	else if (!mapIt->second.chkIfMember(_sender._nick))
+		_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, *chnIt));
+	else if (!mapIt->second.chkIfOper(_sender._nick))
+		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, *chnIt));
+	else{
+		for (vecStrIt	vicIt = victims.begin(); vicIt!= victims.end(); vicIt++ ){
+			std::cout << "victim being kicked: " << *vicIt << "\n";
+			if (!mapIt->second.chkIfMember(*vicIt) && _sender._nick.compare(*vicIt))
+			{
+				std::cout << "user not in channel\n";
+				_sender._messages.push_back(ERR_USERNOTINCHANNEL(_sender._nick, *vicIt, *chnIt));
+			}
+			else if (_sender._nick.compare(*vicIt))
+			{
+				std::cout << "removing member\n";
+				mapIt->second.removeMember(Server::_pfdsMap[Server::_nickMap[*vicIt]], KICK_MSG(_sender._identifier, *chnIt, *vicIt, kickMsg));
+			}
 			}
 		}
-	}
 }
 
 void	Commands::PART() {
@@ -387,12 +411,17 @@ void	Commands::PART() {
 		std::vector<std::string> channels = splitPlusPlus(_param, ",");
 
 		for (vecStrIt it = channels.begin(); it != channels.end(); it++) {
-			if ((mapIt = Server::_chanMap.find(*it)) == Server::_chanMap.end())
+			mapIt = Server::_chanMap.find(*it);
+			if (mapIt == Server::_chanMap.end())
 				_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, *it));
 			else if (!mapIt->second.chkIfMember(_sender._nick))
 				_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, *it));
 			else
+			{
 				mapIt->second.removeMember(_sender, PART_MSG(_sender._identifier, *it));
+				if (mapIt->second._members.empty())
+					Server::_chanMap.erase(*it);
+			}
 		}
 
 	}

@@ -36,7 +36,7 @@
 #define RPL_MYINFO(nick) \
 	":FT_IRC 004 " + nick + " :FT_IRC v1 io iotkl\r\n"
 #define RPL_ISUPPORT(nick) \
-	":FT_IRC 005 " + nick + " CHANMODES=,k,l,it CHANNELLEN=20 KICKLEN=50 NICKLEN=15 USERLEN=10 TOPICLEN=50 :are supported by this server\r\n"
+	":FT_IRC 005 " + nick + " CHANMODES=,k,l,it CHANTYPES=#& CHANNELLEN=20 KICKLEN=50 NICKLEN=15 USERLEN=10 TOPICLEN=50 :are supported by this server\r\n"
 
 #define RPL_WHOISUSER(nick, reqnick, username, host, realname) \
 	":FT_IRC 311 " + nick + " " + reqnick + " " + username + " " + host + " * " + realname + "\r\n"

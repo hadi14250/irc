@@ -54,6 +54,10 @@ bool	Channel::chkIfOper(std::string nick) {
 	return (it == _members.end() ? false : it->second);
 }
 
+bool	Channel::chkTopicFlag() {
+	return _topicOperOnly;
+}
+
 bool	Channel::joinChannel(Client& newMember, std::string password) {
 	vecStrIt		it;
 

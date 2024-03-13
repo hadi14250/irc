@@ -281,8 +281,8 @@ void	Commands::TOPIC() {
 		_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, getCmd(_param)));
 	else if (!it->second.chkIfMember(_sender._nick))
 		_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, getCmd(_param)));
-	// else if (!it->second.chkIfOper(_sender._nick))
-	// 	_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
+	else if (it->second.chkTopicFlag() && !it->second.chkIfOper(_sender._nick))
+		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
 	else
 		(!chkArgs(removeCmd(_param), 1)) ? it->second.geTopic(_sender) : it->second.seTopic(_sender._nick, removeCmd(_param).substr(0, TOPC_LEN));
 }

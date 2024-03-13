@@ -56,6 +56,7 @@ class Channel {
 	void						chanMode(Client& sender, std::string modes, std::string value);
 
 	bool						chkTopic();
+	bool						chkTopicFlag();
 	void						geTopic(Client& user);
 	void						seTopic(std::string author, std::string topic);
 	void						removeMember(Client &client, std::string message);

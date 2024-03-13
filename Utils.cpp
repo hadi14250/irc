@@ -86,7 +86,7 @@ size_t	chkArgs(std::string args, size_t limiter) {
 		if (args.find_first_not_of(" ") == std::string::npos)
 			return 0;
 		else
-			args.substr(args.find_first_not_of(" "), args.size() - args.find_first_not_of(" "));
+			args = args.substr(args.find_first_not_of(" "), args.size() - args.find_first_not_of(" "));
 	}
 	for (i = 0; !args.empty() && i < (limiter ? limiter : 69) ; i++)
 		args = removeCmd(args);

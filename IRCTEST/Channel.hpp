@@ -6,6 +6,7 @@
 #include "Server.hpp"
 #include "Channel.hpp"
 #include "Client.hpp"
+#include "Commands.hpp"
 #include <algorithm>
 #include <vector>
 #include <ctime>
@@ -57,6 +58,7 @@ class Channel {
 	void						chanMode(Client& sender, std::string modes, std::string value);
 
 	bool						chkTopic();
+	bool						chkTopicFlag();
 	void						geTopic(Client& user);
 	void						seTopic(std::string author, std::string topic);
 	void						removeMember(Client &client, std::string message);
@@ -64,8 +66,3 @@ class Channel {
 //! tmp
 	void	printChan();
 };
-
-// create a member funtion to add oper and one to remove
-// ig we can just chk _pass.size() to find out if the channel is password protected!
-// there seems to have no use of keeping track of topic related flags becuz the pdf says only opers can either view
-// or modify it 💀

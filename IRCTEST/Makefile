@@ -1,8 +1,6 @@
 NAME = ircserv
 
-TMP = tmp_dev_cmds.cpp 
-
-SRCS = main.cpp Server.cpp Client.cpp Commands.cpp Utils.cpp Channel.cpp $(TMP)
+SRCS = main.cpp Server.cpp Client.cpp Commands.cpp Utils.cpp Channel.cpp Bot.cpp
 
 CXXFLAGS = -Wall -Wextra -Werror -fsanitize=address -std=c++98
 

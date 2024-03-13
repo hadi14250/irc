@@ -105,7 +105,7 @@ void	Commands::PASS() {
 		_sender._messages.push_back(ERR_PASSWDMISMATCH(_sender._nick));
 	else
 	{
-		std::cout << "authorized\n";
+		std::cout << GREEN << "authorized fd " << _senderFd << RESET << std::endl;
 		_sender._authenticated = true;
 	}
 }
@@ -120,11 +120,11 @@ void	Commands::NICK() {
 		_sender._messages.push_back(ERR_NONICKNAMEGIVEN(_sender._nick));
 	else if ((Server::_nickMap.find(_param)) != Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NICKNAMEINUSE(_param));
-	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos)//|| _param.size() > NICK_MAX
+	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos)
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
 		if (_param.length() > 9)
-			_param = _param.substr(0, 15); // <-do we want to copy liberachat/DALnet?
+			_param = _param.substr(0, 15);
 		if (_sender._nick.compare("*")) {
 			Server::_nickMap.erase(_sender._nick);
 			_sender._messages.push_back(NICKNAME(_sender._nick, _param));
@@ -164,8 +164,6 @@ void	Commands::CAP() {
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 	else if (_param.compare("LS") == 0 || _param.compare("LS 302") == 0)
 		_sender._messages.push_back("CAP * LS :\r\n");
-	// else if (!_param.compare("LIST"))
-	// 	_sender._messages.push_back("CAP * LIST :\r\n"); <- we only need this if we have capabilities
 	else if (_param.compare("END") == 0)
 		return ;
 	else
@@ -192,23 +190,18 @@ void	Commands::MsgClient(std::string recipient, std::string text) {
 		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));
 	else	
 	{
-		if (text.size() && text.at(0) == ':')
+		if (text.find("#SASSYBOT") != std::string::npos){
+			text = BOT();
+		} 
+		else if (text.size() && text.at(0) == ':')
 		{
 			int textLen = text.size();
 			text = text.substr(1, textLen - 1);
 		}
  		Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, text));
- 		// Server::_pfdsMap[it->second]._messages.push_back(PRIV_MSG(_sender._identifier, recipient, ((text.size() && text.at(0) == ':') ? removeCmd(text) : getCmd(text))));
 	}
 }
 
-/* 
-	first we look for either empty recipients or text, recipients are seperated by commas and
-	then theres the text which is seperated by a space from the recipients!
-	for now we don't have the channel class and its implementation, I am working on it and by tommorow I will
-	push a base channel implementation!
-	for now it just handles client to client communication!
- */
 void	Commands::PRIVMSG() {
 	std::vector<std::string>	recipients;
 	std::string					text;
@@ -219,10 +212,7 @@ void	Commands::PRIVMSG() {
 		_sender._messages.push_back(ERR_NOTEXTTOSEND(_sender._nick));
 	else {
 		text = removeCmd(_param);
-		std::cout << "text is: " << text << "\n";
 		recipients = splitPlusPlus(getCmd(_param), ",");
-		for (std::vector<std::string>::iterator it = recipients.begin(); it != recipients.end(); it++)
-			std::cout << "recipients: " << *it << "\n";
 		for (std::vector<std::string>::iterator	it = recipients.begin(); it != recipients.end(); it++) {
 			if (!it->size())
 				_sender._messages.push_back(ERR_NORECIPIENT(_sender._nick));
@@ -232,10 +222,7 @@ void	Commands::PRIVMSG() {
 				else
 					Server::_chanMap[*it].msgChannel(_sender, text);
 			} else
-			{
-				// std::cout << "Messaging client: " << *it << "\n";
 				MsgClient(*it, text);
-			}
 		}
 	}
 }
@@ -285,10 +272,7 @@ void	Commands::JOIN() {
 					continue ;
 				}
 				else if (it->size() && (it->at(0) == '#' || it->at(0) == '&') && ((it->find_first_of(" ^") == std::string::npos) ) )
-				{
-					std::cout << "*it is: " << *it << "\n";
 					Channel	newChan(*it);
-				}
 				else {
 					_sender._messages.push_back(ERR_BADCHANMASK(_sender._nick, *it, "Bad Channel Mask"));
 					continue ;
@@ -319,15 +303,16 @@ void	Commands::MODE() {
 }
 
 void	Commands::TOPIC() {
-	chnMapIt	it;
+	chnMapIt	it = Server::_chanMap.find(getCmd(_param));
+
 	if (_param.empty())
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
-	else if ((it = Server::_chanMap.find(getCmd(_param))) == Server::_chanMap.end())
+	else if (it == Server::_chanMap.end())
 		_sender._messages.push_back(ERR_NOSUCHCHANNEL(_sender._nick, getCmd(_param)));
 	else if (!it->second.chkIfMember(_sender._nick))
 		_sender._messages.push_back(ERR_NOTONCHANNEL(_sender._nick, getCmd(_param)));
-	// else if (!it->second.chkIfOper(_sender._nick))
-	// 	_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
+	else if (it->second.chkTopicFlag() && !it->second.chkIfOper(_sender._nick))
+		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, getCmd(_param)));
 	else
 		(!chkArgs(removeCmd(_param), 1)) ? it->second.geTopic(_sender) : it->second.seTopic(_sender._nick, removeCmd(_param).substr(0, TOPC_LEN));
 }
@@ -358,14 +343,11 @@ void	Commands::INVITE() {
 }
 
 void	Commands::KICK() {
-	std::cout << "entered" << std::endl;
 	if (chkArgs(_param, 2) < 2)
 	{
 		_sender._messages.push_back(ERR_NEEDMOREPARAMS(_sender._nick, _command));
 		return;
 	}
-
-	std::cout << "passed if" << std::endl;
 
 	std::vector<std::string>	channels = splitPlusPlus(getCmd(_param), ",");
 	std::vector<std::string>	victims = splitPlusPlus(getCmd(removeCmd(_param)), ",");
@@ -384,19 +366,12 @@ void	Commands::KICK() {
 		_sender._messages.push_back(ERR_CHANOPRIVSNEEDED(_sender._nick, *chnIt));
 	else{
 		for (vecStrIt	vicIt = victims.begin(); vicIt!= victims.end(); vicIt++ ){
-			std::cout << "victim being kicked: " << *vicIt << "\n";
 			if (!mapIt->second.chkIfMember(*vicIt) && _sender._nick.compare(*vicIt))
-			{
-				std::cout << "user not in channel\n";
 				_sender._messages.push_back(ERR_USERNOTINCHANNEL(_sender._nick, *vicIt, *chnIt));
-			}
 			else if (_sender._nick.compare(*vicIt))
-			{
-				std::cout << "removing member\n";
 				mapIt->second.removeMember(Server::_pfdsMap[Server::_nickMap[*vicIt]], KICK_MSG(_sender._identifier, *chnIt, *vicIt, kickMsg));
-			}
-			}
 		}
+	}
 }
 
 void	Commands::PART() {
@@ -427,4 +402,20 @@ void	Commands::PART() {
 void	Commands::QUIT()
 {
 	Server::deletePfd(_senderFd);
+}
+
+std::string	Commands::BOT() {
+	std::string reply;
+	if (_sender._isBotFirstCall == true) {
+		reply = Bot::botName + ": " +  Bot::popUpResponse;
+		_sender._isBotFirstCall = false;
+	}
+	else if (_sender._isBotFirstCall == false) {
+		std::srand(static_cast<unsigned int>(std::time(nullptr)));
+	    int strSize = sizeof(Bot::helpResponse) / sizeof(Bot::helpResponse[0]);
+		int randIdx = std::rand() % strSize;
+	    const std::string& response = Bot::helpResponse[randIdx];
+		reply = Bot::botName + ": " + response;
+	}
+	return reply;
 }

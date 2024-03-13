@@ -54,13 +54,16 @@ bool	Channel::chkIfOper(std::string nick) {
 	return (it == _members.end() ? false : it->second);
 }
 
+bool	Channel::chkTopicFlag() {
+	return _topicOperOnly;
+}
+
 bool	Channel::joinChannel(Client& newMember, std::string password) {
 	vecStrIt		it;
 
 	if (chkIfMember(newMember._nick))
 		newMember._messages.push_back(ERR_USERONCHANNEL(newMember._nick, newMember._nick, _name));
-	// else if (_userLimit && (_curMemAmt >= _maxMemAmt))
-	else if (_userLimit && ((_members.size() > _maxMemAmt - 1)))
+	else if (_userLimit && ((_members.size() >= _maxMemAmt)))
 		newMember._messages.push_back(ERR_CHANNELISFULL(newMember._nick, _name));
 	else if (_inviteOnly && ((it = find(newMember._invitations.begin(), newMember._invitations.end(), _name)) == newMember._invitations.end()))
 		newMember._messages.push_back(ERR_INVITEONLYCHAN(newMember._nick, _name));
@@ -128,7 +131,7 @@ bool	Channel::handleModeO(Client& sender, char mode, bool addflag, std::string p
 		sender._messages.push_back(ERR_NOSUCHNICK(sender._nick, param));
 	else if (!chkIfMember(param))
 		sender._messages.push_back(ERR_USERNOTINCHANNEL(sender._nick, param, _name));
-	else if (sender._sockfd == it->second) // if mate tries to oper him self again just drop it!
+	else if (sender._sockfd == it->second)
 		return false;
 	else {
 		manipOper(param, addflag);

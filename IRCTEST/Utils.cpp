@@ -1,7 +1,4 @@
-#include "Server.hpp"
-// #include <iostream>
-// #include <string>
-// #include <vector>
+#include "Utils.hpp"
 
 std::string removeNl(std::string str) {
 	size_t	pos = str.find_last_not_of(" \n\r");
@@ -48,7 +45,6 @@ std::vector<std::string>	splitPlusPlus(std::string str, std::string del) {
 	std::vector<std::string>	split;
 	std::size_t	i[2] = {0};
 
-	// if (chkArgs(str, 1) || del.empty()) {
 	if (str.empty() || del.empty()) {
 		if (del.empty())
 			split.push_back(str);
@@ -86,7 +82,7 @@ size_t	chkArgs(std::string args, size_t limiter) {
 		if (args.find_first_not_of(" ") == std::string::npos)
 			return 0;
 		else
-			args.substr(args.find_first_not_of(" "), args.size() - args.find_first_not_of(" "));
+			args = args.substr(args.find_first_not_of(" "), args.size() - args.find_first_not_of(" "));
 	}
 	for (i = 0; !args.empty() && i < (limiter ? limiter : 69) ; i++)
 		args = removeCmd(args);
@@ -98,18 +94,3 @@ std::string	removeColon(std::string str) {
 		str = str.substr(1);
 	return (str);
 }
-
-// int main(int c, char *v[]) {
-// 	if (c < 2)
-// 		return 69;
-// 	std::string	str = v[1];
-// 	// std::cout << "rem cmd <" << removeCmd(str) << ">" << std::endl;
-// 	// std::cout << "get cmd <" << getCmd(str) << ">" << std::endl;
-// 	// std::cout << "rem nwl <" << removeNl(str) << ">" << std::endl;
-// 	std::cout << "chk arg <" << chkArgs(str, 3) << ">" << std::endl;
-// 	// std::cout << "rem cln <" << removeColon(str) << ">" << std::endl;
-// 	// std::vector<std::string> vec = splitPlusPlus(str, ",");
-// 	// for (int i = 0; i < vec.size(); i++)
-// 	// 	std::cout << "split[" << i << "] = " << "<" << vec.at(i) << ">" << std::endl;
-// 	return !69;
-// }

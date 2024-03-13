@@ -4,6 +4,7 @@
 # include "Codes.hpp"
 # include "Client.hpp"
 # include "Channel.hpp"
+# include "Bot.hpp"
 # include <vector>
 
 
@@ -19,38 +20,32 @@ class Commands {
 public:
 	Commands(int fd, std::string command, std::string param, Client& sender);
 
-	void	postRegistrationCmds();
-	bool	registrationCmds();
-	void	WelcomeMsg();
-	void	MOTD();
-	void	completeRegistration(std::string nick);
+	void		postRegistrationCmds();
+	bool		registrationCmds();
+	void		WelcomeMsg();
+	void		MOTD();
+	void		completeRegistration(std::string nick);
 
-	void	CAP();
-	void	PASS();
-	void	NICK();
-	void	USER();
-	void	PING();
-	void	printChan();
-	void	UNKNOWN();
-	void	QUIT();
+	void		CAP();
+	void		PASS();
+	void		NICK();
+	void		USER();
+	void		PING();
+	void		QUIT();
 
-	void	JOIN();
-	void	NAMES();
-	void	PART();
-	void	TOPIC();
-	void	INVITE();
-	void	KICK();
+	void		JOIN();
+	void		NAMES();
+	void		PART();
+	void		TOPIC();
+	void		INVITE();
+	void		KICK();
 
-	void	MODE();
-	void	MsgClient(std::string recipient, std::string text);
-	void	PRIVMSG();
+	void		MODE();
+	void		MsgClient(std::string recipient, std::string text);
+	void		PRIVMSG();
 
-	void	WHOIS();
-
-	// void	KILL();
-	// void	NOTICE();
-	// void	ERROR();
-	// void	OPER();
+	void		WHOIS();
+	std::string	BOT();
 };
 
 typedef void (Commands::*cmdPtr)(void);

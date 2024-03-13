@@ -17,6 +17,7 @@
 # include "Client.hpp"
 # include "Commands.hpp"
 # include "Channel.hpp"
+# include "Utils.hpp"
 # include <algorithm>
 
 typedef std::vector<std::string>::iterator			vecStrIt;
@@ -50,21 +51,12 @@ private:
 	void		readMsg(int fd);
 	void		sendMsg(int fd);
 	static void	signalHandler(int signum);
-
-	// void	printPfdsMap();
-
-public:
-
-//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
-	void	addDevs(int fd, std::string devs);
-//! tmp dev commands remove before submitting! /////////////////////////////////////////////////////////////////////////////////////////// A /////
-	
+public:	
 	static volatile sig_atomic_t 			_run;
 	static std::map<int, Client>			_pfdsMap;
 	static std::map<std::string, int>		_nickMap;
 	static std::map<std::string, Channel>	_chanMap;
 	static struct pollfd*					_pfds;
-	// static int								_change;
 	static int								_pfdsCount;
 	
 	Server(std::string const & port, std::string const & pswd);
@@ -74,11 +66,6 @@ public:
 	static void			setSignals();
 	static std::string	getPassword();
 	static void			deletePfd(int fd);
-	// void				quitClient(int fd);
-
-	/********************** TEMPORARY ***********************/
-	void	testParse(Commands & msg);
-	void	trimTrailingWhitespace(std::string& str);
 	
 	/********************** EXCEPTIONS **********************/
 
@@ -116,11 +103,3 @@ public:
 		const char *what() const throw(){return "generic error msg";}
 	};
 };
-
-// Utils.cpp
-std::string					removeNl(std::string str);
-std::string					removeCmd(std::string msg);
-std::string					getCmd(std::string msg);
-std::vector<std::string>	splitPlusPlus(std::string str, std::string del);
-size_t						chkArgs(std::string args, size_t limiter);
-std::string					removeColon(std::string str);

@@ -6,6 +6,7 @@
 #include "Server.hpp"
 #include "Channel.hpp"
 #include "Client.hpp"
+#include "Commands.hpp"
 #include <algorithm>
 #include <vector>
 #include <ctime>
@@ -16,6 +17,8 @@ typedef std::map<Client*, bool>::iterator chnMemIt;
 
 class Channel {
 	private:
+	friend class Commands;
+
 	std::string					_name; //channel name just in case!
 	std::string					_topic;
 	std::string					_topicAuthor;

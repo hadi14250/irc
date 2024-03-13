@@ -13,6 +13,8 @@ $(NAME): $(OBJS)
 
 all: $(NAME)
 
+bonus: $(NAME)
+
 clean:
 	$(RM) $(OBJS)
 

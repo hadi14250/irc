@@ -123,7 +123,17 @@ void	Commands::NICK() {
 	else if ((invLead.find(_param.at(0)) != std::string::npos) || _param.find_first_of(invStr) != std::string::npos)
 		_sender._messages.push_back(ERR_ERRONEUSNICKNAME(_sender._nick));
 	else {
-		if (_param.length() > 9)
+		if (_param.find_first_of(" ") != _param.npos)
+		{
+			int i = 0;
+			while (_param[i] == ' ')
+				i++;
+			int j = i;
+			while (_param[j] !=  ' ')
+				j++;
+			_param = _param.substr(i, j - i);
+		}
+		if (_param.length() > 15)
 			_param = _param.substr(0, 15);
 		if (_sender._nick.compare("*")) {
 			Server::_nickMap.erase(_sender._nick);
@@ -185,6 +195,12 @@ void Commands::WHOIS() {
 }
 
 void	Commands::MsgClient(std::string recipient, std::string text) {
+	if (text.at(0) != ':')
+	{
+		size_t i = text.find_first_of(" ");
+		if (i != text.npos)
+			text = text.substr(0, i);
+	}
 	std::map<std::string, int>::iterator it = Server::_nickMap.find(recipient);
 	if (it == Server::_nickMap.end())
 		_sender._messages.push_back(ERR_NOSUCHNICK(_sender._nick, recipient));

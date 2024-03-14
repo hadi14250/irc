@@ -6,7 +6,6 @@ std::map<std::string, int>		Server::_nickMap;
 std::map<std::string, Channel>	Server::_chanMap;
 struct pollfd*					Server::_pfds = NULL;
 std::string						Server::_password;
-// int								Server::_change = 0;
 int								Server::_pfdsCount = 0;
 
 
@@ -92,7 +91,6 @@ void	Server::makeListenSockfd()
 	if (listen(_listenSockfd, 25) == -1)
 		throw ListenException();
 	addNewPfd(LISTENFD);
-	// copyPfdMapToArray();
 }
 
 /*
@@ -107,13 +105,12 @@ void	Server::addNewPfd(int tag)
 	Client newClient;
 	if (tag == LISTENFD)
 	{
-		newClient._listenSock = true; //redundant but put here for better readability
-		newClient._sockfd = _listenSockfd; //set our fd to listensockfd;
+		newClient._listenSock = true;
+		newClient._sockfd = _listenSockfd;
 	}
 	else if (tag == CLIENTFD)
 	{
 		newClient._listenSock = false;
-		//taking this out of Client construction for better readability
 		socklen_t addrlen = sizeof(struct sockaddr_in);
 		struct sockaddr_in clientInfo;
 		std::memset(&clientInfo, 0, addrlen);
@@ -125,10 +122,9 @@ void	Server::addNewPfd(int tag)
 	if (fcntl(newClient._sockfd, F_SETFL, O_NONBLOCK) == -1)
 		throw FcntlException();
 	
-	struct pollfd newPfd = {}; //initialize memory chunk to 0
+	struct pollfd newPfd = {}; 
 	newPfd.fd = newClient._sockfd;
 	newPfd.events = POLLIN | POLLOUT;
-	// newClient._pfd = newPfd;
 	_pfdsMap[newClient._sockfd] = newClient;
 	
 	//add new pfd here
@@ -143,25 +139,7 @@ void	Server::addNewPfd(int tag)
 	newPfdsArray[newPfdsCount - 1] = newPfd;
 	_pfds = newPfdsArray;
 	_pfdsCount = newPfdsCount;
-
-	// _change = 1;
 }
-
-/* 
-1. update _pfdsCount to _pfdsMap.length()
-2. delete _pfds array if needed and create new array based on Map
-*/
-// void	Server::copyPfdMapToArray()
-// {
-// 	_pfdsCount = _pfdsMap.size();
-
-// 	if (_pfds)
-// 		delete [] _pfds;
-// 	_pfds = new struct pollfd[_pfdsCount]();
-// 	int i = 0;
-// 	for (std::map<int, Client>::iterator it = _pfdsMap.begin(); it != _pfdsMap.end(); it++)
-// 		_pfds[i++] = it->second._pfd;
-// }
 
 /* 
 1. Print error msg
@@ -200,49 +178,41 @@ void	Server::deletePfd(int fd)
 		_nickMap.erase(nick);
 	_pfdsMap.erase(fd);
 	close(fd);
-	std::cout << "Closed connection for client " << nick << " at fd: " << fd << "!\n";
+	std::cout << RED << "Closed connection for client " << nick << " at fd: " << fd << "!" << RESET << std::endl;
 
 	//reset _pfdsCount and resize _pfds
 	int newPfdsCount = _pfdsMap.size();
 	struct pollfd * newPfdsArray = new struct pollfd[_pfdsCount]();
-	//do we need to check if _pfds exist? at this point it should right?
-		int j = 0;
-		for (int i = 0; i < _pfdsCount; i++)
-		{
-			if (_pfds[i].fd == fd)
-				continue;
-			newPfdsArray[j] = _pfds[i];
-			j++;
-		}
-		delete [] _pfds;
-		_pfds = newPfdsArray;
+	int j = 0;
+	for (int i = 0; i < _pfdsCount; i++)
+	{
+		if (_pfds[i].fd == fd)
+			continue;
+		newPfdsArray[j] = _pfds[i];
+		j++;
+	}
+	delete [] _pfds;
+	_pfds = newPfdsArray;
 	_pfdsCount = newPfdsCount;
 }
 
-void	Server::readMsg(int fd)// done! handles ^D now
+void	Server::readMsg(int fd)
 {
-	// std::cout << "reading fd: " << fd << "\n";
 	Client &	client = _pfdsMap[fd];
 	int			readBytes = 1;
 	char		buf[513];
-	// int			i = 0;
 
-	// std::cout << "reading msg\n";
 	while (readBytes > 0)
 	{
 		std::memset(buf, 0, 513);
 		readBytes = recv(fd, buf, 512, 0);
-		// std::cout << "readBytes: " << readBytes << "\n";
-		// if (i == 0 && readBytes == 0) //if the first iteration and readBytes is already 0
 		if (readBytes == 0)
 		{
 			deletePfd(fd); //if we don't have this we get a weird infinite loop
 			return ;
 		}
-		// if (*buf)
 		if (readBytes > 0)
 			client._fullMsg += buf;
-		// i++;
 	}
 	if (client.chkOverflow()) //if message is bigger than 512 bytes without the /r/n
 	{
@@ -253,15 +223,12 @@ void	Server::readMsg(int fd)// done! handles ^D now
 		return;
 	else 
 	{
-		std::vector<std::string>	cmds = splitPlusPlus(client.getFullMsg(), "\r\n"); // now server doesn't process empty args
+		std::vector<std::string>	cmds = splitPlusPlus(client.getFullMsg(), "\r\n");
 		client._fullMsg.clear();
 		for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) 
 		{
 			if (!chkArgs(*it, 1))
 				continue ;
-		//! tmp dev commands remove before submitting! // don't forget to remove from Server.hpp too //////////////////////////////////////////////////////////////////// V /////
-			if (!it->compare(0, 3, "dev")) 
-				addDevs(fd, getCmd(removeCmd(*it))); // takes arg dev {hadi or jen or huong} eg "dev hadi" adds a user with nick hadi!
 			else 
 			{
 				std::cerr << " processing > " << *it << std::endl;
@@ -295,13 +262,13 @@ In while loop
 5. if a new client has been added, modify our array accordingly
 7. free addrinfo struct (and everything else that needs to be freed)
  */
+
 void	Server::createServer()
 {
-	std::cout << "Creating server\n";
+	std::cout << GREENHL << "CREATING SERVER" << RESET << std::endl;
 	makeListenSockfd();
 	while (_run == 1)
 	{
-		// _change = 0;
 		//-1 means that poll will block indefinitely until it gets something from any file descriptors in _pfds
 		if (poll(_pfds, _pfdsCount, -1) == -1)
 			throw PollException();
@@ -312,7 +279,7 @@ void	Server::createServer()
 			{
 				try
 				{
-					std::cout << "adding new client\n";
+					std::cout << YELLOW << "attempting to add new client" << RESET << std::endl;
 					addNewPfd(CLIENTFD); //if any errors, exception is thrown before being added to map
 				}
 				catch(const std::exception& e)
@@ -323,13 +290,11 @@ void	Server::createServer()
 			else if (_pfds[i].revents & POLLIN)
 			{
 				//fd is ready for reading - USE RCV MSG AND PARSING HERE
-				// std::cout << "POLLIN fd: " << _pfds[i].fd << "\n";
 				readMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLOUT)
 			{
 				//fd is ready for writing - use SEND HERE
-				// std::cout << "POLLOUT fd: " << _pfds[i].fd << "\n";
 				sendMsg(_pfds[i].fd);
 			}
 			else if (_pfds[i].revents & POLLHUP)
@@ -338,9 +303,6 @@ void	Server::createServer()
 				deletePfd(_pfds[i].fd);
 			}
 		}
-		// if (_change == 1)
-			// copyPfdMapToArray();
-		
 	}
 }
 
@@ -348,7 +310,7 @@ void	Server::signalHandler(int signum)
 {
 	(void)signum;
 	_run = 0;
-	std::cout << "\nending program\n";
+	std::cout << RED << "\nending program\n" << RESET;
 }
 
 /* 
@@ -367,55 +329,3 @@ std::string	Server::getPassword()
 {
 	return _password;
 }
-
-/* 
-DRAFTS:
-
-TESTING AF_UNSPEC
-hints.ai_family = AF_UNSPEC; //can be ipv4 or 6
-
-for science, lets check how many items are in this linked list _serv
-there will be two if we use AF_UNSPEC - probably an ipv4 and ipv6
-struct addrinfo *s;
-s = _serv;
-int i = 0;
-for (; s != NULL; s = s->ai_next)
-	i++;
-std::cout << "there are " << i << " structs in _serv\n";
-
-*/
-
-// void	Server::readMsg(int fd)// done! handles ^D now
-// {
-// 	Client & client = _pfdsMap[fd];
-
-// 	std::memset(_buf, 0, sizeof(_buf));
-// 	_readBytes = recv(fd, _buf, sizeof(_buf) - 1, 0);
-// 	if (_readBytes == 0) {
-// 		deletePfd(fd); //use the new quit command from j
-// 		return ;
-// 	} else if (*_buf) {
-// 		std::cerr << " reading > " << _buf << std::endl;
-// 		if (client.appendBuffer(_buf) || client.chkOverflow())
-// 		{
-// 			if (client.chkOverflow())
-// 				client._messages.push_back(ERR_INPUTTOOLONG(client._nick));
-// 			else 
-// 			{
-// 				std::vector<std::string>	cmds = splitPlusPlus(client.getFullMsg(), "\r\n"); // now server doesn't process empty args
-// 				for (vecStrIt it = cmds.begin(); it != cmds.end(); it++) {
-// 					if (!chkArgs(*it, 1))
-// 						continue ;
-// 				//! tmp dev commands remove before submitting! // don't forget to remove from Server.hpp too //////////////////////////////////////////////////////////////////// V /////
-// 					if (!it->compare(0, 3, "dev")) 
-// 						addDevs(fd, getCmd(removeCmd(*it))); // takes arg dev {hadi or jen or huong} eg "dev hadi" adds a user with nick hadi!
-// 					else {
-// 						std::cerr << " processing > " << *it << std::endl;
-// 						Commands	parseCmd(fd, getCmd(*it), removeCmd(*it), _pfdsMap[fd]);
-// 					}
-// 				}
-// 			}
-// 			client._fullMsg.clear();
-// 		}
-// 	}
-// }

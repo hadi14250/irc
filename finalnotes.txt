@@ -34,6 +34,7 @@ cat <filename>.log
 Sample servers
 /connect liberachat
 /connect chat.freenode.net
+/connect DALnet
 
 Concepts
 What is a socket?
@@ -166,7 +167,57 @@ https://beej.us/guide/bgnet/html/
 https://modern.ircdocs.horse/
 http://chi.cs.uchicago.edu/chirc/irc_examples.html
 
+OTHER NOTES:
+/* 
+NOTES:
+-nick must be unique and can be changed
+-user does not have to be unique and cannot be changed
+-user comes with real name and mode as well
 
+-to initialize things to 0 for new, add () after
 
-seg fsults here:
- KICK #chan qKICK #chan q1,q2
+-note sockaddr_storage can be used since it's flexible with ipv4 or ipv6.
+since we're working with ipv4, better to use sockaddr_in -> then we don't have to static cast the struct after
+
+-in c++11 and later, we are actually able to get a pointer to an array of elements from the container using data()
+
+checking nbyte:
+	int nbytes = recv()
+	if nbytes <= 0
+		error or connection was closed
+		close the fd
+		make sure to delete this client from _pfds!
+	otherwise we've got info! hurray!
+		send the data accordingly -> idk how we're going to do this yet 
+			but i'm starting to understand why we might need a whole client class
+check for signals
+	ctrl+c will close
+	ctrl+d - ??
+	ctrl+z - ??
+
+IRC messages are always lines of characters terminated with a CR-LF
+(Carriage Return - Line Feed) pair, and these messages SHALL NOT
+exceed 512 characters in length, counting all characters including
+the trailing CR-LF. Thus, there are 510 characters maximum allowed
+for the command and its parameters. - from rfc 2813
+
+3.1 Connection Registration (see rfc 2812)
+   The commands described here are used to register a connection with an
+   IRC server as a user as well as to correctly disconnect.
+
+   A "PASS" command is not required for a client connection to be
+   registered, but it MUST precede the latter of the NICK/USER
+   combination (for a user connection) or the SERVICE command (for a
+   service connection). The RECOMMENDED order for a client to register
+   is as follows:
+
+                           1. Pass message
+           2. Nick message                 2. Service message
+           3. User message
+
+   Upon success, the client will receive an RPL_WELCOME (for users) or
+   RPL_YOURESERVICE (for services) message indicating that the
+   connection is now registered and known the to the entire IRC network.
+   The reply message MUST contain the full client identifier upon which
+   it was registered.
+*/
